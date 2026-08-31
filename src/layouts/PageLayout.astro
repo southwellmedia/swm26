@@ -1,0 +1,55 @@
+---
+/**
+ * PageLayout
+ * Layout wrapper for standard content pages (non-landing)
+ * Uses Header + Footer with content page configuration
+ */
+import BaseLayout from './BaseLayout.astro';
+import Header from '@/components/layout/Header.astro';
+import Footer from '@/components/layout/Footer.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  imageAlt?: string;
+  noindex?: boolean;
+  nofollow?: boolean;
+}
+
+const { title, description, image, imageAlt, noindex, nofollow } = Astro.props;
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  image={image}
+  imageAlt={imageAlt}
+  noindex={noindex}
+  nofollow={nofollow}
+>
+  <Header
+    slot="header"
+    position="fixed"
+    size="lg"
+    showActiveState
+    showCta
+    cta={{ label: 'View Docs', href: 'https://docs.deployvelocity.com' }}
+    extraNav={[{ label: 'Features', href: '#features' }]}
+    actions={[
+      {
+        icon: 'github',
+        href: 'https://github.com/southwellmedia/velocity',
+        label: 'View on GitHub',
+        iconOnly: true,
+        target: '_blank',
+      },
+    ]}
+  />
+
+  <main class="min-h-screen pt-16">
+    <slot />
+  </main>
+
+  <Footer slot="footer" layout="simple" />
+</BaseLayout>

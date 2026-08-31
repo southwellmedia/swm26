@@ -1,0 +1,12 @@
+/* =============================================================================
+   Velocity Design Tokens - Colors
+   =============================================================================
+   This file aggregates primitive color scales and the active theme.
+   To switch themes, change the theme import below.
+   ============================================================================= */
+
+@import './primitives.css';
+@import '../themes/default.css';
+/* To use the midnight theme, replace the line above with:
+   @import '../themes/midnight.css';
+*/
