@@ -6,7 +6,7 @@
    ============================================================================= */
 
 @import './primitives.css';
-@import '../themes/default.css';
+@import '../themes/southwell.css';
 /* To use the midnight theme, replace the line above with:
    @import '../themes/midnight.css';
 */

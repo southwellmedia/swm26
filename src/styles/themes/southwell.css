@@ -1,0 +1,369 @@
+/* =============================================================================
+   Velocity Theme - Southwell Media
+   =============================================================================
+   "Ink on ice": #0c1016 on #eef2f4. Implements the Velocity theme contract, so
+   every stock Velocity component (Button, Card, Input, blog, forms) inherits
+   the studio palette without being restyled one by one.
+
+   Raw values come from tokens/primitives.css (--ink-*, --ice-*).
+
+   Dark mode flips the ground to ink and the type to ice. The identity is
+   already monochrome, so this reads as the same brand rather than a second one.
+   ============================================================================= */
+
+:root {
+  /* -------------------------------------------------------------------------
+     Semantic Tokens - Light Mode
+     ------------------------------------------------------------------------- */
+  --background: var(--ice-100);
+  --background-secondary: var(--ice-200);
+  --background-tertiary: var(--ice-300);
+  --background-elevated: #ffffff;
+
+  --foreground: var(--ink-950); /* 16.9:1 on ice — WCAG AAA */
+  --foreground-secondary: var(--ink-700); /*  9.4:1 on ice — WCAG AAA */
+  --foreground-muted: var(--ink-600); /*  6.1:1 on ice — WCAG AA  */
+  --foreground-subtle: var(--ink-500); /*  4.8:1 on ice — WCAG AA  */
+
+  --border: rgb(12 16 22 / 0.09);
+  --border-strong: rgb(12 16 22 / 0.18);
+  --border-subtle: rgb(12 16 22 / 0.05);
+
+  /* The studio has no accent colour — ink is the primary. */
+  --primary: var(--ink-950);
+  --primary-hover: var(--ink-800);
+  --primary-foreground: var(--ice-100);
+
+  --secondary: var(--ice-200);
+  --secondary-hover: var(--ice-300);
+  --secondary-foreground: var(--ink-950);
+
+  --accent: var(--ink-950);
+  --accent-hover: var(--ink-800);
+  --accent-light: var(--ice-300);
+
+  --muted: var(--ice-200);
+  --muted-foreground: var(--ink-600);
+
+  --card: #ffffff;
+  --card-border: rgb(12 16 22 / 0.07);
+
+  --input-bg: #ffffff;
+  --input-border: rgb(12 16 22 / 0.18);
+  --input-focus: var(--ink-950);
+
+  --ring: var(--ink-950);
+
+  --destructive: var(--error);
+  --destructive-foreground: var(--ice-100);
+
+  --gradient-start: var(--ice-200);
+  --gradient-end: var(--ice-100);
+
+  /* -------------------------------------------------------------------------
+     Inverted Section — the dark rounded footer, and anything else that wants
+     to sit on ink while the page is on ice.
+     ------------------------------------------------------------------------- */
+  --surface-invert: var(--ink-950);
+  --surface-invert-secondary: var(--ink-900);
+  --surface-invert-tertiary: var(--ink-800);
+  --on-invert: var(--ice-100); /* 16.9:1 on ink — WCAG AAA */
+  --on-invert-secondary: var(--ice-400); /* 11.1:1 on ink — WCAG AAA */
+  --on-invert-muted: var(--ink-500); /*  4.9:1 on ink — WCAG AA  */
+  --border-invert: rgb(238 242 244 / 0.14);
+  --border-invert-strong: rgb(238 242 244 / 0.3);
+
+  /* -------------------------------------------------------------------------
+     Typography
+     Outfit for headlines, Archivo for body and UI, IBM Plex Mono for the
+     eyebrow and meta labels.
+     ------------------------------------------------------------------------- */
+  --theme-font-sans: 'Archivo Variable', 'Archivo', system-ui, -apple-system,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* Display face. This one line changes every headline on the site.
+     Outfit: near-monoline geometric, open and even at large sizes — the
+     opposite of the crowding Archivo showed at display scale. */
+  --theme-font-display: 'Outfit Variable', 'Outfit', var(--theme-font-sans);
+  --theme-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, 'SF Mono',
+    Menlo, Consolas, monospace;
+
+  --theme-heading-weight: 600;
+  --theme-heading-tracking: -0.03em;
+  --theme-body-leading: 1.6;
+
+  /* -------------------------------------------------------------------------
+     Display type
+     Every headline reads off these two values, so a face can be retuned
+     without touching a single component. The prototype ran weight 600 at
+     -0.055em; that tracking is tight enough to be worth suspecting before
+     the typeface is.
+     ------------------------------------------------------------------------- */
+  --display-weight: 600;
+  --display-tracking: -0.04em;
+
+  /* Headings are set lowercase. Set this to `none` to get the copy back as
+     written. The mono eyebrow labels (DIGITAL EXPERIENCE, MENU, SAY HI) stay
+     uppercase on purpose — the two cases are the contrast the system runs on,
+     so change this one and leave .label-mono alone. */
+  --display-case: lowercase;
+
+  /* -------------------------------------------------------------------------
+     The emphasised word inside a display line — the "our" in "builds our
+     story", the "a stranger" in the sign-off.
+
+     A face with a true italic uses it. A face without one must NOT fall back
+     to font-style: italic — the browser shears the uprights, and at 168px
+     that is unmistakable. Those faces drop weight instead, and a face with a
+     width axis can narrow as well.
+     ------------------------------------------------------------------------- */
+  /* Outfit ships no italic, so emphasis is a weight drop. */
+  /* -------------------------------------------------------------------------
+     Hero treatment
+     Which HeroVisual layer is showing. Exactly one should be 1. Setting them
+     all to 0 and --hero-panel-display to none gives a type-only hero, which is
+     a real option rather than an empty state.
+     ------------------------------------------------------------------------- */
+  --hv-mesh: 1;
+  --hv-grid: 0;
+  --hv-duotone: 0;
+  --hero-panel-display: block;
+  --hero-headline-pull: -0.52em;
+  --hero-headline-pull-sm: -0.4em;
+
+  --display-em-style: normal;
+  --display-em-weight: 300;
+  --display-em-stretch: 100%;
+  --display-em-tracking: -0.03em;
+
+  /* -------------------------------------------------------------------------
+     Shadows — tinted with ink rather than pure black, so they sit on ice
+     without going muddy.
+     ------------------------------------------------------------------------- */
+  --theme-shadow-sm: 0 1px 2px rgb(12 16 22 / 0.06);
+  --theme-shadow-md: 0 4px 12px rgb(12 16 22 / 0.08);
+  --theme-shadow-lg: 0 10px 30px rgb(12 16 22 / 0.14);
+  --theme-shadow-xl: 0 24px 60px rgb(12 16 22 / 0.18);
+
+  /* -------------------------------------------------------------------------
+     Border Radii — the prototype's actual corner language.
+     ------------------------------------------------------------------------- */
+  --theme-radius-sm: 6px;
+  --theme-radius-md: 10px;
+  --theme-radius-lg: 14px;
+  --theme-radius-xl: 18px;
+  --theme-radius-full: 9999px;
+
+  /* -------------------------------------------------------------------------
+     Component tier — service card colourways
+     The four stacking cards each take a different ground so the pile reads as
+     four things rather than one long panel. Card 03 deliberately breaks to ink.
+
+     Each ground also carries two translucent glows and a light direction, so
+     the pile reads as four temperatures rather than four greys. Tints sit at
+     roughly 5-10% saturation — enough to feel, not enough to make the site
+     colourful. `-grain` scales the noise overlay: dark grounds swallow it, so
+     they get more of it.
+
+       01 white — cool steel, lit from the top-left
+       02 mid   — warm sand, glow from the bottom-right
+       03 ink   — blue lift pooling from the top-right
+       04 shade — slate green, glow from the bottom-left
+     ------------------------------------------------------------------------- */
+  /* The nav's contextual label — the client name after the wordmark slash.
+     The one place the site allows itself a hue; it borrows the steel of
+     service card 01 so it doesn't read as a new colour. */
+  --nav-context: rgb(64 104 152);
+  /* Lifted for use over a dark hero image, in either colour scheme. */
+  --nav-context-on-media: rgb(132 176 226);
+
+  --service-white-bg: #ffffff;
+  --service-white-fg: var(--ink-950);
+  --service-white-chip: rgb(12 16 22 / 0.25);
+  --service-white-glow-a: rgb(84 122 166 / 0.26);
+  --service-white-glow-b: rgb(146 168 190 / 0.18);
+  --service-white-light: 12% 6%;
+  --service-white-light-b: 88% 96%;
+  --service-white-grain: 0.5;
+
+  --service-mid-bg: var(--ice-300);
+  --service-mid-fg: var(--ink-950);
+  --service-mid-chip: rgb(12 16 22 / 0.25);
+  --service-mid-glow-a: rgb(196 158 112 / 0.38);
+  --service-mid-glow-b: rgb(214 194 168 / 0.26);
+  --service-mid-light: 86% 94%;
+  --service-mid-light-b: 8% 14%;
+  --service-mid-grain: 0.5;
+
+  --service-ink-bg: var(--ink-950);
+  --service-ink-fg: var(--ice-100);
+  --service-ink-chip: rgb(238 242 244 / 0.3);
+  --service-ink-glow-a: rgb(92 134 196 / 0.34);
+  --service-ink-glow-b: rgb(56 86 138 / 0.22);
+  --service-ink-light: 80% 10%;
+  --service-ink-light-b: 18% 92%;
+  --service-ink-grain: 0.75;
+
+  --service-shade-bg: var(--ice-400);
+  --service-shade-fg: var(--ink-950);
+  --service-shade-chip: rgb(12 16 22 / 0.25);
+  --service-shade-glow-a: rgb(112 158 136 / 0.36);
+  --service-shade-glow-b: rgb(150 176 162 / 0.24);
+  --service-shade-light: 14% 92%;
+  --service-shade-light-b: 90% 20%;
+  --service-shade-grain: 0.55;
+
+  /* Component tier - work card media well. Deeper than the page so an empty
+     card still reads as an image slot rather than a gap. */
+  --work-media-bg: var(--ice-500);
+
+  /* Work cards rest desaturated and dimmed, and come up to full colour on
+     hover. On a monochrome identity that means colour only ever appears on
+     intent, and the grid reads as one surface instead of eleven competing
+     photographs. */
+  --work-rest-grayscale: 1;
+  --work-rest-opacity: 0.62;
+  --work-rest-contrast: 1.05;
+
+  /* -------------------------------------------------------------------------
+     Brand ramp override
+     Velocity primitives ship an International Orange brand scale. This studio
+     has no accent colour - the brand IS the ink - so the ramp is remapped onto
+     ice-to-ink. Every stock Velocity component that reaches for brand-500
+     (badges, icon wells, blog cards) lands on-brand without being touched.
+     ------------------------------------------------------------------------- */
+  --brand-50: var(--ice-50);
+  --brand-100: var(--ice-100);
+  --brand-200: var(--ice-200);
+  --brand-300: var(--ice-300);
+  --brand-400: var(--ice-500);
+  --brand-500: var(--ink-950);
+  --brand-600: var(--ink-900);
+  --brand-700: var(--ink-800);
+  --brand-800: var(--ink-700);
+  --brand-900: var(--ink-600);
+}
+
+/* -------------------------------------------------------------------------
+   Dark Mode — ink ground, ice type.
+   ------------------------------------------------------------------------- */
+.dark {
+  --background: var(--ink-950);
+  --background-secondary: var(--ink-900);
+  --background-tertiary: var(--ink-800);
+  --background-elevated: var(--ink-900);
+
+  --foreground: var(--ice-100); /* 16.9:1 on ink — WCAG AAA */
+  --foreground-secondary: var(--ice-400); /* 11.1:1 on ink — WCAG AAA */
+  --foreground-muted: var(--ice-500); /*  8.3:1 on ink — WCAG AAA */
+  --foreground-subtle: var(--ink-500); /*  4.9:1 on ink — WCAG AA  */
+
+  --border: rgb(238 242 244 / 0.14);
+  --border-strong: rgb(238 242 244 / 0.3);
+  --border-subtle: rgb(238 242 244 / 0.08);
+
+  --primary: var(--ice-100);
+  --primary-hover: #ffffff;
+  --primary-foreground: var(--ink-950);
+
+  --secondary: var(--ink-800);
+  --secondary-hover: var(--ink-700);
+  --secondary-foreground: var(--ice-100);
+
+  --accent: var(--ice-100);
+  --accent-hover: #ffffff;
+  --accent-light: var(--ink-800);
+
+  --muted: var(--ink-800);
+  --muted-foreground: var(--ice-500);
+
+  --card: var(--ink-900);
+  --card-border: rgb(238 242 244 / 0.12);
+
+  --input-bg: var(--ink-900);
+  --input-border: rgb(238 242 244 / 0.24);
+  --input-focus: var(--ice-100);
+
+  --ring: var(--ice-100);
+
+  --destructive: oklch(65% 0.22 25);
+  --destructive-foreground: var(--ice-100);
+
+  --gradient-start: var(--ink-900);
+  --gradient-end: var(--ink-950);
+
+  --success-light: oklch(25% 0.05 145);
+  --warning-light: oklch(25% 0.05 85);
+  --error-light: oklch(25% 0.05 25);
+
+  /* On an ink page the "inverted" surface is the one that lifts off it. */
+  --surface-invert: var(--ink-900);
+  --surface-invert-secondary: var(--ink-800);
+  --surface-invert-tertiary: var(--ink-700);
+  --on-invert: var(--ice-100);
+  --on-invert-secondary: var(--ice-400);
+  --on-invert-muted: var(--ink-500);
+  --border-invert: rgb(238 242 244 / 0.14);
+  --border-invert-strong: rgb(238 242 244 / 0.3);
+
+  --theme-shadow-sm: 0 1px 3px rgb(0 0 0 / 0.4);
+  --theme-shadow-md: 0 4px 12px rgb(0 0 0 / 0.45);
+  --theme-shadow-lg: 0 10px 30px rgb(0 0 0 / 0.55);
+  --theme-shadow-xl: 0 24px 60px rgb(0 0 0 / 0.6);
+
+  /* Service cards in dark: the pile inverts, and card 03 still breaks the
+     pattern — it goes to ice while the others stay on ink. */
+  /* Lifted so it holds up on ink at the same perceived weight. */
+  --nav-context: rgb(132 176 226);
+
+  --service-white-bg: var(--ink-900);
+  --service-white-fg: var(--ice-100);
+  --service-white-chip: rgb(238 242 244 / 0.25);
+  --service-white-glow-a: rgb(108 152 206 / 0.2);
+  --service-white-glow-b: rgb(70 96 130 / 0.16);
+  --service-white-light: 12% 6%;
+  --service-white-light-b: 88% 96%;
+  --service-white-grain: 0.7;
+
+  --service-mid-bg: var(--ink-800);
+  --service-mid-fg: var(--ice-100);
+  --service-mid-chip: rgb(238 242 244 / 0.25);
+  --service-mid-glow-a: rgb(206 164 112 / 0.18);
+  --service-mid-glow-b: rgb(150 116 78 / 0.14);
+  --service-mid-light: 86% 94%;
+  --service-mid-light-b: 8% 14%;
+  --service-mid-grain: 0.7;
+
+  /* Still the odd one out: an ice card in a dark pile, so its tint darkens
+     rather than lifts. */
+  --service-ink-bg: var(--ice-100);
+  --service-ink-fg: var(--ink-950);
+  --service-ink-chip: rgb(12 16 22 / 0.3);
+  --service-ink-glow-a: rgb(70 112 176 / 0.2);
+  --service-ink-glow-b: rgb(120 146 178 / 0.14);
+  --service-ink-light: 80% 10%;
+  --service-ink-light-b: 18% 92%;
+  --service-ink-grain: 0.5;
+
+  --service-shade-bg: var(--ink-700);
+  --service-shade-fg: var(--ice-100);
+  --service-shade-chip: rgb(238 242 244 / 0.25);
+  --service-shade-glow-a: rgb(122 186 156 / 0.17);
+  --service-shade-glow-b: rgb(82 128 108 / 0.13);
+  --service-shade-light: 14% 92%;
+  --service-shade-light-b: 90% 20%;
+  --service-shade-grain: 0.7;
+
+  --work-media-bg: var(--ink-800);
+
+  /* The ramp inverts with the page. */
+  --brand-50: var(--ink-950);
+  --brand-100: var(--ink-900);
+  --brand-200: var(--ink-800);
+  --brand-300: var(--ink-700);
+  --brand-400: var(--ink-500);
+  --brand-500: var(--ice-100);
+  --brand-600: var(--ice-200);
+  --brand-700: var(--ice-400);
+  --brand-800: var(--ice-500);
+  --brand-900: var(--ink-500);
+}

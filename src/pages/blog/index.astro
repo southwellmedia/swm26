@@ -1,157 +1,172 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import Header from '@/components/layout/Header.astro';
-import Footer from '@/components/layout/Footer.astro';
-import BlogCard from '@/components/blog/BlogCard.astro';
-import Button from '@/components/ui/form/Button/Button.astro';
-import Badge from '@/components/ui/data-display/Badge/Badge.astro';
-import Icon from '@/components/ui/primitives/Icon/Icon.astro';
-import Input from '@/components/ui/form/Input/Input.astro';
-import CTA from '@/components/ui/marketing/CTA/CTA.astro';
-import { Hero } from '@/components/hero';
+/**
+ * Lab index
+ * URL: /blog
+ *
+ * "Lab" is what the studio calls its writing; the route stays /blog so the
+ * RSS feed, sitemap entries and Pagefind index keep their addresses.
+ *
+ * The listing is an editorial list rather than Velocity's card grid — the
+ * identity is built on big type and hairline rules, not cards.
+ */
+import SiteLayout from '@/layouts/SiteLayout.astro';
+import SectionHead from '@/components/sections/SectionHead.astro';
+import Cta from '@/components/sections/Cta.astro';
 import { getCollection } from 'astro:content';
+import { formatDate } from '@/lib/utils';
 
-// Get all published posts
-const allPosts = await getCollection('blog', ({ data }) => {
-  return import.meta.env.PROD ? data.draft !== true : true;
-});
-
-// Filter by English locale and sort by date
-const posts = allPosts
+const posts = (
+  await getCollection('blog', ({ data }) => (import.meta.env.PROD ? data.draft !== true : true))
+)
   .filter((post) => post.data.locale === 'en')
   .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
 
-// Separate featured posts (shown in hero section)
-const featuredPosts = posts.filter((post) => post.data.featured);
-// Non-featured posts for the main listing
-const nonFeaturedPosts = posts.filter((post) => !post.data.featured);
-// If ALL posts are featured, show them all in the main listing too (to avoid empty section)
-const regularPosts = nonFeaturedPosts.length > 0 ? nonFeaturedPosts : posts;
-
-const getPostUrl = (postId: string) => {
-  // Remove locale prefix from id (e.g., "en/welcome-to-velocity" -> "welcome-to-velocity")
-  const slug = postId.replace('en/', '');
-  return `/blog/${slug}`;
-};
+const postUrl = (id: string) => '/blog/' + id.replace('en/', '');
 ---
 
-<BaseLayout title="Blog" description="Latest articles and updates">
-  <Header
-    slot="header"
-    position="fixed"
-    size="lg"
-    showActiveState
-    showCta
-    cta={{ label: 'View Docs', href: 'https://docs.deployvelocity.com' }}
-    extraNav={[{ label: 'Features', href: '#features' }]}
-    actions={[
+<SiteLayout
+  title="Lab"
+  description="Notes from the studio — what we are building, and what we learned building it."
+>
+  <header class="shell pt-[180px] max-[800px]:pt-[130px]">
+    <SectionHead
+      title="Lab"
+      blurb="Notes from the studio — what we are building, and what we learned building it."
+    />
+  </header>
+
+  <!-- Pagefind search. Hidden until the index is confirmed present, so it
+       never shows up broken in `astro dev`, where no index has been built. -->
+  <div class="mt-16 shell max-[800px]:mt-10" id="lab-search" hidden>
+    <label class="label-mono text-foreground-muted" for="lab-search-input">SEARCH</label>
+    <input
+      id="lab-search-input"
+      type="search"
+      autocomplete="off"
+      placeholder="Search the lab"
+      class="mt-3 w-full max-w-[560px] border-0 border-b border-border bg-transparent pb-4 text-[clamp(1.25rem,2.4vw,1.75rem)] tracking-[-0.03em] outline-none placeholder:text-foreground-subtle focus:border-foreground"
+    />
+  </div>
+
+  <section class="mt-14 shell max-[800px]:mt-10">
+    <ul class="m-0 list-none p-0" id="lab-results" hidden></ul>
+
+    <ul class="m-0 list-none p-0" id="lab-list">
       {
-        icon: 'github',
-        href: 'https://github.com/southwellmedia/velocity',
-        label: 'View on GitHub',
-        iconOnly: true,
-        target: '_blank',
-      },
-    ]}
-  />
+        posts.map((post) => (
+          <li class="border-t border-border last:border-b" data-reveal>
+            <a class="group block py-10 max-[800px]:py-7" href={postUrl(post.id)}>
+              <span class="label-mono text-foreground-muted">
+                {formatDate(post.data.publishedAt).toUpperCase()}
+              </span>
 
-  <Hero layout="split" size="sm" class="bg-surface-secondary border-b border-border">
-    <Badge slot="badge">
-      <Icon name="book" size="sm" class="text-brand-500" />
-      All posts
-    </Badge>
+              <h2 class="font-display [text-transform:var(--display-case)] mt-4 mb-0 text-[clamp(1.75rem,4.4vw,3.25rem)] leading-[1.05] font-semibold tracking-[var(--display-tracking)] transition-opacity group-hover:opacity-60">
+                {post.data.title}
+              </h2>
 
-    <h1 slot="title">Blog</h1>
+              <p class="mt-4 mb-0 max-w-[620px] text-[17px] leading-[1.55] text-foreground-secondary">
+                {post.data.description}
+              </p>
 
-    <p slot="description">Latest articles and updates</p>
-  </Hero>
-
-  <!-- Featured Posts Section -->
-  {
-    featuredPosts.length > 0 && (
-      <section class="bg-background py-16">
-        <div class="mx-auto max-w-6xl px-6">
-          <h2 class="font-display text-foreground mb-8 flex items-center gap-2 text-2xl font-bold">
-            <svg class="text-brand-500 h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            Featured
-          </h2>
-
-          <div class="grid gap-6 md:grid-cols-2">
-            {featuredPosts.map((post) => (
-              <BlogCard
-                title={post.data.title}
-                description={post.data.description}
-                href={getPostUrl(post.id)}
-                publishedAt={post.data.publishedAt}
-                tags={post.data.tags}
-                author={post.data.author}
-                image={post.data.image}
-                featured={true}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  <!-- All Posts Section -->
-  <section class="bg-background-secondary py-16">
-    <div class="mx-auto max-w-6xl px-6">
-      {
-        featuredPosts.length > 0 && nonFeaturedPosts.length > 0 && (
-          <h2 class="font-display text-foreground mb-8 text-2xl font-bold">All posts</h2>
-        )
+              {post.data.tags.length > 0 && (
+                <div class="mt-5 flex flex-wrap gap-2">
+                  {post.data.tags.map((tag) => (
+                    <span class="rounded-full border border-border px-3.5 py-1.5 text-[13px] font-medium">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </a>
+          </li>
+        ))
       }
+    </ul>
 
-      {
-        regularPosts.length > 0 ? (
-          <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {regularPosts.map((post) => (
-              <BlogCard
-                title={post.data.title}
-                description={post.data.description}
-                href={getPostUrl(post.id)}
-                publishedAt={post.data.publishedAt}
-                tags={post.data.tags}
-                author={post.data.author}
-                image={post.data.image}
-              />
-            ))}
-          </div>
-        ) : posts.length === 0 ? (
-          <div class="py-16 text-center">
-            <div class="bg-background mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-              <Icon name="file-text" size="lg" class="text-foreground-muted" />
-            </div>
-            <p class="text-foreground-muted text-lg">No posts found</p>
-          </div>
-        ) : null
-      }
-    </div>
+    {
+      posts.length === 0 && (
+        <p class="py-10 text-[17px] text-foreground-secondary">Nothing published yet.</p>
+      )
+    }
   </section>
 
-  <!-- Newsletter CTA Section -->
-  <CTA variant="invert" size="sm" maxWidth="lg">
-    <h2 slot="heading">Subscribe</h2>
-    <p slot="description">Get the latest articles and updates delivered to your inbox.</p>
+  <Cta />
+</SiteLayout>
 
-    <form class="mx-auto flex max-w-md flex-col items-center gap-4 sm:flex-row">
-      <Input
-        type="email"
-        placeholder="Enter your email"
-        size="lg"
-        required
-        class="flex-1"
-      />
-      <Button size="lg" type="submit">
-        Subscribe
-        <Icon name="arrow-right" size="sm" />
-      </Button>
-    </form>
-  </CTA>
+<script>
+  interface PagefindResult {
+    data: () => Promise<{ url: string; excerpt: string; meta: { title?: string } }>;
+  }
 
-  <Footer slot="footer" layout="simple" background="secondary" showCopyright={false} />
-</BaseLayout>
+  interface PagefindApi {
+    init: () => Promise<void>;
+    debouncedSearch: (query: string) => Promise<{ results: PagefindResult[] } | null>;
+  }
+
+  async function initLabSearch() {
+    const wrapper = document.getElementById('lab-search');
+    const input = document.getElementById('lab-search-input') as HTMLInputElement | null;
+    const results = document.getElementById('lab-results');
+    const list = document.getElementById('lab-list');
+
+    if (!wrapper || !input || !results || !list) return;
+
+    let pagefind: PagefindApi;
+
+    try {
+      // The path is held in a variable so Vite does not try to resolve it at
+      // build time — the index only exists in dist/ after `pagefind` runs.
+      const modulePath = '/pagefind/pagefind.js';
+      pagefind = (await import(/* @vite-ignore */ modulePath)) as PagefindApi;
+      await pagefind.init();
+    } catch {
+      // No index (dev server, or a build that skipped the pagefind step).
+      return;
+    }
+
+    wrapper.hidden = false;
+
+    input.addEventListener('input', async () => {
+      const query = input.value.trim();
+
+      if (query === '') {
+        results.hidden = true;
+        results.innerHTML = '';
+        list.hidden = false;
+        return;
+      }
+
+      const search = await pagefind.debouncedSearch(query);
+      if (!search) return;
+
+      const found = await Promise.all(search.results.slice(0, 8).map((result) => result.data()));
+
+      list.hidden = true;
+      results.hidden = false;
+      results.innerHTML = found
+        .map(
+          (item) =>
+            '<li class="border-t border-border last:border-b">' +
+            '<a class="group block py-8" href="' +
+            item.url +
+            '">' +
+            '<h2 class="font-display [text-transform:var(--display-case)] m-0 text-[clamp(1.5rem,3.2vw,2.25rem)] leading-[1.1] font-semibold tracking-[var(--display-tracking)] transition-opacity group-hover:opacity-60">' +
+            (item.meta.title ?? 'Untitled') +
+            '</h2>' +
+            '<p class="mt-3 mb-0 max-w-[620px] text-[16px] leading-[1.55] text-foreground-secondary">' +
+            item.excerpt +
+            '</p>' +
+            '</a></li>'
+        )
+        .join('');
+
+      if (found.length === 0) {
+        results.innerHTML =
+          '<li class="py-10 text-[17px] text-foreground-secondary">No matches.</li>';
+      }
+    });
+  }
+
+  initLabSearch();
+  document.addEventListener('astro:after-swap', initLabSearch);
+</script>

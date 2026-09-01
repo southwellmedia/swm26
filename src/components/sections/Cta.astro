@@ -1,0 +1,63 @@
+---
+/**
+ * Cta
+ *
+ * The sign-off: a soft object the headline overlaps, then the two buttons.
+ *
+ * It uses the same HeroVisual treatment as the hero, in an organic silhouette,
+ * so the two visuals on the page are demonstrably one system. Not the logomark
+ * — that is a green gradient, which fights the monochrome identity.
+ */
+import siteConfig from '@/config/site.config';
+import HeroVisual from '@/components/site/HeroVisual.astro';
+import PillButton from '@/components/site/PillButton.astro';
+---
+
+<section
+  class="cta relative flex flex-col items-center overflow-hidden shell pt-[70px] pb-[140px] max-[800px]:pb-[100px]"
+>
+  <div class="cta__object" data-reveal>
+    <HeroVisual class="cta__blob" quiet />
+  </div>
+
+  <h2 class="cta__headline display-cta m-0 text-center" data-reveal>
+    Don&rsquo;t be<br /><em>a stranger.</em>
+  </h2>
+
+  <div class="mt-13 flex flex-wrap justify-center gap-[18px] max-[800px]:mt-9" data-reveal>
+    <PillButton href={'mailto:' + siteConfig.email}>Chat with Southwell</PillButton>
+    <PillButton href="/contact" variant="outline">Book a meeting</PillButton>
+  </div>
+</section>
+
+<style>
+  /* The float loop and the scroll-driven reveal cannot share one animation
+     property, so the wrapper reveals and the inner element floats. */
+  .cta__object {
+    display: var(--hero-panel-display, block);
+    width: min(24vw, 300px);
+    height: min(24vw, 300px);
+    /* Tucked behind the headline, which overlaps its lower edge. */
+    margin-bottom: -100px;
+  }
+
+  .cta__blob {
+    width: 100%;
+    height: 100%;
+    /* An organic silhouette, so it reads as an object rather than a panel. */
+    --hv-radius: 46% 54% 58% 42% / 52% 44% 56% 48%;
+    animation: sw-floaty 10s ease-in-out infinite;
+  }
+
+  .cta__headline {
+    position: relative;
+  }
+
+  @media (max-width: 800px) {
+    .cta__object {
+      width: 50vw;
+      height: 50vw;
+      margin-bottom: -60px;
+    }
+  }
+</style>

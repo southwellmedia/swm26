@@ -1,0 +1,136 @@
+---
+/**
+ * Hero
+ *
+ * A panel with the headline overlapping its lower edge, and a staggered
+ * load-in: the panel fades, each headline line rises, then the foot fades in.
+ *
+ * The panel is HeroVisual — CSS, not an image. Client work does not belong
+ * here; the first thing on the page has to carry the studio's own brand.
+ * Setting the treatment to `none` removes the panel entirely and lets the type
+ * carry the page, which is a legitimate answer rather than a fallback.
+ */
+import siteConfig from '@/config/site.config';
+import HeroVisual from '@/components/site/HeroVisual.astro';
+---
+
+<section class="hero flex min-h-screen flex-col justify-end shell pt-24 pb-9 max-[700px]:pt-[84px]">
+  <HeroVisual class="hero__render h-[58vh] max-[700px]:h-[42vh]" />
+
+  <h1 class="hero__headline display-hero">
+    <span class="hero__line"><span class="hero__word hero__word--1">Your growth</span></span>
+    <span class="hero__line"
+      ><span class="hero__word hero__word--2">builds <em>our</em> story.</span></span
+    >
+  </h1>
+
+  <div class="hero__foot mt-9 flex items-end justify-between gap-10">
+    <p class="m-0 max-w-[400px] text-[17px] leading-[1.6] text-foreground-secondary">
+      {siteConfig.description}
+    </p>
+
+    <div class="hero__scroll" aria-hidden="true">
+      Scroll
+      <span class="hero__scroll-line"></span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+  }
+
+  .hero__render {
+    /* Set to `none` by the treatment token, which collapses the panel and
+       leaves a type-only hero. */
+    display: var(--hero-panel-display, block);
+    /* Comes from behind and settles — no forward arc. The panel is shell-wide,
+       and anything crossing Z 0 magnifies out through the gutter. */
+    --emerge-z: -300px;
+    --emerge-y: 34px;
+    --emerge-rot: 3.5deg;
+    --emerge-scale: 0.97;
+    animation: sw-emerge 1.5s 0.15s var(--ease-settle) both;
+    transform-origin: 50% 80%;
+  }
+
+  /* The headline rides up over the panel rather than sitting under it. When
+     there is no panel it needs no overlap, so the pull-up is a token too. */
+  .hero__headline {
+    position: relative;
+    margin: var(--hero-headline-pull, -0.52em) 0 0;
+  }
+
+  /* Each line masks its word so it rises out from behind the line above.
+     line-height 0.93 makes the line box SHORTER than the glyphs, so the mask
+     has to be padded out vertically or it shears the ascenders and descenders
+     off — the negative margins put the layout back exactly where it was. */
+  .hero__line {
+    display: block;
+    overflow: hidden;
+    padding-block: 0.2em 0.12em;
+    margin-block: -0.2em -0.12em;
+  }
+
+  /* The words rise inside their masks and nowhere else.
+
+     Depth is deliberately NOT used here: the mask is a tight overflow:hidden
+     box tuned to this line-height, so rotating or scaling the word inside it
+     shears the glyphs against the mask edge, and any forward Z magnifies a
+     shell-wide line straight off the left of the screen. The two-phase settle
+     is the upgrade — the travel stays flat and clean.
+
+     Line two is lighter: less distance, arrives faster. Delays are uneven on
+     purpose; equal spacing is what makes a stagger look mechanical. */
+  .hero__word {
+    display: block;
+    animation: sw-rise 0.95s var(--ease-settle) both;
+  }
+
+  .hero__word--1 {
+    animation-delay: 0.35s;
+  }
+
+  .hero__word--2 {
+    animation-delay: 0.47s;
+    animation-duration: 0.86s;
+  }
+
+  /* Not masked and not full-bleed, so it can carry a little depth. */
+  .hero__foot {
+    --emerge-z: -260px;
+    --emerge-y: 34px;
+    --emerge-rot: 2.5deg;
+    --emerge-scale: 0.985;
+    animation: sw-emerge 1s 0.95s var(--ease-settle) both;
+  }
+
+  .hero__scroll {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--color-foreground-muted);
+  }
+
+  .hero__scroll-line {
+    display: block;
+    width: 1.5px;
+    height: 48px;
+    background: var(--color-foreground);
+    animation: sw-scrollpulse 1.8s ease-in-out infinite;
+  }
+
+  @media (max-width: 700px) {
+    .hero__headline {
+      margin-top: var(--hero-headline-pull-sm, -0.4em);
+    }
+
+    .hero__scroll {
+      display: none;
+    }
+  }
+</style>

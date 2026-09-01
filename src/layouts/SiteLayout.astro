@@ -1,0 +1,72 @@
+---
+/**
+ * SiteLayout
+ *
+ * Every page on the site uses this. It is BaseLayout (head, SEO, JSON-LD,
+ * analytics, consent, view transitions) plus the studio's own nav and footer.
+ *
+ * Velocity ships PageLayout / MarketingLayout / LandingLayout, which wire up
+ * the stock Header and Footer. This design has neither, so those layouts go
+ * unused here.
+ */
+import BaseLayout from './BaseLayout.astro';
+import Nav from '@/components/site/Nav.astro';
+import Footer from '@/components/site/Footer.astro';
+import FontSwitcher from '@/components/dev/FontSwitcher.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  imageAlt?: string;
+  article?: {
+    publishedTime?: Date;
+    modifiedTime?: Date;
+    authors?: string[];
+    tags?: string[];
+  };
+  noindex?: boolean;
+  nofollow?: boolean;
+  includeOrgSchema?: boolean;
+  /** Client name shown after the wordmark's slash. Work case studies only. */
+  navContext?: string;
+  /** The page opens on a dark full-bleed image, so the nav must go light. */
+  navOverMedia?: boolean;
+}
+
+const {
+  title,
+  description,
+  image,
+  imageAlt,
+  article,
+  noindex = false,
+  nofollow = false,
+  includeOrgSchema = false,
+  navContext,
+  navOverMedia = false,
+} = Astro.props;
+
+// Dev-only display-font switcher, rendered below.
+//
+// It has to be a static import: Astro collects a component's scoped styles and
+// scripts by analysing imports at build time, and a dynamic import skips that
+// pipeline entirely — the markup renders, but with no CSS, no JS and no fonts.
+const showFontSwitcher = import.meta.env.DEV;
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  image={image}
+  imageAlt={imageAlt}
+  article={article}
+  noindex={noindex}
+  nofollow={nofollow}
+  includeOrgSchema={includeOrgSchema}
+>
+  <Nav slot="header" context={navContext} overMedia={navOverMedia} />
+  <slot />
+  <Footer slot="footer" />
+  {showFontSwitcher && <FontSwitcher slot="footer" />}
+</BaseLayout>

@@ -1,0 +1,451 @@
+/* =============================================================================
+   Southwell Media — site-level styles on top of Velocity
+   =============================================================================
+   Everything here is specific to this studio's site rather than to Velocity.
+   It lives outside tokens/ and themes/ so "create-velocity-astro upgrade"
+   leaves it alone; only the single @import in global.css has to be re-applied.
+
+   Three things live here that Tailwind cannot express cleanly:
+     1. The display type scale — viewport-relative headline sizes.
+     2. The scroll-driven reveal system.
+     3. The striped asset placeholders.
+   ============================================================================= */
+
+/* -------------------------------------------------------------------------
+   Layout rhythm
+   ------------------------------------------------------------------------- */
+:root {
+  /* Side gutter, and the width the content is held to. Velocity ships a
+     .container at 1200px; this identity is built on very large type, so it
+     needs a wider measure before the headlines start to feel cramped.
+     Change --shell-max in one place to retune the whole site. */
+  --gutter: 48px;
+  --shell-max: 1440px;
+
+  /* Motion curve carried over from the prototype. */
+  --ease-sw: cubic-bezier(0.2, 0.6, 0.2, 1);
+
+  /* -----------------------------------------------------------------------
+     Motion curves — generated, not eyeballed
+
+     The house style is that no motion runs on a single easing function. Each
+     of these is the design system's JS easing sampled into a CSS linear(),
+     so the curve the browser runs is the curve that was specified.
+
+     --ease-settle is the two-phase pattern: easeInOutCubic over the first 65%
+     for a weighted approach, then easeOutElastic over the last 35% for the
+     overshoot and ring. It peaks at 1.03, so anything using it travels past
+     its mark and settles back. That overshoot is the whole point — do not
+     "fix" the values above 1.
+     ----------------------------------------------------------------------- */
+  --ease-settle: linear(
+    0, 0.0006, 0.0049, 0.0165, 0.0391, 0.0763, 0.1319, 0.2094, 0.3125, 0.445,
+    0.5834, 0.6922, 0.7745, 0.8342, 0.8748, 0.9, 0.9135, 0.9189, 0.92, 1.0063,
+    1.0171, 0.9894, 1.0014, 1.0018, 0.9987, 1.0003, 1.0002, 0.9998, 1
+  );
+
+  /* easeOutQuart — fast departure, gentle landing. Entries and settles. */
+  --ease-quart: linear(
+    0, 0.2565, 0.4602, 0.6189, 0.7397, 0.8292, 0.8934, 0.9375, 0.9663, 0.9837,
+    0.9933, 0.9979, 0.9996, 1, 1
+  );
+
+  /* easeOutBack — confident overshoot. Scale and position landings. */
+  --ease-back: linear(
+    0, 0.2695, 0.4929, 0.6742, 0.8174, 0.9264, 1.0051, 1.0576, 1.0877, 1.0995,
+    1.0968, 1.0837, 1.0641, 1.042, 1.0213, 1.006, 1
+  );
+
+  /* Shared viewing distance, so every depth effect on the page agrees. */
+  --depth: 1100px;
+}
+
+@media (max-width: 900px) {
+  :root {
+    --gutter: 24px;
+  }
+}
+
+@layer base {
+  /* clip, not hidden — "hidden" would make body a scroll container and break
+     the sticky service cards. */
+  body {
+    overflow-x: clip;
+  }
+
+  /* Plain text links dim on hover. Cards and buttons opt out — they carry
+     their own hover treatment. */
+  a:not([data-card]):not([data-button]):not(.nav-link):hover {
+    opacity: 0.7;
+  }
+
+  img {
+    display: block;
+  }
+}
+
+@layer utilities {
+  /* -----------------------------------------------------------------------
+     Display type
+     The prototype sizes headlines against the viewport, not a modular scale,
+     so the type stays edge-to-edge at every width. Values are the signed-off
+     ones; the breakpoints below were added when the desktop-only prototype
+     was made responsive.
+     ----------------------------------------------------------------------- */
+  .display-hero {
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: min(11.5vw, 168px);
+    line-height: 0.93;
+    letter-spacing: var(--display-tracking);
+  }
+
+  .display-section {
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: min(8vw, 116px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+  }
+
+  .display-service {
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: min(6.4vw, 92px);
+    line-height: 0.96;
+    letter-spacing: var(--display-tracking);
+  }
+
+  .display-cta {
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: min(13vw, 190px);
+    line-height: 0.9;
+    letter-spacing: var(--display-tracking);
+  }
+
+  .display-mark {
+    font-family: var(--font-display);
+    font-weight: calc(var(--display-weight) + 100);
+    text-transform: var(--display-case);
+    font-size: min(9vw, 120px);
+    line-height: 0.9;
+    letter-spacing: var(--display-tracking);
+  }
+
+  /* The emphasised word is where the type does the talking - see
+     --display-em-* in themes/southwell.css for why it is not an italic. */
+  .display-hero em,
+  .display-cta em,
+  .display-section em,
+  .display-service em {
+    font-style: var(--display-em-style);
+    font-weight: var(--display-em-weight);
+    font-stretch: var(--display-em-stretch);
+    letter-spacing: var(--display-em-tracking);
+  }
+
+  @media (max-width: 900px) {
+    .display-mark {
+      font-size: 22vw;
+    }
+  }
+
+  @media (max-width: 800px) {
+    .display-section {
+      font-size: 15vw;
+    }
+
+    .display-service {
+      font-size: 11vw;
+    }
+
+    .display-cta {
+      font-size: 15vw;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .display-hero {
+      font-size: 13vw;
+    }
+  }
+
+  /* -----------------------------------------------------------------------
+     Eyebrow / meta label — mono, small, used for section numbers and tags.
+     ----------------------------------------------------------------------- */
+  .label-mono {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  /* -----------------------------------------------------------------------
+     Page gutter
+     ----------------------------------------------------------------------- */
+  .px-gutter {
+    padding-inline: var(--gutter);
+  }
+
+  /* The content shell. Backgrounds stay full-bleed - the footer slab, the
+     nav bar - while everything you read sits inside this. */
+  .shell {
+    width: 100%;
+    max-width: var(--shell-max);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* -----------------------------------------------------------------------
+     Scroll-driven reveals
+     Driven by CSS scroll timelines, not JS — nothing to break, nothing left
+     stuck at opacity 0 if a script fails to run. Browsers without
+     animation-timeline render the content as-is via the @supports fallback.
+     ----------------------------------------------------------------------- */
+  [data-reveal] {
+    animation: sw-reveal 0.9s var(--ease-settle) both;
+    animation-timeline: view();
+    animation-range: entry calc(4% + var(--reveal-in, 0%)) entry calc(38% + var(--reveal-out, 0%));
+  }
+
+  /* Uniform reveals read as mechanical: same distance, same angle, same
+     moment, every time. Rotating four sets of values off nth-child gives each
+     element its own arrival without any component having to opt in. Set
+     --reveal-* inline to override a specific one. */
+  [data-reveal]:nth-child(4n + 1) {
+    --reveal-y: 74px;
+    --reveal-z: -240px;
+    --reveal-rot: 7deg;
+    --reveal-out: 2%;
+  }
+
+  [data-reveal]:nth-child(4n + 2) {
+    --reveal-y: 52px;
+    --reveal-z: -150px;
+    --reveal-rot: 4deg;
+    --reveal-in: 3%;
+    --reveal-out: 6%;
+  }
+
+  [data-reveal]:nth-child(4n + 3) {
+    --reveal-y: 66px;
+    --reveal-z: -280px;
+    --reveal-rot: 8deg;
+    --reveal-in: 1.5%;
+    --reveal-out: -2%;
+  }
+
+  [data-reveal]:nth-child(4n) {
+    --reveal-y: 58px;
+    --reveal-z: -190px;
+    --reveal-rot: 5deg;
+    --reveal-in: 4.5%;
+    --reveal-out: 3%;
+  }
+
+  @supports not (animation-timeline: view()) {
+    [data-reveal] {
+      animation: none;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Keyframes
+   ------------------------------------------------------------------------- */
+/* Elements arrive from behind the page, not just below it. The perspective
+   lives in the transform rather than on an ancestor so nothing has to be
+   wrapped for this to work. */
+@keyframes sw-reveal {
+  from {
+    opacity: 0;
+    transform: perspective(var(--depth)) translate3d(0, var(--reveal-y, 62px), var(--reveal-z, -200px))
+      rotateX(var(--reveal-rot, 6deg)) scale(var(--reveal-scale, 0.965));
+  }
+  to {
+    opacity: 1;
+    transform: perspective(var(--depth)) translate3d(0, 0, 0) rotateX(0) scale(1);
+  }
+}
+
+/* Depth emergence: rises from behind, comes past the viewer, settles back.
+   The mid keyframe is the arc — without it this is just a fade with extra
+   steps. Each phase carries its own timing function, which is the two-phase
+   pattern expressed in keyframes rather than in one curve. */
+@keyframes sw-emerge {
+  0% {
+    opacity: 0;
+    transform: perspective(var(--depth)) translate3d(0, var(--emerge-y, 70px), var(--emerge-z, -560px))
+      rotateX(var(--emerge-rot, 8deg)) scale(var(--emerge-scale, 0.94));
+    animation-timing-function: var(--ease-quart);
+  }
+  /* The forward half of the arc is OPT-IN and defaults to zero. Positive Z
+     magnifies through the perspective — at 1100px, +70px is ~6% — and on
+     anything as wide as the shell that pushes the element straight past the
+     gutter and out of the viewport. Only give --emerge-arc a value to
+     something with room around it to grow into. */
+  62% {
+    opacity: 1;
+    transform: perspective(var(--depth)) translate3d(0, -6px, var(--emerge-arc, 0px)) rotateX(-1.2deg)
+      scale(var(--emerge-mid-scale, 1));
+    animation-timing-function: var(--ease-back);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(var(--depth)) translate3d(0, 0, 0) rotateX(0) scale(1);
+  }
+}
+
+@keyframes sw-rise {
+  from {
+    opacity: 0;
+    transform: translateY(70px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sw-fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sw-floaty {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-18px) rotate(2deg);
+  }
+}
+
+@keyframes sw-scrollpulse {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+    transform-origin: top;
+  }
+  50% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Asset placeholders
+   Diagonal-stripe boxes standing in for the 3D renders and project captures
+   until real assets land. Every one is a slot: swapping in an <img> keeps the
+   surrounding behaviour (hover zoom, aspect, rounding) as-is.
+   ------------------------------------------------------------------------- */
+@layer components {
+  .placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-background-secondary);
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgb(12 16 22 / 0.06) 0,
+      rgb(12 16 22 / 0.06) 9px,
+      transparent 9px,
+      transparent 18px
+    );
+  }
+
+  .dark .placeholder {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgb(238 242 244 / 0.06) 0,
+      rgb(238 242 244 / 0.06) 9px,
+      transparent 9px,
+      transparent 18px
+    );
+  }
+
+  .placeholder__label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+    text-align: center;
+    padding: 5px 12px;
+    border-radius: 4px;
+    color: rgb(12 16 22 / 0.45);
+    background: rgb(255 255 255 / 0.75);
+  }
+
+  .dark .placeholder__label {
+    color: rgb(238 242 244 / 0.5);
+    background: rgb(12 16 22 / 0.5);
+  }
+
+  /* On ink — the footer render sits on the dark surface in both modes. */
+  .placeholder--invert {
+    background-color: transparent;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgb(255 255 255 / 0.05) 0,
+      rgb(255 255 255 / 0.05) 9px,
+      transparent 9px,
+      transparent 18px
+    );
+  }
+
+  .placeholder--invert .placeholder__label {
+    color: rgb(255 255 255 / 0.5);
+    background: rgb(255 255 255 / 0.08);
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Film grain
+
+   An feTurbulence tile as a data URI — no network request, and it tiles
+   seamlessly via stitchTiles. Laid over a gradient at low opacity it does two
+   jobs: gives the surface a printed tactility, and breaks up the banding that
+   wide, low-contrast gradients show on 8-bit displays.
+
+   The `#` in url(#n) has to stay percent-encoded as %23 or the data URI is
+   truncated at that point.
+   ------------------------------------------------------------------------- */
+:root {
+  --sw-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* -------------------------------------------------------------------------
+   Reduced motion
+   ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

@@ -2,176 +2,111 @@
 /**
  * Contact page
  * URL: /contact
+ *
+ * Velocity's contact form and /api/contact endpoint, wearing the studio's
+ * type. The submit handler is carried over from the stock page unchanged.
  */
-import PageLayout from '@/layouts/PageLayout.astro';
-import Icon from '@/components/ui/primitives/Icon/Icon.astro';
-import Badge from '@/components/ui/data-display/Badge/Badge.astro';
-import Button from '@/components/ui/form/Button/Button.astro';
+import { Icon } from 'astro-icon/components';
+import SiteLayout from '@/layouts/SiteLayout.astro';
+import SectionHead from '@/components/sections/SectionHead.astro';
 import Input from '@/components/ui/form/Input/Input.astro';
 import Textarea from '@/components/ui/form/Textarea/Textarea.astro';
-import Card from '@/components/ui/data-display/Card/Card.astro';
-import { Hero } from '@/components/hero';
-import GoogleMap from '@/components/ui/data-display/GoogleMap/GoogleMap.astro';
+import Button from '@/components/ui/form/Button/Button.astro';
 import siteConfig from '@/config/site.config';
+
+const channels = [
+  { label: 'EMAIL', value: siteConfig.email, href: 'mailto:' + siteConfig.email, icon: 'mail' },
+  {
+    label: 'PHONE',
+    value: siteConfig.phone ?? '',
+    href: 'tel:' + siteConfig.phoneHref,
+    icon: 'phone',
+  },
+  { label: 'STUDIO', value: siteConfig.location, href: undefined, icon: 'map-pin' },
+];
 ---
 
-<PageLayout
-  title="Contact Us"
-  description="Get in touch with the Velocity team."
+<SiteLayout
+  title="Contact"
+  description="Start a project with Southwell Media, or just say hello."
+  includeOrgSchema
 >
-  <Hero layout="centered" size="sm" showGrid>
-    <Badge slot="badge" pill pulse>Get in Touch</Badge>
+  <header class="shell pt-[180px] max-[800px]:pt-[130px]">
+    <SectionHead
+      title="Contact"
+      blurb="Tell us what you are building. We answer every message ourselves — no forms disappearing into a queue."
+    />
+  </header>
 
-    <h1 slot="title">
-      Let's <span class="text-brand-500">connect.</span>
-    </h1>
+  <section class="mt-20 grid grid-cols-[1.1fr_1fr] gap-20 shell max-[900px]:mt-12 max-[900px]:grid-cols-1 max-[900px]:gap-12">
+    <form id="contact-form" action="/api/contact" method="POST" class="flex flex-col gap-6">
+      <Input label="Your name" name="name" type="text" required autocomplete="name" />
+      <Input label="Email address" name="email" type="email" required autocomplete="email" />
+      <Input label="Subject" name="subject" type="text" />
+      <Textarea
+        label="Message"
+        name="message"
+        placeholder="What are you building, and what is in the way?"
+        rows={6}
+        required
+      />
 
-    <p slot="description">
-      Have a question, suggestion, or just want to say hello? We'd love to hear from you.
-    </p>
-  </Hero>
-
-  <!-- Contact Section -->
-  <section class="py-20 bg-surface-secondary">
-    <div class="mx-auto max-w-6xl px-6">
-      <div class="grid gap-12 lg:grid-cols-2">
-        <!-- Form -->
-        <Card padding="lg">
-          <h2 class="text-2xl font-display font-bold text-foreground mb-6">Send us a message</h2>
-
-          <form id="contact-form" action="/api/contact" method="POST" class="space-y-6">
-            <Input
-              label="Your Name"
-              name="name"
-              type="text"
-              placeholder="John Doe"
-              required
-              autocomplete="name"
-            />
-
-            <Input
-              label="Email Address"
-              name="email"
-              type="email"
-              placeholder="john@example.com"
-              required
-              autocomplete="email"
-            />
-
-            <Input
-              label="Subject"
-              name="subject"
-              type="text"
-              placeholder="How can we help?"
-            />
-
-            <Textarea
-              label="Message"
-              name="message"
-              placeholder="Tell us more about your project or question..."
-              rows={5}
-              required
-            />
-
-            <!-- Honeypot field for spam protection -->
-            <div class="hidden" aria-hidden="true">
-              <input type="text" name="honeypot" tabindex="-1" autocomplete="off" />
-            </div>
-
-            <div id="form-message" class="hidden text-sm"></div>
-
-            <Button type="submit" class="w-full" id="submit-button">
-              <Icon name="mail" size="sm" />
-              Send Message
-            </Button>
-          </form>
-        </Card>
-
-        <!-- Right column: Map + Contact Info -->
-        <div class="flex flex-col gap-8">
-          {/* Map */}
-          <GoogleMap
-            size="sm"
-            ariaLabel={`Map showing ${siteConfig.name} location`}
-            placeholderTitle="Our Location"
-          />
-
-          {/* Contact Info */}
-          <div>
-            <h2 class="font-display text-2xl font-bold text-foreground mb-6">
-              Other ways to reach us
-            </h2>
-
-            <div class="space-y-4">
-              <!-- Email -->
-              <a href={`mailto:${siteConfig.email}`} class="block">
-                <Card hover padding="sm">
-                  <div class="flex items-center gap-4">
-                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-500/5 flex items-center justify-center text-brand-500 shrink-0">
-                      <Icon name="mail" size="md" />
-                    </div>
-                    <div>
-                      <p class="text-sm text-foreground-muted">Email</p>
-                      <p class="font-medium text-foreground">{siteConfig.email}</p>
-                    </div>
-                  </div>
-                </Card>
-              </a>
-
-              <!-- GitHub -->
-              <a
-                href="https://github.com/southwellmedia/velocity"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="block"
-              >
-                <Card hover padding="sm">
-                  <div class="flex items-center gap-4">
-                    <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-500/5 flex items-center justify-center text-brand-500 shrink-0">
-                      <Icon name="github" size="md" />
-                    </div>
-                    <div>
-                      <p class="text-sm text-foreground-muted">GitHub</p>
-                      <p class="font-medium text-foreground">velocity</p>
-                    </div>
-                  </div>
-                </Card>
-              </a>
-
-              <!-- Twitter -->
-              {siteConfig.twitter && (
-                <a
-                  href={`https://twitter.com/${siteConfig.twitter.site.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="block"
-                >
-                  <Card hover padding="sm">
-                    <div class="flex items-center gap-4">
-                      <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500/20 to-brand-500/5 flex items-center justify-center text-brand-500 shrink-0">
-                        <Icon name="twitter" size="md" />
-                      </div>
-                      <div>
-                        <p class="text-sm text-foreground-muted">Twitter</p>
-                        <p class="font-medium text-foreground">{siteConfig.twitter.site}</p>
-                      </div>
-                    </div>
-                  </Card>
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
+      <!-- Honeypot field for spam protection -->
+      <div class="hidden" aria-hidden="true">
+        <input type="text" name="honeypot" tabindex="-1" autocomplete="off" />
       </div>
-    </div>
+
+      <div id="form-message" class="hidden text-sm" role="status" aria-live="polite"></div>
+
+      <Button
+        type="submit"
+        id="submit-button"
+        size="lg"
+        class="h-auto self-start rounded-full px-10 py-[18px] text-[17px] font-semibold"
+      >
+        Send message
+      </Button>
+    </form>
+
+    <aside class="flex flex-col gap-10">
+      {
+        channels.map((channel) => (
+          <div class="border-t border-border pt-6">
+            <span class="channel__label label-mono text-foreground-muted">
+              <Icon name={'lucide:' + channel.icon} aria-hidden="true" />
+              {channel.label}
+            </span>
+            <p class="mt-3 mb-0 text-[clamp(1.25rem,2vw,1.75rem)] tracking-[-0.03em]">
+              {channel.href ? <a href={channel.href}>{channel.value}</a> : channel.value}
+            </p>
+          </div>
+        ))
+      }
+    </aside>
   </section>
-</PageLayout>
+
+  <div class="h-[140px] max-[800px]:h-[100px]"></div>
+</SiteLayout>
+
+<style>
+  .channel__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .channel__label :global(svg) {
+    width: 14px;
+    height: 14px;
+    stroke-width: 1.75;
+  }
+</style>
 
 <script>
   function initContactForm() {
-    const form = document.getElementById('contact-form') as HTMLFormElement;
-    const button = document.getElementById('submit-button') as HTMLButtonElement;
-    const message = document.getElementById('form-message') as HTMLDivElement;
+    const form = document.getElementById('contact-form') as HTMLFormElement | null;
+    const button = document.getElementById('submit-button') as HTMLButtonElement | null;
+    const message = document.getElementById('form-message') as HTMLDivElement | null;
 
     if (!form || !button || !message) return;
 
@@ -192,11 +127,13 @@ import siteConfig from '@/config/site.config';
         const data = await response.json();
 
         if (data.success) {
-          message.textContent = 'Message sent successfully! We will get back to you soon.';
+          message.textContent = 'Message sent. We will get back to you shortly.';
           message.className = 'text-sm text-success';
           form.reset();
         } else {
-          const errors = data.errors ? Object.values(data.errors).flat().join(', ') : 'Something went wrong';
+          const errors = data.errors
+            ? Object.values(data.errors).flat().join(', ')
+            : 'Something went wrong';
           message.textContent = errors;
           message.className = 'text-sm text-destructive';
         }
@@ -205,7 +142,7 @@ import siteConfig from '@/config/site.config';
         message.className = 'text-sm text-destructive';
       } finally {
         button.disabled = false;
-        button.textContent = 'Send Message';
+        button.textContent = 'Send message';
         message.classList.remove('hidden');
       }
     });

@@ -1,0 +1,586 @@
+---
+/**
+ * Work case study
+ * URL: /work/<slug>
+ *
+ * Built as a run of full-bleed bands rather than a column of sections. The
+ * page changes temperature as you move down it — ink, ice, ink — so the
+ * chapters are felt before they are read.
+ *
+ * Each band's heading is sticky: it pins while that band's captures scroll past
+ * it, then the next band pushes it out. That ties a caption to the pictures it
+ * belongs to without repeating it above every one.
+ */
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import { Icon } from 'astro-icon/components';
+import SiteLayout from '@/layouts/SiteLayout.astro';
+import Placeholder from '@/components/site/Placeholder.astro';
+import PillButton from '@/components/site/PillButton.astro';
+import Cta from '@/components/sections/Cta.astro';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('work', ({ data }) =>
+    import.meta.env.PROD ? data.draft !== true : true
+  );
+
+  const ordered = [...projects].sort((a, b) => a.data.order - b.data.order);
+
+  return ordered.map((project, i) => ({
+    params: { slug: project.id },
+    props: {
+      project,
+      next: ordered[(i + 1) % ordered.length],
+    },
+  }));
+}
+
+const { project, next } = Astro.props;
+const { Content } = await render(project);
+
+const {
+  title,
+  discipline,
+  description,
+  client,
+  year,
+  services,
+  url,
+  feature,
+  cover,
+  coverAlt,
+  gallery,
+  placeholder,
+  challenge,
+  solution,
+  technologies,
+  features,
+  badge,
+} = project.data;
+
+// Only the facts that were actually filled in get a slot.
+const facts = [
+  client ? { label: 'Client', value: client } : null,
+  year ? { label: 'Year', value: String(year) } : null,
+  { label: 'Discipline', value: discipline },
+  services.length ? { label: 'Services', value: services.join(', ') } : null,
+].filter((fact) => fact !== null);
+
+// The feature photograph leads the page the way it leads the card. The mockup
+// is not dropped — it becomes the first capture in the bands below.
+const hero = feature ?? cover;
+const shots = feature && cover ? [{ src: cover, alt: coverAlt ?? title }, ...gallery] : gallery;
+
+/* The written half of a case study, split across two bands. Most projects have
+   neither half written yet, so each band has to earn its place: one with no
+   prose AND no captures isn't rendered rather than left as an empty heading.
+   Captures are dealt between the bands so the page still has rhythm when the
+   writing is missing. */
+const half = Math.ceil(shots.length / 2);
+const bands = [
+  { key: 'problem', label: '( THE PROBLEM )', prose: challenge, shots: shots.slice(0, half) },
+  { key: 'solution', label: '( WHAT WE BUILT )', prose: solution, shots: shots.slice(half) },
+].filter((band) => band.prose || band.shots.length > 0);
+
+const hasBuild = technologies.length > 0 || features.length > 0;
+const nextImage = next.data.feature ?? next.data.cover;
+---
+
+<SiteLayout
+  title={title}
+  description={description}
+  image={hero?.src}
+  imageAlt={coverAlt ?? title}
+  navContext={client ?? title}
+  navOverMedia={Boolean(hero)}
+>
+  <article class="case">
+    {/* --- hero: full-bleed, viewport tall, type over the picture -------- */}
+    <header class="case__hero">
+      {
+        hero ? (
+          <Image
+            src={hero}
+            alt={coverAlt ?? title}
+            layout="none"
+            widths={[768, 1280, 1920, 2560]}
+            sizes="100vw"
+            class="case__hero-img"
+            loading="eager"
+            fetchpriority="high"
+          />
+        ) : (
+          <Placeholder class="case__hero-img rounded-none" label={placeholder ?? title} />
+        )
+      }
+
+      <div class="case__hero-scrim"></div>
+
+      <div class="case__hero-body shell">
+        <div class="case__eyebrow">
+          <span class="label-mono">{discipline}</span>
+          {badge && <span class="case__badge label-mono">{badge}</span>}
+        </div>
+
+        <h1 class="case__title">{title}</h1>
+        <p class="case__lede">{description}</p>
+      </div>
+
+      <span class="case__scroll label-mono" aria-hidden="true">scroll</span>
+    </header>
+
+    {/* --- facts: a thin ledger closing off the hero -------------------- */}
+    <section class="case__ledger" aria-label="Project details">
+      <dl class="case__ledger-inner shell">
+        {
+          facts.map((fact) => (
+            <div class="case__fact">
+              <dt class="label-mono">{fact.label.toUpperCase()}</dt>
+              <dd>{fact.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </section>
+
+    {/* --- alternating bands -------------------------------------------- */}
+    {
+      bands.map((band, i) => (
+        <section class="band" data-tone={i % 2 === 0 ? 'ink' : 'ice'}>
+          <div class="band__inner shell">
+            <div class="band__aside">
+              <span class="band__label label-mono">{band.label}</span>
+              {band.prose && <p class="band__prose">{band.prose}</p>}
+            </div>
+
+            <div class="band__shots">
+              {band.shots.map((shot) => (
+                <Image
+                  src={shot.src}
+                  alt={shot.alt ?? title}
+                  layout="none"
+                  widths={[768, 1280, 1920]}
+                  sizes="(max-width: 1000px) 100vw, 62vw"
+                  class="band__shot"
+                  data-reveal
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      ))
+    }
+
+    {/* --- stack + shipped ---------------------------------------------- */}
+    {
+      hasBuild && (
+        <section class="case__build">
+          <div class="case__build-inner shell">
+            {technologies.length > 0 && (
+              <div>
+                <span class="label-mono text-foreground-muted">( STACK )</span>
+                <ul class="case__chips">
+                  {technologies.map((item) => (
+                    <li>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {features.length > 0 && (
+              <div>
+                <span class="label-mono text-foreground-muted">( SHIPPED )</span>
+                <ul class="case__shipped">
+                  {features.map((item) => (
+                    <li>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </section>
+      )
+    }
+
+    <div class="case__prose shell">
+      <div class="prose">
+        <Content />
+      </div>
+    </div>
+
+    {
+      url && (
+        <div class="case__visit shell">
+          <PillButton href={url} target="_blank" variant="solid">
+            Visit the site
+            <Icon name="lucide:arrow-up-right" aria-hidden="true" />
+          </PillButton>
+        </div>
+      )
+    }
+
+    {/* --- next project: a full-bleed door out --------------------------- */}
+    <a class="nextup" href={'/work/' + next.id} data-card>
+      {
+        nextImage && (
+          <Image
+            src={nextImage}
+            alt=""
+            layout="none"
+            widths={[768, 1280, 1920]}
+            sizes="100vw"
+            class="nextup__img"
+          />
+        )
+      }
+      <div class="nextup__body shell">
+        <span class="label-mono">( NEXT PROJECT )</span>
+        <span class="nextup__title">{next.data.title}</span>
+      </div>
+    </a>
+  </article>
+
+  <Cta />
+</SiteLayout>
+
+<style>
+  /* --- hero ------------------------------------------------------------ */
+
+  .case__hero {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 100svh;
+    overflow: hidden;
+    background: var(--ink-950);
+    isolation: isolate;
+  }
+
+  .case__hero-img {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Type sits on the picture, so the picture is made safe for type rather than
+     the type given a box to hide in. */
+  .case__hero-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(to top, rgb(12 16 22 / 0.88) 0%, rgb(12 16 22 / 0.25) 46%, transparent 72%),
+      linear-gradient(to right, rgb(12 16 22 / 0.55), transparent 60%);
+  }
+
+  .case__hero-body {
+    padding-bottom: 88px;
+    color: var(--ice-100);
+  }
+
+  .case__eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    color: rgb(238 242 244 / 0.72);
+  }
+
+  .case__badge {
+    padding: 6px 13px;
+    border: 1px solid rgb(238 242 244 / 0.28);
+    border-radius: var(--radius-full);
+  }
+
+  .case__title {
+    margin: 22px 0 0;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: min(10vw, 148px);
+    line-height: 0.92;
+    letter-spacing: var(--display-tracking);
+  }
+
+  .case__lede {
+    margin: 28px 0 0;
+    max-width: 46ch;
+    font-size: clamp(1.0625rem, 1.5vw, 1.375rem);
+    line-height: 1.5;
+    color: rgb(238 242 244 / 0.82);
+  }
+
+  .case__scroll {
+    position: absolute;
+    right: var(--gutter);
+    bottom: 88px;
+    color: rgb(238 242 244 / 0.6);
+    writing-mode: vertical-rl;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* --- ledger ---------------------------------------------------------- */
+
+  .case__ledger {
+    background: var(--ink-950);
+    color: var(--ice-100);
+    border-top: 1px solid rgb(238 242 244 / 0.14);
+  }
+
+  .case__ledger-inner {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+    padding-block: 36px 44px;
+  }
+
+  .case__fact dt {
+    color: rgb(238 242 244 / 0.55);
+  }
+
+  .case__fact dd {
+    margin: 12px 0 0;
+    font-size: 17px;
+    line-height: 1.45;
+  }
+
+  /* --- bands ----------------------------------------------------------- */
+
+  .band {
+    padding-block: clamp(80px, 11vw, 160px);
+  }
+
+  .band[data-tone='ink'] {
+    background: var(--ink-950);
+    color: var(--ice-100);
+  }
+
+  .band[data-tone='ice'] {
+    background: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  .band__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.1fr);
+    gap: 64px;
+    align-items: start;
+  }
+
+  /* The heading pins while its own captures scroll past, then the next band
+     pushes it out. `align-self: start` is what stops the sticky box being
+     stretched to the row's full height, which would leave it sticking to
+     nothing. */
+  .band__aside {
+    position: sticky;
+    top: calc(var(--sw-nav-h, 76px) + 32px);
+    align-self: start;
+  }
+
+  .band__label {
+    display: block;
+    opacity: 0.6;
+  }
+
+  .band__prose {
+    margin: 22px 0 0;
+    font-size: clamp(1.125rem, 1.7vw, 1.5rem);
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+  }
+
+  .band__shots {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(20px, 3vw, 40px);
+  }
+
+  .band__shot {
+    width: 100%;
+    border-radius: var(--radius-lg);
+  }
+
+  /* A band with prose but no pictures shouldn't leave a hole where they'd be. */
+  .band__shots:empty {
+    display: none;
+  }
+
+  .band__inner:has(.band__shots:empty) {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 68ch;
+  }
+
+  .band__inner:has(.band__shots:empty) .band__aside {
+    position: static;
+  }
+
+  /* --- build ----------------------------------------------------------- */
+
+  .case__build {
+    padding-block: clamp(64px, 8vw, 112px);
+    background: var(--color-background);
+  }
+
+  .case__build-inner {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 56px;
+    padding-top: 44px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .case__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .case__chips li {
+    padding: 8px 16px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .case__shipped {
+    margin: 20px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .case__shipped li {
+    padding-block: 13px;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 17px;
+  }
+
+  .case__shipped li:last-child {
+    border-bottom: 0;
+  }
+
+  /* --- prose + visit ---------------------------------------------------- */
+
+  .case__prose {
+    padding-block: 8px;
+  }
+
+  /* Velocity's .prose centres on a 65ch column; here it sits in the page
+     gutter alongside everything else. */
+  .prose {
+    max-width: 680px;
+  }
+
+  .prose:empty {
+    display: none;
+  }
+
+  .case__visit {
+    padding-block: 40px 96px;
+  }
+
+  /* --- next project ----------------------------------------------------- */
+
+  .nextup {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 52svh;
+    overflow: hidden;
+    background: var(--ink-950);
+    isolation: isolate;
+  }
+
+  .nextup__img {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.5;
+    filter: grayscale(1);
+    transition:
+      transform 0.9s var(--ease-sw),
+      opacity 0.5s ease,
+      filter 0.5s ease;
+  }
+
+  .nextup:hover .nextup__img,
+  .nextup:focus-visible .nextup__img {
+    transform: scale(1.04);
+    opacity: 0.75;
+    filter: grayscale(0);
+  }
+
+  .nextup__body {
+    padding-block: 56px;
+    color: var(--ice-100);
+  }
+
+  .nextup__body .label-mono {
+    opacity: 0.7;
+  }
+
+  .nextup__title {
+    display: block;
+    margin-top: 14px;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: min(8vw, 104px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+  }
+
+  @media (max-width: 1000px) {
+    .band__inner {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 32px;
+    }
+
+    /* One column means the heading has nothing to pin beside. */
+    .band__aside {
+      position: static;
+    }
+
+    .case__ledger-inner {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
+    }
+  }
+
+  @media (max-width: 800px) {
+    .case__hero-body {
+      padding-bottom: 56px;
+    }
+
+    .case__title {
+      font-size: 15vw;
+    }
+
+    .case__lede {
+      font-size: 1rem;
+      margin-top: 20px;
+    }
+
+    .case__scroll {
+      display: none;
+    }
+
+    .case__build-inner {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 40px;
+    }
+
+    .nextup__title {
+      font-size: 13vw;
+    }
+  }
+</style>

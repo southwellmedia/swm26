@@ -1,0 +1,632 @@
+---
+/**
+ * Dev panel — development only.
+ *
+ * Overrides the display and hero tokens at runtime so type and hero treatments
+ * can be judged on the real pages: the actual hero, the actual work cards, the
+ * actual footer. A specimen sheet flatters everything; the homepage does not.
+ *
+ * SiteLayout imports this behind `import.meta.env.DEV`, so neither the panel
+ * nor these font files reach a production build.
+ *
+ * When a face wins, three lines go into styles/themes/southwell.css and this
+ * whole directory gets deleted — the panel prints the exact lines to copy.
+ */
+
+// Candidates. Loaded here and nowhere else.
+import '@fontsource-variable/geist/wght.css';
+import '@fontsource-variable/geist/wght-italic.css';
+import '@fontsource-variable/inter-tight/wght.css';
+import '@fontsource-variable/inter-tight/wght-italic.css';
+import '@fontsource-variable/instrument-sans/wght.css';
+import '@fontsource-variable/instrument-sans/wght-italic.css';
+import '@fontsource-variable/schibsted-grotesk/wght.css';
+import '@fontsource-variable/schibsted-grotesk/wght-italic.css';
+import '@fontsource-variable/host-grotesk/wght.css';
+import '@fontsource-variable/host-grotesk/wght-italic.css';
+import '@fontsource-variable/dm-sans/wght.css';
+import '@fontsource-variable/dm-sans/wght-italic.css';
+import '@fontsource-variable/outfit/wght.css';
+import '@fontsource-variable/space-grotesk/wght.css';
+import '@fontsource-variable/fraunces/wght.css';
+import '@fontsource-variable/fraunces/wght-italic.css';
+import '@fontsource/instrument-serif/400.css';
+import '@fontsource/instrument-serif/400-italic.css';
+
+interface Face {
+  id: string;
+  name: string;
+  /** The value that goes into --theme-font-display. */
+  stack: string;
+  /** A true italic in the font file, or nothing to lean on. */
+  italic: boolean;
+  /** Faces with a single weight, so the weight slider is a lie. */
+  fixedWeight?: number;
+  group: string;
+  note: string;
+}
+
+const faces: Face[] = [
+  {
+    id: 'archivo',
+    name: 'Archivo',
+    stack: "'Archivo Variable', 'Archivo', sans-serif",
+    italic: true,
+    group: 'Current',
+    note: 'The body face doing double duty. Squarish and even; crowds at tight tracking.',
+  },
+  {
+    id: 'geist',
+    name: 'Geist',
+    stack: "'Geist Variable', sans-serif",
+    italic: true,
+    group: 'Neutral grotesque',
+    note: 'Vercel’s face. Extremely clean, almost invisible — lets the layout and the ink do the talking.',
+  },
+  {
+    id: 'inter-tight',
+    name: 'Inter Tight',
+    stack: "'Inter Tight Variable', sans-serif",
+    italic: true,
+    group: 'Neutral grotesque',
+    note: 'Inter drawn for headlines: narrower, closer fitting. The safest large-size workhorse here.',
+  },
+  {
+    id: 'instrument-sans',
+    name: 'Instrument Sans',
+    stack: "'Instrument Sans Variable', sans-serif",
+    italic: true,
+    group: 'Neutral grotesque',
+    note: 'Clean but not anonymous — slightly cut terminals give it an edge Geist does not have.',
+  },
+  {
+    id: 'schibsted',
+    name: 'Schibsted Grotesk',
+    stack: "'Schibsted Grotesk Variable', sans-serif",
+    italic: true,
+    group: 'Editorial grotesque',
+    note: 'Drawn for Nordic newsrooms. Confident at size, with a bit more personality in the a and g.',
+  },
+  {
+    id: 'host',
+    name: 'Host Grotesk',
+    stack: "'Host Grotesk Variable', sans-serif",
+    italic: true,
+    group: 'Editorial grotesque',
+    note: 'Newer grotesque with a touch of warmth. Between Archivo and Schibsted in character.',
+  },
+  {
+    id: 'dm-sans',
+    name: 'DM Sans',
+    stack: "'DM Sans Variable', sans-serif",
+    italic: true,
+    group: 'Geometric',
+    note: 'Low-contrast geometric. Round, open and calm at 168px — the opposite of crowded.',
+  },
+  {
+    id: 'outfit',
+    name: 'Outfit',
+    stack: "'Outfit Variable', 'Outfit', var(--theme-font-sans)",
+    italic: false,
+    group: 'Geometric',
+    note: 'Committed. Near-monoline geometric, very even. No italic, so emphasis drops to weight.',
+  },
+  {
+    id: 'space-grotesk',
+    name: 'Space Grotesk',
+    stack: "'Space Grotesk Variable', sans-serif",
+    italic: false,
+    group: 'Geometric',
+    note: 'Technical, slightly squared. Reads as engineering rather than studio. No italic.',
+  },
+  {
+    id: 'instrument-serif',
+    name: 'Instrument Serif',
+    stack: "'Instrument Serif', serif",
+    italic: true,
+    fixedWeight: 400,
+    group: 'Serif',
+    note: 'High-contrast display serif, one weight only. The biggest contrast against an Archivo body, and the best italic in this list.',
+  },
+  {
+    id: 'fraunces',
+    name: 'Fraunces',
+    stack: "'Fraunces Variable', serif",
+    italic: true,
+    group: 'Serif',
+    note: 'Soft, slightly odd serif that holds a heavy weight — keeps the density the design has now.',
+  },
+];
+
+const groups = [...new Set(faces.map((face) => face.group))];
+---
+
+<aside class="fs" id="font-switcher" data-open="false" aria-label="Display font switcher">
+  <button class="fs__handle" id="fs-handle" type="button" aria-expanded="false" aria-controls="fs-panel">
+    <span class="fs__dot" aria-hidden="true"></span>
+    <span id="fs-current">Archivo</span>
+  </button>
+
+  <div class="fs__panel" id="fs-panel">
+    <div class="fs__head">
+      <strong>Design</strong>
+      <span class="fs__note">dev only</span>
+    </div>
+
+    <div class="fs__group">
+      <span class="fs__group-label">Hero treatment</span>
+      <div class="fs__seg fs__seg--wrap">
+        <button type="button" data-hero="mesh" title="Soft overlapping blooms">mesh</button>
+        <button type="button" data-hero="grid" title="Fine rule grid, faded at the edges">grid</button>
+        <button type="button" data-hero="duotone" title="One long diagonal wash">duotone</button>
+        <button type="button" data-hero="none" title="No panel — type carries the page">none</button>
+      </div>
+    </div>
+
+    <div class="fs__group-label fs__divider">Display face</div>
+
+    <div class="fs__faces">
+      {
+        groups.map((group) => (
+          <div class="fs__group">
+            <span class="fs__group-label">{group}</span>
+            {faces
+              .filter((face) => face.group === group)
+              .map((face) => (
+                <button
+                  class="fs__face"
+                  type="button"
+                  data-face={face.id}
+                  data-stack={face.stack}
+                  data-italic={String(face.italic)}
+                  data-fixed-weight={face.fixedWeight ? String(face.fixedWeight) : ''}
+                  title={face.note}
+                >
+                  <span class="fs__face-name" style={'font-family:' + face.stack}>
+                    {face.name}
+                  </span>
+                  {!face.italic && <span class="fs__flag">no italic</span>}
+                  {face.fixedWeight && <span class="fs__flag">1 weight</span>}
+                </button>
+              ))}
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="fs__controls">
+      <div class="fs__case">
+        <span>case</span>
+        <div class="fs__seg">
+          <button type="button" data-case="lowercase">lowercase</button>
+          <button type="button" data-case="none">As Written</button>
+        </div>
+      </div>
+
+      <label>
+        <span>weight <output id="fs-weight-out">600</output></span>
+        <input id="fs-weight" type="range" min="300" max="800" step="10" value="600" />
+      </label>
+      <label>
+        <span>tracking <output id="fs-track-out">-0.04</output>em</span>
+        <input id="fs-track" type="range" min="-0.09" max="0.02" step="0.005" value="-0.04" />
+      </label>
+    </div>
+
+    <pre class="fs__css" id="fs-css"></pre>
+
+    <div class="fs__actions">
+      <button type="button" id="fs-copy">Copy CSS</button>
+      <button type="button" id="fs-reset">Reset</button>
+    </div>
+  </div>
+</aside>
+
+<style>
+  .fs {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--ice-100);
+  }
+
+  .fs__handle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ink-950);
+    color: var(--ice-100);
+    font: inherit;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgb(12 16 22 / 0.3);
+  }
+
+  .fs__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #6ee7a8;
+  }
+
+  .fs__panel {
+    display: none;
+    width: 320px;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 16px;
+    border-radius: 14px;
+    background: var(--ink-950);
+    box-shadow: 0 20px 60px rgb(12 16 22 / 0.45);
+  }
+
+  .fs[data-open='true'] .fs__panel {
+    display: block;
+  }
+
+  .fs__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .fs__note {
+    color: var(--ink-500);
+  }
+
+  .fs__group {
+    margin-bottom: 12px;
+  }
+
+  .fs__group-label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--ink-500);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .fs__face {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ice-100);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .fs__face:hover {
+    background: rgb(238 242 244 / 0.08);
+  }
+
+  .fs__face[aria-pressed='true'] {
+    background: var(--ice-100);
+    color: var(--ink-950);
+  }
+
+  /* The name previews its own face, so the list is legible at a glance. */
+  .fs__face-name {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .fs__flag {
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: rgb(238 242 244 / 0.12);
+    color: var(--ice-400);
+    font-size: 9px;
+  }
+
+  .fs__face[aria-pressed='true'] .fs__flag {
+    background: rgb(12 16 22 / 0.12);
+    color: var(--ink-700);
+  }
+
+  .fs__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 14px 0;
+    padding-top: 14px;
+    border-top: 1px solid rgb(238 242 244 / 0.14);
+  }
+
+  .fs__controls label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: var(--ink-500);
+  }
+
+  .fs__case {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: var(--ink-500);
+  }
+
+  .fs__seg {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 999px;
+    background: rgb(238 242 244 / 0.08);
+  }
+
+  .fs__seg--wrap {
+    flex-wrap: wrap;
+  }
+
+  .fs__divider {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgb(238 242 244 / 0.14);
+  }
+
+  .fs__seg button {
+    flex: 1;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ice-400);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .fs__seg button[aria-pressed='true'] {
+    background: var(--ice-100);
+    color: var(--ink-950);
+  }
+
+  .fs__controls input {
+    width: 100%;
+    accent-color: var(--ice-100);
+  }
+
+  .fs__css {
+    margin: 0 0 12px;
+    padding: 10px;
+    border-radius: 8px;
+    background: rgb(238 242 244 / 0.07);
+    color: var(--ice-400);
+    font-size: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .fs__actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .fs__actions button {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid rgb(238 242 244 / 0.2);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ice-100);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .fs__actions button:hover {
+    background: rgb(238 242 244 / 0.1);
+  }
+</style>
+
+<script>
+  // Bumped when the committed defaults change, so a stale saved selection in
+  // someone browser does not mask what the site actually ships.
+  const STORAGE_KEY = 'sw-design-v3';
+
+  interface FontState {
+    face: string;
+    stack: string;
+    italic: boolean;
+    fixedWeight: number | null;
+    weight: string;
+    track: string;
+    textCase: string;
+    hero: string;
+    name: string;
+  }
+
+  function initFontSwitcher() {
+    const root = document.getElementById('font-switcher');
+    const handle = document.getElementById('fs-handle');
+    const current = document.getElementById('fs-current');
+    const weight = document.getElementById('fs-weight') as HTMLInputElement | null;
+    const track = document.getElementById('fs-track') as HTMLInputElement | null;
+    const cssOut = document.getElementById('fs-css');
+    const copy = document.getElementById('fs-copy');
+    const reset = document.getElementById('fs-reset');
+
+    if (!root || !handle || !current || !weight || !track || !cssOut || !copy || !reset) return;
+
+    const buttons = Array.from(root.querySelectorAll('.fs__face'));
+    const caseButtons = Array.from(root.querySelectorAll('.fs__seg button[data-case]'));
+    const heroButtons = Array.from(root.querySelectorAll('.fs__seg button[data-hero]'));
+    const weightOut = document.getElementById('fs-weight-out');
+    const trackOut = document.getElementById('fs-track-out');
+
+    // Mirrors what is committed in styles/themes/southwell.css, so Reset
+    // returns the page to the real site rather than to a previous experiment.
+    const defaults: FontState = {
+      face: 'outfit',
+      stack: "'Outfit Variable', 'Outfit', var(--theme-font-sans)",
+      italic: false,
+      fixedWeight: null,
+      weight: '600',
+      track: '-0.04',
+      textCase: 'lowercase',
+      hero: 'mesh',
+      name: 'Outfit',
+    };
+
+    let state: FontState = { ...defaults };
+
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) state = { ...defaults, ...JSON.parse(saved) };
+    } catch {
+      // Ignore a corrupt or unavailable store and start from the defaults.
+    }
+
+    const apply = () => {
+      const style = document.documentElement.style;
+      const effectiveWeight = state.fixedWeight ? String(state.fixedWeight) : state.weight;
+
+      style.setProperty('--theme-font-display', state.stack);
+      style.setProperty('--display-weight', effectiveWeight);
+      style.setProperty('--display-tracking', state.track + 'em');
+      style.setProperty('--display-case', state.textCase);
+
+      // Exactly one hero layer is on; `none` also collapses the panel and
+      // drops the headline pull-up, since there is nothing left to overlap.
+      style.setProperty('--hv-mesh', state.hero === 'mesh' ? '1' : '0');
+      style.setProperty('--hv-grid', state.hero === 'grid' ? '1' : '0');
+      style.setProperty('--hv-duotone', state.hero === 'duotone' ? '1' : '0');
+      style.setProperty('--hero-panel-display', state.hero === 'none' ? 'none' : 'block');
+      style.setProperty('--hero-headline-pull', state.hero === 'none' ? '0' : '-0.52em');
+      style.setProperty('--hero-headline-pull-sm', state.hero === 'none' ? '0' : '-0.4em');
+
+      // A face with no italic in the file must not be sheared by the browser;
+      // it drops weight instead.
+      style.setProperty('--display-em-style', state.italic ? 'italic' : 'normal');
+      style.setProperty('--display-em-weight', state.italic ? '400' : '300');
+
+      current.textContent = state.name;
+      weight.value = state.weight;
+      track.value = state.track;
+      weight.disabled = state.fixedWeight !== null;
+      if (weightOut) weightOut.textContent = state.fixedWeight ? String(state.fixedWeight) : state.weight;
+      if (trackOut) trackOut.textContent = state.track;
+
+      buttons.forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.getAttribute('data-face') === state.face));
+      });
+
+      caseButtons.forEach((button) => {
+        button.setAttribute(
+          'aria-pressed',
+          String(button.getAttribute('data-case') === state.textCase)
+        );
+      });
+
+      heroButtons.forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.getAttribute('data-hero') === state.hero));
+      });
+
+      cssOut.textContent = [
+        '/* styles/themes/southwell.css */',
+        '--theme-font-display: ' + state.stack + ';',
+        '--display-weight: ' + effectiveWeight + ';',
+        '--display-tracking: ' + state.track + 'em;',
+        '--display-case: ' + state.textCase + ';',
+        '/* hero: ' + state.hero + ' */',
+        '--hv-mesh: ' + (state.hero === 'mesh' ? '1' : '0') + ';',
+        '--hv-grid: ' + (state.hero === 'grid' ? '1' : '0') + ';',
+        '--hv-duotone: ' + (state.hero === 'duotone' ? '1' : '0') + ';',
+        '--hero-panel-display: ' + (state.hero === 'none' ? 'none' : 'block') + ';',
+        '--display-em-style: ' + (state.italic ? 'italic' : 'normal') + ';',
+        '--display-em-weight: ' + (state.italic ? '400' : '300') + ';',
+      ].join('\n');
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch {
+        // Not worth failing the panel over.
+      }
+    };
+
+    handle.addEventListener('click', () => {
+      const open = root.dataset.open !== 'true';
+      root.dataset.open = String(open);
+      handle.setAttribute('aria-expanded', String(open));
+    });
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const fixed = button.getAttribute('data-fixed-weight');
+        const name = button.querySelector('.fs__face-name');
+
+        state = {
+          ...state,
+          face: button.getAttribute('data-face') ?? 'archivo',
+          stack: button.getAttribute('data-stack') ?? defaults.stack,
+          italic: button.getAttribute('data-italic') === 'true',
+          fixedWeight: fixed ? Number(fixed) : null,
+          name: name?.textContent?.trim() ?? 'Archivo',
+        };
+
+        apply();
+      });
+    });
+
+    caseButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        state = { ...state, textCase: button.getAttribute('data-case') ?? 'lowercase' };
+        apply();
+      });
+    });
+
+    heroButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        state = { ...state, hero: button.getAttribute('data-hero') ?? 'mesh' };
+        apply();
+      });
+    });
+
+    weight.addEventListener('input', () => {
+      state = { ...state, weight: weight.value };
+      apply();
+    });
+
+    track.addEventListener('input', () => {
+      state = { ...state, track: track.value };
+      apply();
+    });
+
+    copy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(cssOut.textContent ?? '');
+        copy.textContent = 'Copied';
+        setTimeout(() => (copy.textContent = 'Copy CSS'), 1200);
+      } catch {
+        copy.textContent = 'Select it';
+      }
+    });
+
+    reset.addEventListener('click', () => {
+      state = { ...defaults };
+      apply();
+    });
+
+    apply();
+  }
+
+  initFontSwitcher();
+  document.addEventListener('astro:after-swap', initFontSwitcher);
+</script>

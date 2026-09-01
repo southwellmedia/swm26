@@ -1,8 +1,8 @@
 ---
 import type { ImageMetadata } from 'astro';
 import BaseLayout from './BaseLayout.astro';
-import Header from '@/components/layout/Header.astro';
-import Footer from '@/components/layout/Footer.astro';
+import Nav from '@/components/site/Nav.astro';
+import Footer from '@/components/site/Footer.astro';
 import Breadcrumbs from '@/components/seo/Breadcrumbs.astro';
 import ArticleHero from '@/components/blog/ArticleHero.astro';
 import ShareButtons from '@/components/blog/ShareButtons.astro';
@@ -56,24 +56,7 @@ const fullUrl = new URL(Astro.url.pathname, Astro.site).toString();
     tags,
   }}
 >
-  <Header
-    slot="header"
-    position="fixed"
-    size="lg"
-    showActiveState
-    showCta
-    cta={{ label: 'View Docs', href: 'https://docs.deployvelocity.com' }}
-    extraNav={[{ label: 'Features', href: '#features' }]}
-    actions={[
-      {
-        icon: 'github',
-        href: 'https://github.com/southwellmedia/velocity',
-        label: 'View on GitHub',
-        iconOnly: true,
-        target: '_blank',
-      },
-    ]}
-  />
+  <Nav slot="header" />
 
   <!-- Article Hero -->
   <ArticleHero
@@ -94,6 +77,7 @@ const fullUrl = new URL(Astro.url.pathname, Astro.site).toString();
 
       <!-- Article Content -->
       <div
+        data-pagefind-body
         class="prose prose-lg prose-headings:font-display prose-headings:font-bold prose-a:text-brand-600 hover:prose-a:text-brand-500 prose-code:text-brand-600 prose-code:bg-brand-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-background-secondary prose-pre:border prose-pre:border-border dark:prose-invert dark:prose-a:text-brand-400 dark:hover:prose-a:text-brand-300 dark:prose-code:text-brand-400 dark:prose-code:bg-brand-900/30 max-w-none"
       >
         <slot />
@@ -137,5 +121,5 @@ const fullUrl = new URL(Astro.url.pathname, Astro.site).toString();
     )
   }
 
-  <Footer slot="footer" layout="simple" background="secondary" showCopyright={false} />
+  <Footer slot="footer" />
 </BaseLayout>

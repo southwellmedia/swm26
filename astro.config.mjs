@@ -2,10 +2,11 @@ import { defineConfig, envField } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import react from '@astrojs/react';
+import icon from 'astro-icon';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: process.env.SITE_URL || 'https://example.com',
+  site: process.env.SITE_URL || 'https://southwell.media',
 
   env: {
     schema: {
@@ -30,6 +31,9 @@ export default defineConfig({
     react(),
     mdx(),
     sitemap(),
+    // Iconify sets, inlined as SVG at build time - only the icons actually
+    // referenced end up in the output, and none of it ships JavaScript.
+    icon({ include: { lucide: ['*'] } }),
   ],
 
   vite: {

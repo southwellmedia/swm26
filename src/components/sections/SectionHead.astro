@@ -1,0 +1,28 @@
+---
+/**
+ * Giant section title paired with a short right-hand blurb. Shared by Work and
+ * Services so the two headers stay identical.
+ */
+interface Props {
+  title: string;
+  blurb: string;
+  id?: string;
+  class?: string;
+}
+
+const { title, blurb, id, class: className } = Astro.props;
+---
+
+<header
+  class:list={[
+    'flex items-baseline justify-between gap-10',
+    'max-[800px]:flex-col max-[800px]:items-start max-[800px]:gap-5',
+    className,
+  ]}
+  data-reveal
+>
+  <h2 class="display-section m-0" id={id}>{title}</h2>
+  <p class="m-0 max-w-[380px] text-[18px] leading-[1.55] text-foreground-secondary max-[800px]:text-base">
+    {blurb}
+  </p>
+</header>

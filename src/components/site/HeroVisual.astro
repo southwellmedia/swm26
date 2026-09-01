@@ -1,0 +1,134 @@
+---
+/**
+ * HeroVisual
+ *
+ * The panel behind the headline. Built in CSS — no image, so client work never
+ * has to carry the studio's own first impression, and nothing is downloaded.
+ *
+ * Three treatments plus an off switch, all monochrome and all derived from the
+ * theme tokens, so each one flips correctly in dark mode:
+ *
+ *   mesh     soft overlapping blooms — quiet, contemporary, no hard edges
+ *   grid     a fine architectural rule grid, faded at the edges
+ *   duotone  one long diagonal wash from ground to ink
+ *   none     no panel at all; the type carries the page on its own
+ *
+ * Which one is live is set by tokens in styles/themes/southwell.css, so the
+ * dev panel can swap treatments at runtime without a rebuild.
+ */
+interface Props {
+  class?: string;
+  /** Softens every treatment, for the smaller CTA object. */
+  quiet?: boolean;
+}
+
+const { class: className, quiet = false } = Astro.props;
+---
+
+<div class:list={['hv', quiet && 'hv--quiet', className]} aria-hidden="true">
+  <div class="hv__layer hv__mesh"></div>
+  <div class="hv__layer hv__grid"></div>
+  <div class="hv__layer hv__duotone"></div>
+  <div class="hv__grain"></div>
+</div>
+
+<style>
+  .hv {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--hv-radius, var(--radius-lg));
+    background: var(--color-background-secondary);
+    isolation: isolate;
+  }
+
+  .hv__layer,
+  .hv__grain {
+    position: absolute;
+    inset: 0;
+  }
+
+  .hv__layer {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  /* --- mesh ------------------------------------------------------------
+     Large, heavily overlapping blooms. No focal point, no singularity — the
+     failure of the previous chrome sweep was that a conic gradient converges
+     to a visible cone tip in the middle of the panel. */
+  .hv__mesh {
+    opacity: var(--hv-mesh, 0);
+    background-image:
+      radial-gradient(
+        58% 68% at 14% 18%,
+        color-mix(in srgb, var(--color-foreground) 20%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        54% 64% at 86% 26%,
+        color-mix(in srgb, var(--color-foreground) 11%, transparent),
+        transparent 64%
+      ),
+      radial-gradient(
+        76% 86% at 64% 96%,
+        color-mix(in srgb, var(--color-foreground) 16%, transparent),
+        transparent 66%
+      ),
+      radial-gradient(
+        40% 50% at 38% 62%,
+        color-mix(in srgb, var(--color-background) 70%, transparent),
+        transparent 70%
+      );
+  }
+
+  /* --- grid ------------------------------------------------------------ */
+  .hv__grid {
+    opacity: var(--hv-grid, 0);
+    background-image:
+      linear-gradient(
+        to right,
+        color-mix(in srgb, var(--color-foreground) 10%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--color-foreground) 10%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 72px 72px;
+    /* Fading the grid out at the edges stops it reading as a table. */
+    mask-image: radial-gradient(78% 78% at 50% 42%, #000 35%, transparent 100%);
+  }
+
+  /* --- duotone --------------------------------------------------------- */
+  .hv__duotone {
+    opacity: var(--hv-duotone, 0);
+    background-image: linear-gradient(
+      118deg,
+      var(--color-background-secondary) 0%,
+      var(--color-background-tertiary) 38%,
+      color-mix(in srgb, var(--color-foreground) 55%, transparent) 78%,
+      var(--color-foreground) 100%
+    );
+  }
+
+  /* Grain sits over everything and keeps wide gradients from banding. */
+  .hv__grain {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+    opacity: 0.1;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+
+  .hv--quiet .hv__layer {
+    opacity: calc(var(--hv-mesh, 0) * 0.7);
+  }
+
+  .hv--quiet .hv__grid {
+    opacity: calc(var(--hv-grid, 0) * 0.7);
+  }
+
+  .hv--quiet .hv__duotone {
+    opacity: calc(var(--hv-duotone, 0) * 0.7);
+  }
+</style>

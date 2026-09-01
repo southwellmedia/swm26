@@ -1,0 +1,28 @@
+---
+/**
+ * Work index
+ * URL: /work
+ *
+ * The same grid as the homepage, without the four-project cap.
+ */
+import SiteLayout from '@/layouts/SiteLayout.astro';
+import SectionHead from '@/components/sections/SectionHead.astro';
+import WorkGrid from '@/components/sections/WorkGrid.astro';
+import Cta from '@/components/sections/Cta.astro';
+---
+
+<SiteLayout
+  title="Work"
+  description="Selected projects from Southwell Media — websites, apps and brands built for operators in Dallas and beyond."
+>
+  <header class="shell pt-[180px] max-[800px]:pt-[130px]">
+    <SectionHead
+      title="Work"
+      blurb="A diligent little studio, obsessed with turning ideas into digital realities."
+    />
+  </header>
+
+  <WorkGrid showHead={false} showMore={false} class="pt-16 max-[800px]:pt-10" />
+
+  <Cta />
+</SiteLayout>

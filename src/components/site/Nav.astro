@@ -1,0 +1,573 @@
+---
+/**
+ * Nav
+ *
+ * A wordmark and a menu control, nothing else. Transparent over the hero,
+ * frosted-solid once you scroll past it.
+ *
+ * The wordmark unfurls on hover: "southwell media" is already hiding inside
+ * "sw" — s-outh-w-ell — so the missing letters grow out from between the two
+ * visible ones rather than a second label fading in beside them.
+ *
+ * The menu control is two rules of unequal length that level up on hover and
+ * cross into an X when the overlay opens. A labelled "Menu ———" was doing the
+ * same job with more furniture.
+ */
+import { Icon } from 'astro-icon/components';
+import { getNavItems } from '@/config/nav.config';
+import siteConfig from '@/config/site.config';
+import ThemeToggle from '@/components/layout/ThemeToggle.astro';
+
+interface Props {
+  /**
+   * Whose page this is — a client name, set after the wordmark's slash so the
+   * nav reads "sw/ cirries". Only the work case studies pass one.
+   */
+  context?: string;
+  /**
+   * The bar is sitting over a dark full-bleed image rather than the page
+   * ground, so the ink wordmark would disappear into it until the bar frosts
+   * on scroll.
+   */
+  overMedia?: boolean;
+}
+
+const { context, overMedia = false } = Astro.props;
+
+const items = getNavItems();
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const isCurrent = (href: string) => path === href || (href !== '/' && path.startsWith(href + '/'));
+---
+
+<header
+  class="sw-nav"
+  id="sw-nav"
+  data-menu-open="false"
+  data-over-media={overMedia ? '' : undefined}
+>
+  <div class="sw-nav__inner shell">
+    {/* The context sits outside the anchor deliberately: the wordmark goes
+        home, and a client name that quietly did the same would be a trap. */}
+    <div class="sw-nav__brand">
+      <a href="/" class="mark" aria-label={siteConfig.name + ' — home'}>
+        <span class="mark__seen">s</span>
+        <span class="mark__grow"><span class="mark__hidden">outh</span></span>
+        <span class="mark__seen">w</span>
+        <span class="mark__grow"><span class="mark__hidden">ell media</span></span>
+        <span class="mark__seen mark__slash">/</span>
+      </a>
+
+      {context && <span class="mark__context">{context}</span>}
+    </div>
+
+    <button
+      class="burger"
+      id="sw-nav-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="sw-menu"
+    >
+      <span class="burger__lines" aria-hidden="true">
+        <span class="burger__line"></span>
+        <span class="burger__line"></span>
+      </span>
+      <span class="sr-only" id="sw-nav-toggle-label">Open menu</span>
+    </button>
+  </div>
+</header>
+
+<div class="sw-menu invert-section" id="sw-menu" data-state="closed" inert>
+  <div class="sw-menu__inner shell">
+    <nav class="sw-menu__nav" aria-label="Main">
+      <ul class="sw-menu__list">
+        {
+          items.map((item, i) => (
+            <li class="sw-menu__item" style={'--i:' + i}>
+              <a
+                class="sw-menu__link"
+                href={item.href}
+                aria-current={isCurrent(item.href) ? 'page' : undefined}
+              >
+                <span class="sw-menu__index label-mono" aria-hidden="true">( 0{i + 1} )</span>
+                <span class="sw-menu__label">{item.label}</span>
+                <Icon name="lucide:arrow-up-right" class="sw-menu__arrow" aria-hidden="true" />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="sw-menu__foot">
+      <div class="sw-menu__contact">
+        <a href={'mailto:' + siteConfig.email}>
+          <Icon name="lucide:mail" aria-hidden="true" />
+          {siteConfig.email}
+        </a>
+        <a href={'tel:' + siteConfig.phoneHref}>
+          <Icon name="lucide:phone" aria-hidden="true" />
+          {siteConfig.phone}
+        </a>
+      </div>
+      <div class="sw-menu__meta">
+        <span class="sw-menu__place label-mono">
+          <Icon name="lucide:map-pin" aria-hidden="true" />
+          {siteConfig.location}
+        </span>
+        <ThemeToggle class="sw-menu__theme" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* The bar spans the viewport so the frosted background reaches both edges;
+     its contents are held to the same shell as the page. */
+  .sw-nav {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 60;
+    padding-block: 22px;
+    /* The wordmark unfurls by animating grid-template-columns, which is a
+       layout animation and so repaints the bar every frame. The page below now
+       carries 3D-composited layers (card tilt, the service stack), and a large
+       fixed layer repainting over those is where stutter shows up. Giving the
+       bar its own layer keeps that repaint to itself. */
+    will-change: transform;
+    color: var(--color-foreground);
+    background: transparent;
+    animation: sw-fadein 1s 0.9s both;
+    transition:
+      background 0.4s ease,
+      box-shadow 0.4s ease,
+      padding 0.4s ease,
+      color 0.3s ease;
+  }
+
+  .sw-nav__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Over a dark hero the bar borrows the ice palette — the burger draws from
+     currentColor, so one declaration carries both. Once .is-scrolled frosts the
+     bar with the page ground, the normal colours are correct again. */
+  .sw-nav[data-over-media]:not(.is-scrolled) {
+    color: var(--ice-100);
+  }
+
+  .sw-nav[data-over-media]:not(.is-scrolled) .mark__context {
+    color: var(--nav-context-on-media);
+  }
+
+  .sw-nav.is-scrolled {
+    padding-block: 14px;
+    background: color-mix(in srgb, var(--color-background) 88%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 1px 0 var(--color-border);
+  }
+
+  /* Over the open overlay the bar goes transparent again and flips to ice. */
+  .sw-nav[data-menu-open='true'] {
+    background: transparent;
+    box-shadow: none;
+    color: var(--on-invert);
+  }
+
+  /* --- wordmark --------------------------------------------------------- */
+
+  .sw-nav__brand {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 7px;
+    min-width: 0;
+  }
+
+  .mark {
+    display: inline-flex;
+    flex: none;
+    align-items: baseline;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+  }
+
+  /* Whose page this is. Lighter than the wordmark and in the one accent the
+     site allows itself, so it reads as a second voice rather than more brand.
+     Retune --nav-context in themes/southwell.css. */
+  .mark__context {
+    /* If anything has to give, it is the client name, never the wordmark. */
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    text-transform: var(--display-case);
+    color: var(--nav-context);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* 0fr to 1fr on a grid column animates to the content's own width — the
+     letters genuinely unroll rather than sliding a fixed distance. */
+  .mark__grow {
+    display: inline-grid;
+    grid-template-columns: 0fr;
+    transition: grid-template-columns 0.55s var(--ease-sw);
+  }
+
+  .mark__hidden {
+    overflow: hidden;
+    min-width: 0;
+    opacity: 0;
+    transition: opacity 0.35s ease 0.05s;
+  }
+
+  .mark:hover .mark__grow,
+  .mark:focus-visible .mark__grow {
+    grid-template-columns: 1fr;
+  }
+
+  .mark:hover .mark__hidden,
+  .mark:focus-visible .mark__hidden {
+    opacity: 1;
+  }
+
+  .mark__slash {
+    /* The slash leads the reveal slightly, so it reads as being pushed along
+       by the letters rather than sitting still while they appear. */
+    transition: transform 0.55s var(--ease-sw);
+  }
+
+  .mark:hover .mark__slash {
+    transform: translateX(1px);
+  }
+
+  /* --- menu control ----------------------------------------------------- */
+
+  .burger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-right: -10px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .burger:hover {
+    background: color-mix(in srgb, currentColor 10%, transparent);
+  }
+
+  .burger__lines {
+    position: relative;
+    display: block;
+    width: 24px;
+    height: 12px;
+  }
+
+  .burger__line {
+    position: absolute;
+    right: 0;
+    display: block;
+    height: 1.5px;
+    background: currentColor;
+    border-radius: 2px;
+    transition:
+      width 0.35s var(--ease-sw),
+      transform 0.35s var(--ease-sw),
+      top 0.25s var(--ease-sw);
+  }
+
+  /* Unequal at rest; they level up on hover. */
+  .burger__line:first-child {
+    top: 2px;
+    width: 24px;
+  }
+
+  .burger__line:last-child {
+    top: 9px;
+    width: 15px;
+  }
+
+  .burger:hover .burger__line:last-child {
+    width: 24px;
+  }
+
+  /* Open: both centre, then cross. */
+  .sw-nav[data-menu-open='true'] .burger__line {
+    top: 5px;
+    width: 24px;
+  }
+
+  .sw-nav[data-menu-open='true'] .burger__line:first-child {
+    transform: rotate(45deg);
+  }
+
+  .sw-nav[data-menu-open='true'] .burger__line:last-child {
+    transform: rotate(-45deg);
+  }
+
+  /* --- overlay ---------------------------------------------------------- */
+
+  .sw-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    display: flex;
+    flex-direction: column;
+    padding-block: 140px 48px;
+    background: var(--color-background);
+    color: var(--color-foreground);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-2%);
+    transition:
+      opacity 0.4s ease,
+      transform 0.5s var(--ease-sw),
+      visibility 0.4s;
+  }
+
+  .sw-menu[data-state='open'] {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+
+  .sw-menu__inner {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 40px;
+  }
+
+  .sw-menu__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .sw-menu__item {
+    border-top: 1px solid var(--color-border);
+  }
+
+  .sw-menu__item:last-child {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .sw-menu[data-state='open'] .sw-menu__item {
+    animation: sw-rise 0.6s var(--ease-sw) both;
+    animation-delay: calc(var(--i) * 60ms + 120ms);
+  }
+
+  .sw-menu__link {
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    padding: 18px 0;
+  }
+
+  .sw-menu__index {
+    flex: none;
+    color: var(--color-foreground-muted);
+  }
+
+  .sw-menu__label {
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: min(9vw, 92px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+    text-transform: var(--display-case);
+  }
+
+  /* The arrow slides out of the row edge on hover. */
+  .sw-menu__arrow {
+    width: 34px;
+    height: 34px;
+    margin-left: auto;
+    align-self: center;
+    stroke-width: 1.5;
+    opacity: 0;
+    transform: translate(-14px, 8px);
+    transition:
+      opacity 0.3s ease,
+      transform 0.4s var(--ease-sw);
+  }
+
+  .sw-menu__link:hover .sw-menu__arrow,
+  .sw-menu__link:focus-visible .sw-menu__arrow {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+
+  /* The page you are on narrows and lightens, the same emphasis move the
+     headlines use — not an underline, and not a fake italic. */
+  .sw-menu__link[aria-current='page'] .sw-menu__label {
+    font-style: var(--display-em-style);
+    font-weight: var(--display-em-weight);
+    font-stretch: var(--display-em-stretch);
+    letter-spacing: var(--display-em-tracking);
+  }
+
+  .sw-menu__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    font-size: 15px;
+  }
+
+  .sw-menu__contact {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sw-menu__contact a,
+  .sw-menu__place {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .sw-menu__contact :global(svg),
+  .sw-menu__place :global(svg) {
+    width: 16px;
+    height: 16px;
+    stroke-width: 1.75;
+    color: var(--color-foreground-muted);
+  }
+
+  .sw-menu__meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: var(--color-foreground-muted);
+  }
+
+  @media (max-width: 700px) {
+    .sw-menu {
+      padding-top: 110px;
+    }
+
+    .sw-menu__link {
+      gap: 14px;
+      padding: 14px 0;
+    }
+
+    .sw-menu__arrow {
+      display: none;
+    }
+  }
+
+  /* The unfurl is decorative; without motion the mark simply stays as sw/. */
+  @media (prefers-reduced-motion: reduce) {
+    .mark__grow,
+    .mark__hidden,
+    .mark__slash,
+    .burger__line {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  function initNav() {
+    const nav = document.getElementById('sw-nav');
+    const toggle = document.getElementById('sw-nav-toggle');
+    const menu = document.getElementById('sw-menu');
+
+    if (!nav || !toggle || !menu) return;
+
+    const label = document.getElementById('sw-nav-toggle-label');
+    let open = false;
+    let scrolled = false;
+
+    /* The bar is fixed, so anything that wants to sit clear of it — the sticky
+       band headings on a case study, for one — needs to know how tall it is,
+       and only the browser knows that once the display font has loaded. */
+    const publishHeight = () => {
+      document.documentElement.style.setProperty(
+        '--sw-nav-h',
+        `${Math.round(nav.getBoundingClientRect().height)}px`
+      );
+    };
+    publishHeight();
+    window.addEventListener('resize', publishHeight, { passive: true });
+    if (document.fonts?.ready) void document.fonts.ready.then(publishHeight);
+
+    const setOpen = (next: boolean) => {
+      open = next;
+      nav.dataset.menuOpen = String(next);
+      menu.dataset.state = next ? 'open' : 'closed';
+      toggle.setAttribute('aria-expanded', String(next));
+      if (label) label.textContent = next ? 'Close menu' : 'Open menu';
+
+      // inert keeps the closed overlay out of the tab order and the
+      // accessibility tree — visibility: hidden alone would not.
+      if (next) menu.removeAttribute('inert');
+      else menu.setAttribute('inert', '');
+
+      document.documentElement.style.overflow = next ? 'hidden' : '';
+
+      if (next) {
+        const first = menu.querySelector('a');
+        if (first instanceof HTMLElement) first.focus();
+      }
+    };
+
+    const onScroll = () => {
+      const next = window.scrollY > 60;
+      if (next === scrolled) return;
+      scrolled = next;
+      nav.classList.toggle('is-scrolled', next);
+      // The bar is shorter once it frosts, so anything measuring against it —
+      // the sticky band headings on a case study — needs the new number.
+      publishHeight();
+    };
+
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && open) {
+        setOpen(false);
+        toggle.focus();
+      }
+    };
+
+    toggle.addEventListener('click', () => setOpen(!open));
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('keydown', onKeydown);
+    onScroll();
+
+    // View transitions swap the DOM; drop the document/window listeners with
+    // it so they do not stack up across navigations.
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        window.removeEventListener('scroll', onScroll);
+        document.removeEventListener('keydown', onKeydown);
+        document.documentElement.style.overflow = '';
+      },
+      { once: true }
+    );
+  }
+
+  initNav();
+  document.addEventListener('astro:after-swap', initNav);
+</script>

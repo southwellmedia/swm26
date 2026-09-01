@@ -1,0 +1,559 @@
+---
+/**
+ * WorkGrid
+ *
+ * A bento grid of projects. Reads the work collection, so the homepage and
+ * /work stay in step with one file per project.
+ *
+ * Footprints come from position, not from the project. Hand-assigning a span
+ * per project is what left holes in the grid: dense packing fills a gap only
+ * with a LATER item that happens to fit, so one awkward span strands
+ * whitespace no amount of reordering reliably clears.
+ *
+ * Instead the lead project takes the full width, and everything after it draws
+ * from PATTERN, a repeating run whose every segment completes whole rows. The
+ * grid cannot develop a hole, whatever the project count.
+ */
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import { Icon } from 'astro-icon/components';
+import SectionHead from './SectionHead.astro';
+import Placeholder from '@/components/site/Placeholder.astro';
+import PillButton from '@/components/site/PillButton.astro';
+
+interface Props {
+  /** How many projects the grid shows. Omit for all of them. */
+  count?: number;
+  /** The shared giant-title header. Off on /work, which has its own. */
+  showHead?: boolean;
+  /** The "See all work" button under the grid. */
+  showMore?: boolean;
+  class?: string;
+}
+
+const { count, showHead = true, showMore = true, class: className } = Astro.props;
+
+const projects = (await getCollection('work', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+const shown = typeof count === 'number' ? projects.slice(0, count) : projects;
+const remaining = projects.length - shown.length;
+
+// A card's span decides how wide it actually renders, so it has to decide the
+// srcset too. One shared `sizes` would either starve the full-width lead card
+// or make every 1x1 download a picture three times the size it displays.
+// Breakpoints mirror the grid: 3 columns, 2 below 1100px, 1 below 700px.
+// Every segment of this run closes off whole rows on a 3-column grid:
+//   large + standard + standard  -> 2 rows  (a 2x2 beside a stack of two)
+//   wide  + standard             -> 1 row
+//   wide  + standard             -> 1 row
+//   standard x3                  -> 1 row
+// Ten items, five rows, exactly. The lead card sits above all of it at full
+// width and two rows deep, so counts of 1, 6 and 11 land on a row boundary.
+const PATTERN = [
+  'large',
+  'standard',
+  'standard',
+  'wide',
+  'standard',
+  'wide',
+  'standard',
+  'standard',
+  'standard',
+  'standard',
+] as const;
+
+const spanFor = (index: number) => (index === 0 ? 'hero' : PATTERN[(index - 1) % PATTERN.length]);
+
+const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[]; sizes: string }> = {
+  hero: {
+    widths: [640, 1024, 1536, 2048],
+    sizes: '(max-width: 1100px) 100vw, 1344px',
+  },
+  large: {
+    widths: [480, 896, 1440],
+    sizes: '(max-width: 700px) 100vw, (max-width: 1100px) 100vw, 896px',
+  },
+  wide: {
+    widths: [480, 896, 1440],
+    sizes: '(max-width: 700px) 100vw, (max-width: 1100px) 100vw, 896px',
+  },
+  standard: {
+    widths: [360, 640, 960],
+    sizes: '(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 448px',
+  },
+};
+---
+
+<section class:list={['pt-[130px] pb-15 shell max-[800px]:pt-[90px]', className]}>
+  {
+    showHead && (
+      <SectionHead
+        title="Work"
+        blurb="A diligent little studio, obsessed with turning ideas into digital realities."
+        id="work"
+      />
+    )
+  }
+
+  <div class="bento mt-16 max-[800px]:mt-10" data-parallax-grid>
+    {
+      shown.map((project, i) => {
+        const span = spanFor(i);
+        const sizing = SIZING[span];
+        return (
+        <a class="card" href={'/work/' + project.id} data-span={span} data-card data-reveal>
+          <div class="card__media" data-swaps={project.data.feature && project.data.cover ? '' : undefined}>
+            {/* The feature photograph rests; the mockup is what hover reveals.
+                With only one of the two, it just sits there and nothing swaps. */}
+            {project.data.feature && (
+              <Image
+                src={project.data.feature}
+                alt={project.data.coverAlt ?? project.data.title}
+                layout="none"
+                widths={sizing.widths}
+                sizes={sizing.sizes}
+                class="card__img card__img--rest"
+              />
+            )}
+
+            {project.data.cover && (
+              <Image
+                src={project.data.cover}
+                alt={project.data.feature ? '' : (project.data.coverAlt ?? project.data.title)}
+                layout="none"
+                widths={sizing.widths}
+                sizes={sizing.sizes}
+                class="card__img card__img--reveal"
+              />
+            )}
+
+            {!project.data.feature && !project.data.cover && (
+              <Placeholder
+                class="h-full w-full rounded-none"
+                label={project.data.placeholder ?? project.data.title}
+              />
+            )}
+          </div>
+
+          <div class="card__view" aria-hidden="true">
+            <span class="card__view-pill">
+              View project
+              <Icon name="lucide:arrow-up-right" aria-hidden="true" />
+            </span>
+          </div>
+
+          <div class="card__caption">
+            <span class="card__name">{project.data.title}</span>
+          </div>
+
+          <span class="card__meta label-mono">{project.data.discipline}</span>
+
+          {/* Light that follows the cursor. Screen blend so it adds light
+              rather than washing a grey film over the picture. */}
+          <span class="card__glare" aria-hidden="true" />
+        </a>
+        );
+      })
+    }
+  </div>
+
+  {
+    showMore && (
+      <div class="mt-[72px] flex justify-center" data-reveal>
+        <PillButton href="/work" variant="outline" class="px-9 py-4">
+          {remaining > 0 ? 'See all ' + projects.length + ' projects' : 'See all work'}
+          <Icon name="lucide:arrow-right" aria-hidden="true" />
+        </PillButton>
+      </div>
+    )
+  }
+</section>
+
+<style>
+  /* Dense flow lets a 1x1 backfill a hole left by a 2x2, so the grid stays
+     solid regardless of how many projects are shown. */
+  .bento {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: 280px;
+    grid-auto-flow: dense;
+    gap: 20px;
+  }
+
+  /* The card's own box never moves. Depth comes from the layers inside it
+     drifting against each other, which `overflow: hidden` then clips — so a
+     card can't reach into the 20px gap and touch its neighbours no matter how
+     far the pointer travels. Rotating the card itself is what did that: at 9°
+     the projected corners overrun the gap on their own. */
+  .card {
+    position: relative;
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--work-media-bg);
+    box-shadow: 0 18px 36px rgb(12 16 22 / 0.1);
+    transition: box-shadow 0.4s ease;
+  }
+
+  .card:hover,
+  .card:focus-visible {
+    box-shadow: 0 30px 56px rgb(12 16 22 / 0.22);
+  }
+
+  .card__glare {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(
+      ellipse 70% 70% at var(--mx, 50%) var(--my, 50%),
+      rgb(255 255 255 / 0.18),
+      transparent 65%
+    );
+    mix-blend-mode: screen;
+    transition: opacity 0.35s ease;
+  }
+
+  .card:hover .card__glare,
+  .card:focus-visible .card__glare {
+    opacity: 1;
+  }
+
+  /* The lead project takes the full width of the grid. */
+  .card[data-span='hero'] {
+    grid-column: 1 / -1;
+    grid-row: span 2;
+  }
+
+  .card[data-span='large'] {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+
+  .card[data-span='wide'] {
+    grid-column: span 2;
+  }
+
+  /* The media fills the cell and is the zoom target, so the card's footprint
+     is set by the grid rather than by the image.
+
+     At rest it is desaturated and dimmed; hovering brings it up to full
+     colour. See --work-rest-* in themes/southwell.css. */
+  .card__media {
+    position: absolute;
+    inset: 0;
+    filter: grayscale(var(--work-rest-grayscale)) contrast(var(--work-rest-contrast));
+    opacity: var(--work-rest-opacity);
+    /* Drift and zoom share the one transform. The zoom is what buys the drift
+       its headroom: at 1.06 there is 3% of overhang on every side, and the
+       drift is capped at 6px, so an edge can never be pulled into view. */
+    transform: translate3d(var(--px, 0px), var(--py, 0px), 0) scale(var(--media-scale, 1));
+    transition:
+      transform var(--pt, 0.7s) var(--ease-quart),
+      filter 0.5s ease,
+      opacity 0.5s ease;
+  }
+
+  .card__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Where a card has both images, the mockup waits underneath at a slight
+     scale and crossfades up on hover. Where it has only one, that image is
+     simply always visible — hence [data-swaps] gating rather than a blanket
+     rule that would hide a lone cover. */
+  .card__media[data-swaps] .card__img--reveal {
+    opacity: 0;
+    transform: scale(1.06);
+    transition:
+      opacity 0.55s var(--ease-sw),
+      transform 0.7s var(--ease-sw);
+  }
+
+  .card__media[data-swaps] .card__img--rest {
+    opacity: 1;
+    transition: opacity 0.55s var(--ease-sw);
+  }
+
+  .card:hover .card__media[data-swaps] .card__img--reveal,
+  .card:focus-visible .card__media[data-swaps] .card__img--reveal {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .card:hover .card__media[data-swaps] .card__img--rest,
+  .card:focus-visible .card__media[data-swaps] .card__img--rest {
+    opacity: 0;
+  }
+
+  /* No hover on touch: show the mockup, since that is the more informative
+     of the two, and never leave a half-faded state. */
+  @media (hover: none) {
+    .card__media[data-swaps] .card__img--reveal {
+      opacity: 1;
+      transform: none;
+    }
+
+    .card__media[data-swaps] .card__img--rest {
+      opacity: 0;
+    }
+  }
+
+  .card__media :global(.placeholder) {
+    background-color: var(--work-media-bg);
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgb(12 16 22 / 0.1) 0,
+      rgb(12 16 22 / 0.1) 9px,
+      transparent 9px,
+      transparent 18px
+    );
+  }
+
+  .card:hover .card__media,
+  .card:focus-visible .card__media {
+    filter: grayscale(0) contrast(1);
+    opacity: 1;
+    --media-scale: 1.06;
+  }
+
+  /* Touch has no hover state, so the work would sit permanently greyed out.
+     Show it in full there instead. */
+  @media (hover: none) {
+    .card__media {
+      filter: none;
+      opacity: 1;
+    }
+  }
+
+  .card__view {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+    transition:
+      opacity 0.35s ease,
+      transform 0.35s var(--ease-sw);
+  }
+
+  .card:hover .card__view,
+  .card:focus-visible .card__view {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .card__view-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 14px 24px;
+    border-radius: var(--radius-full);
+    background: var(--ice-100);
+    color: var(--ink-950);
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgb(12 16 22 / 0.25);
+  }
+
+  .card__view-pill :global(svg) {
+    width: 17px;
+    height: 17px;
+    stroke-width: 2;
+  }
+
+  /* Caption and meta chip sit on the image, so they stay light in both colour
+     schemes rather than following the page tokens. */
+  .card__caption {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 24px 26px;
+    pointer-events: none;
+    background: linear-gradient(to top, rgb(12 16 22 / 0.6), transparent);
+    /* Moves with the pointer while the picture moves against it. The opposition
+       is the whole effect — same direction would just look like sliding. */
+    transform: translate3d(var(--cx, 0px), var(--cy, 0px), 0);
+    transition: transform var(--pt, 0.7s) var(--ease-quart);
+  }
+
+  .card__name {
+    display: block;
+    font-family: var(--font-display);
+    color: #fff;
+    font-size: 30px;
+    font-weight: var(--display-weight);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+    text-transform: var(--display-case);
+  }
+
+  /* Bigger cells get bigger type, so the grid has a clear focal point. */
+  .card[data-span='hero'] .card__name {
+    font-size: clamp(2.75rem, 4.6vw, 4.5rem);
+  }
+
+  .card[data-span='large'] .card__name {
+    font-size: clamp(2.25rem, 3.4vw, 3.25rem);
+  }
+
+  .card[data-span='hero'] .card__caption {
+    padding: 40px 44px;
+  }
+
+  .card[data-span='large'] .card__caption,
+  .card[data-span='wide'] .card__caption {
+    padding: 32px 36px;
+  }
+
+  .card[data-span='wide'] .card__name {
+    font-size: clamp(1.75rem, 2.4vw, 2.25rem);
+  }
+
+  .card__meta {
+    position: absolute;
+    top: 20px;
+    right: 22px;
+    padding: 6px 13px;
+    border-radius: var(--radius-full);
+    background: rgb(12 16 22 / 0.4);
+    color: rgb(255 255 255 / 0.88);
+    pointer-events: none;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  @media (max-width: 1100px) {
+    .bento {
+      grid-template-columns: repeat(2, 1fr);
+      grid-auto-rows: 260px;
+    }
+
+    .card[data-span='hero'] {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .bento {
+      grid-template-columns: 1fr;
+      grid-auto-rows: 300px;
+      gap: 14px;
+    }
+
+    .card[data-span='large'],
+    .card[data-span='wide'],
+    .card[data-span='hero'] {
+      grid-column: span 1;
+    }
+
+    .card[data-span='large'],
+    .card[data-span='hero'] {
+      grid-row: span 1;
+    }
+
+    .card__name,
+    .card[data-span='large'] .card__name,
+    .card[data-span='hero'] .card__name {
+      font-size: 2rem;
+    }
+
+    .card__caption,
+    .card[data-span='large'] .card__caption,
+    .card[data-span='hero'] .card__caption {
+      padding: 22px 24px;
+    }
+  }
+</style>
+
+<script>
+  /* Interior parallax and glare on the work cards.
+
+     The card's own box is never touched — only the layers inside it and the
+     glare position. That is deliberate: the previous version rotated the card
+     itself, and a rotated card's projected corners overrun the 20px bento gap
+     and collide with its neighbours. Clipping the motion inside the frame
+     makes that impossible rather than merely unlikely.
+
+     Everything written here is a custom property the stylesheet already reads,
+     so this only ever sets numbers. Skipped on touch and under
+     prefers-reduced-motion. */
+  function initParallax() {
+    const grid = document.querySelector<HTMLElement>('[data-parallax-grid]');
+    if (!grid || grid.dataset.parallaxBound === 'true') return;
+    if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    grid.dataset.parallaxBound = 'true';
+
+    // Capped against the zoom's 3% overhang so the picture's edge can never be
+    // pulled inside the frame. The caption moves less, and the other way.
+    const MEDIA = 6;
+    const CAPTION = 4;
+
+    let active: HTMLElement | null = null;
+    let frame = 0;
+    let next: { card: HTMLElement; x: number; y: number } | null = null;
+
+    const paint = () => {
+      frame = 0;
+      if (!next) return;
+      const { card, x, y } = next;
+      const dx = x - 0.5;
+      const dy = y - 0.5;
+      card.style.setProperty('--mx', (x * 100).toFixed(2) + '%');
+      card.style.setProperty('--my', (y * 100).toFixed(2) + '%');
+      card.style.setProperty('--px', (-dx * 2 * MEDIA).toFixed(2) + 'px');
+      card.style.setProperty('--py', (-dy * 2 * MEDIA).toFixed(2) + 'px');
+      card.style.setProperty('--cx', (dx * 2 * CAPTION).toFixed(2) + 'px');
+      card.style.setProperty('--cy', (dy * 2 * CAPTION).toFixed(2) + 'px');
+    };
+
+    const release = (card: HTMLElement | null) => {
+      if (!card) return;
+      card.style.setProperty('--pt', '0.7s');
+      for (const prop of ['--px', '--py', '--cx', '--cy']) card.style.removeProperty(prop);
+    };
+
+    grid.addEventListener('pointermove', (event) => {
+      if (event.pointerType !== 'mouse') return;
+      const card = (event.target as Element).closest<HTMLElement>('.card');
+      if (!card) return;
+
+      // Crossing straight from one card to the next never fires a leave, so the
+      // one being left has to be released here.
+      if (active && active !== card) release(active);
+      active = card;
+
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--pt', '0.14s');
+      next = {
+        card,
+        x: (event.clientX - rect.left) / rect.width,
+        y: (event.clientY - rect.top) / rect.height,
+      };
+      if (!frame) frame = requestAnimationFrame(paint);
+    });
+
+    grid.addEventListener('pointerleave', () => {
+      release(active);
+      active = null;
+      next = null;
+    });
+  }
+
+  // Fires on first load and after every ClientRouter navigation.
+  document.addEventListener('astro:page-load', initParallax);
+</script>

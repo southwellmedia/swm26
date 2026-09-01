@@ -1,0 +1,44 @@
+---
+/**
+ * PillButton
+ *
+ * The studio's button: a tall pill, either solid ink or an ink outline.
+ *
+ * It wraps Velocity's Button rather than replacing it, so there is still one
+ * button implementation on the site. Button composes its classes through `cn`
+ * (tailwind-merge), which drops the conflicting base utilities — the rounded-md
+ * corners and the fixed h-12 — in favour of the ones passed here.
+ */
+import Button from '@/components/ui/form/Button/Button.astro';
+import { cn } from '@/lib/cn';
+
+interface Props {
+  href?: string;
+  variant?: 'solid' | 'outline';
+  target?: string;
+  class?: string;
+}
+
+const { href, variant = 'solid', target, class: className } = Astro.props;
+
+const pill = [
+  'rounded-full h-auto px-10 py-[18px] text-[17px] font-semibold',
+  'transition-[transform,background-color,color] duration-300 ease-out',
+].join(' ');
+
+const look =
+  variant === 'solid'
+    ? 'bg-foreground text-background hover:bg-foreground hover:scale-105 active:scale-100'
+    : 'border-[1.5px] border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-background active:scale-100';
+---
+
+<Button
+  href={href}
+  target={target}
+  variant={variant === 'solid' ? 'primary' : 'outline'}
+  size="lg"
+  data-button
+  class={cn(pill, look, className)}
+>
+  <slot />
+</Button>

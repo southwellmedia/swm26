@@ -1,0 +1,22 @@
+---
+/**
+ * Placeholder
+ *
+ * A striped box standing in for a 3D render or a project capture. Every one is
+ * an asset slot: replacing it with an <Image /> keeps the surrounding
+ * behaviour (hover zoom, aspect, rounding) exactly as-is.
+ */
+interface Props {
+  /** Caption describing what belongs here. */
+  label?: string;
+  /** Use on an ink surface, e.g. inside the footer. */
+  invert?: boolean;
+  class?: string;
+}
+
+const { label, invert = false, class: className } = Astro.props;
+---
+
+<div class:list={['placeholder', invert && 'placeholder--invert', className]} aria-hidden="true">
+  {label && <span class="placeholder__label">{label}</span>}
+</div>

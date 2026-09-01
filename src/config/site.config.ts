@@ -46,48 +46,49 @@ export interface SiteConfig {
       backgroundColor: string;
     };
   };
+  /** Human-readable location — used in the footer and on the contact page. */
+  location: string;
+  /** Phone in dialable form, for tel: links. */
+  phoneHref: string;
+  /** The two-character wordmark the whole identity leans on. */
+  mark: string;
 }
 
 const siteConfig: SiteConfig = {
-  name: 'Velocity',
-  description: 'A modern website built with Astro and Tailwind CSS',
-  url: SITE_URL || 'https://example.com',
+  name: 'Southwell Media',
+  description:
+    'Southwell Media is a Dallas studio building original websites, apps and brands — no templates, no themes, shipped in weeks.',
+  url: SITE_URL || 'https://southwell.media',
   ogImage: '/og-default.png',
   author: 'Southwell Media',
-  // Demo contact info - replace with your actual business details
-  email: 'hello@example.com',
-  phone: '+1 (555) 123-4567',
-  address: {
-    street: '123 Main St',
-    city: 'Dallas',
-    state: 'TX',
-    zip: '75001',
-    country: 'US',
-  },
+  email: 'hello@southwellmedia.com',
+  phone: '945-545-2608',
+  phoneHref: '+19455452608',
+  location: 'Dallas, TX',
+  mark: 'sw/',
+  // TODO: add the street address to promote Organization schema to
+  // LocalBusiness. Deliberately absent rather than guessed — a wrong postal
+  // address in structured data is worse than none at all.
+  // Feeds Organization.sameAs in the JSON-LD.
   socialLinks: [
-    'https://github.com/southwellmedia',
+    'https://www.linkedin.com/in/michaelfroseth',
+    'https://github.com/southwellmedia-dev',
   ],
-  // Twitter metadata - update with your actual handles or remove
-  // twitter: {
-  //   site: '@yourhandle',
-  //   creator: '@yourhandle',
-  // },
   verification: {
     google: GOOGLE_SITE_VERIFICATION,
     bing: BING_SITE_VERIFICATION,
   },
-  // Branding: Logo files live in src/assets/branding/
-  // Replace the SVG files there with your own branding
   branding: {
     logo: {
-      alt: 'Velocity',
+      alt: 'Southwell Media',
     },
     favicon: {
       svg: '/favicon.svg',
     },
     colors: {
-      themeColor: '#F94C10',
-      backgroundColor: '#ffffff',
+      // Ice — the page ground, so browser chrome matches the site.
+      themeColor: '#eef2f4',
+      backgroundColor: '#eef2f4',
     },
   },
 };

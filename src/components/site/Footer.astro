@@ -1,0 +1,79 @@
+---
+/**
+ * Footer
+ *
+ * The dark rounded slab the page ends on. It uses Velocity's .invert-section
+ * utility rather than hard-coded ink, so it stays the contrasting surface in
+ * both light and dark mode.
+ */
+import { Icon } from 'astro-icon/components';
+import siteConfig from '@/config/site.config';
+import { footerColumns } from '@/config/footer.config';
+import Placeholder from './Placeholder.astro';
+
+const year = new Date().getFullYear();
+---
+
+<footer
+  class="invert-section rounded-t-[24px] bg-background pt-[90px] pb-10 text-foreground max-[900px]:pt-[60px]"
+>
+  <div class="shell">
+    <div class="flex items-start justify-between gap-10 max-[900px]:flex-col max-[900px]:gap-12">
+      <span class="display-mark">{siteConfig.mark}</span>
+
+      <nav class="flex flex-wrap gap-[72px] text-[15px] max-[900px]:gap-10" aria-label="Footer">
+        {
+          footerColumns.map((column) => (
+            <div class="flex flex-col gap-3">
+              <span class="label-mono text-foreground-muted">{column.heading}</span>
+              {column.links.map((link) => (
+                <a
+                  class="footer__link"
+                  href={link.href}
+                  target={link.external ? '_blank' : undefined}
+                  rel={link.external ? 'noopener noreferrer' : undefined}
+                >
+                  {link.icon && <Icon name={'lucide:' + link.icon} aria-hidden="true" />}
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          ))
+        }
+      </nav>
+    </div>
+
+    <Placeholder
+      invert
+      label="[ footer 3d render — cropped, bleeds off bottom ]"
+      class="mt-16 h-[220px] max-[900px]:mt-12 max-[900px]:h-[150px]"
+    />
+
+    <div
+      class="mt-9 flex justify-between gap-5 text-[13px] text-foreground-muted max-[900px]:flex-col max-[900px]:gap-2"
+    >
+      <span>&copy; {year} {siteConfig.name} — {siteConfig.location}</span>
+      <span>Working with clients across the globe</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .footer__link :global(svg) {
+    width: 15px;
+    height: 15px;
+    stroke-width: 1.75;
+    opacity: 0.55;
+    transition: opacity 0.25s ease;
+  }
+
+  .footer__link:hover :global(svg) {
+    opacity: 1;
+  }
+</style>

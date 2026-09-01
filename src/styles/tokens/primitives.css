@@ -56,3 +56,31 @@
   --info-light: oklch(94% 0.05 260);
   --info-foreground: oklch(40% 0.15 260); /* WCAG AA compliant on info-light */
 }
+
+/* =============================================================================
+   Southwell Media - "Ink on Ice" Raw Scale
+   =============================================================================
+   Brand primitives for the Southwell theme. Kept as hex rather than OKLCH
+   because these are the exact values signed off in the Claude Design
+   prototype (Southwell Homepage.dc.html) — converting them would drift.
+
+   Semantic mapping lives in src/styles/themes/southwell.css.
+   ============================================================================= */
+
+:root {
+  /* Ink — the near-black the whole identity hangs off */
+  --ink-950: #0c1016;
+  --ink-900: #161c25;
+  --ink-800: #232b36;
+  --ink-700: #3c434d; /* body copy on ice */
+  --ink-600: #5b6470; /* muted copy on ice */
+  --ink-500: #6a737f; /* muted copy on ink (footer) */
+
+  /* Ice — the cool off-white ground */
+  --ice-50: #f6f9fa;
+  --ice-100: #eef2f4; /* page background */
+  --ice-200: #e2e8ec; /* placeholder fill */
+  --ice-300: #dfe7ea; /* service card "mid" */
+  --ice-400: #c8d3d8; /* service card "shade" */
+  --ice-500: #aebcc4; /* slate — project card fill */
+}
