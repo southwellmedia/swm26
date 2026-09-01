@@ -32,6 +32,8 @@ interface Props {
   navContext?: string;
   /** The page opens on a dark full-bleed image, so the nav must go light. */
   navOverMedia?: boolean;
+  /** The whole page sits on ink, so the frosted bar must frost to ink too. */
+  navTone?: 'dark';
 }
 
 const {
@@ -45,6 +47,7 @@ const {
   includeOrgSchema = false,
   navContext,
   navOverMedia = false,
+  navTone,
 } = Astro.props;
 
 // Dev-only display-font switcher, rendered below.
@@ -65,7 +68,7 @@ const showFontSwitcher = import.meta.env.DEV;
   nofollow={nofollow}
   includeOrgSchema={includeOrgSchema}
 >
-  <Nav slot="header" context={navContext} overMedia={navOverMedia} />
+  <Nav slot="header" context={navContext} overMedia={navOverMedia} tone={navTone} />
   <slot />
   <Footer slot="footer" />
   {showFontSwitcher && <FontSwitcher slot="footer" />}

@@ -30,9 +30,14 @@ interface Props {
    * on scroll.
    */
   overMedia?: boolean;
+  /**
+   * The page itself is on ink (a client story), so once the bar frosts it
+   * must frost to ink rather than the page ground, in either colour scheme.
+   */
+  tone?: 'dark';
 }
 
-const { context, overMedia = false } = Astro.props;
+const { context, overMedia = false, tone } = Astro.props;
 
 const items = getNavItems();
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
@@ -44,10 +49,13 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   id="sw-nav"
   data-menu-open="false"
   data-over-media={overMedia ? '' : undefined}
+  data-tone={tone}
 >
   <div class="sw-nav__inner shell">
-    {/* The context sits outside the anchor deliberately: the wordmark goes
-        home, and a client name that quietly did the same would be a trap. */}
+    {
+      /* The context sits outside the anchor deliberately: the wordmark goes
+        home, and a client name that quietly did the same would be a trap. */
+    }
     <div class="sw-nav__brand">
       <a href="/" class="mark" aria-label={siteConfig.name + ' — home'}>
         <span class="mark__seen">s</span>
@@ -88,7 +96,9 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
                 href={item.href}
                 aria-current={isCurrent(item.href) ? 'page' : undefined}
               >
-                <span class="sw-menu__index label-mono" aria-hidden="true">( 0{i + 1} )</span>
+                <span class="sw-menu__index label-mono" aria-hidden="true">
+                  ( 0{i + 1} )
+                </span>
                 <span class="sw-menu__label">{item.label}</span>
                 <Icon name="lucide:arrow-up-right" class="sw-menu__arrow" aria-hidden="true" />
               </a>
@@ -159,6 +169,16 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
 
   .sw-nav[data-over-media]:not(.is-scrolled) .mark__context {
     color: var(--nav-context-on-media);
+  }
+
+  /* A page on ink: the bar reads its colours from the story, not the page
+     ground. The variables are remapped on the bar itself so the existing
+     rules below need no second copy. */
+  .sw-nav[data-tone='dark'] {
+    --color-background: var(--ink-950);
+    --color-foreground: var(--ice-100);
+    --color-border: var(--border-invert);
+    --nav-context: var(--nav-context-on-media);
   }
 
   .sw-nav.is-scrolled {

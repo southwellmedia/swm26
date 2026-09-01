@@ -1,0 +1,1259 @@
+---
+/**
+ * Reap Capital — client story
+ * URL: /work/reap-capital
+ *
+ * Ported from the Claude Design prototype (Reap Capital Case Study B.dc.html).
+ *
+ * The first hand-built work page. The generic /work/[...slug] template skips
+ * any project whose frontmatter sets `story: true`, and this file owns the URL
+ * instead. It keeps the site's Nav, Cta and Footer; what changes is that the
+ * whole story sits on ink. You leave the ice-white site, drop into the story,
+ * and the Cta hands you back.
+ *
+ * Content lives in @/data/reap-capital.ts. Every figure there is the
+ * prototype's draft copy and needs confirming with Reap.
+ */
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import SiteLayout from '@/layouts/SiteLayout.astro';
+import Placeholder from '@/components/site/Placeholder.astro';
+import BeforeAfter from '@/components/site/BeforeAfter.astro';
+import Cta from '@/components/sections/Cta.astro';
+import {
+  hero,
+  stats,
+  flagship,
+  chapters,
+  properties,
+  films,
+  lucidos,
+  posts,
+  stack,
+} from '@/data/reap-capital';
+import feature from '@/assets/work/reap-capital/feature.webp';
+import cover from '@/assets/work/reap-capital/cover.webp';
+
+// Same ordering as the generic template, so "next" agrees with the grid.
+const projects = (
+  await getCollection('work', ({ data }) => (import.meta.env.PROD ? data.draft !== true : true))
+).sort((a, b) => a.data.order - b.data.order);
+
+const index = projects.findIndex((project) => project.id === 'reap-capital');
+if (index === -1) throw new Error('reap-capital is missing from src/content/work');
+
+const project = projects[index];
+const next = projects[(index + 1) % projects.length];
+const nextImage = next.data.feature ?? next.data.cover;
+---
+
+<SiteLayout
+  title={project.data.title}
+  description={project.data.description}
+  image={cover.src}
+  imageAlt={project.data.coverAlt ?? project.data.title}
+  navContext={project.data.client ?? project.data.title}
+  navOverMedia
+  navTone="dark"
+>
+  <article class="story">
+    {/* --- hero: full-bleed, the feature photograph made safe for type ------ */}
+    <header class="hero">
+      <Image
+        src={feature}
+        alt=""
+        layout="none"
+        widths={[768, 1280, 1920, 2560]}
+        sizes="100vw"
+        class="hero__img"
+        loading="eager"
+        fetchpriority="high"
+      />
+      <div class="hero__scrim" aria-hidden="true"></div>
+
+      <div class="hero__body shell">
+        <p class="hero__eyebrow label-mono">
+          {hero.eyebrow.map((item) => <span>{item}</span>)}
+        </p>
+        <h1 class="display-hero m-0">
+          the whole <em>operation,</em><br />one studio.
+        </h1>
+        <div class="hero__foot">
+          <p class="hero__intro">{hero.intro}</p>
+          <div class="hero__scroll label-mono" aria-hidden="true">
+            <span>scroll</span>
+            <span class="hero__scroll-line"></span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    {/* --- results ------------------------------------------------------- */}
+    <section class="shell" aria-label="Results">
+      <div class="stats" data-reveal>
+        {
+          stats.map((stat) => (
+            <div class="stats__item">
+              <div class="stats__value">{stat.value}</div>
+              <div class="stats__label">{stat.label}</div>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* --- 01 flagship --------------------------------------------------- */}
+    <section class="flagship shell" aria-labelledby="flagship-title">
+      <div class="flagship__head" data-reveal>
+        <div>
+          <p class="eyebrow label-mono">( 01 ) THE FLAGSHIP</p>
+          <h2 class="flagship__title display-section" id="flagship-title">
+            reapcapital<em>.com</em>
+          </h2>
+        </div>
+        <p class="flagship__intro">{flagship.intro}</p>
+      </div>
+
+      <div class="flagship__cover" data-reveal>
+        <Image
+          src={cover}
+          alt="reapcapital.com on a laptop"
+          layout="none"
+          widths={[768, 1280, 1920, 2560]}
+          sizes="100vw"
+          class="flagship__cover-img"
+        />
+        <a class="pill label-mono" href={flagship.url} target="_blank" rel="noopener noreferrer">
+          VISIT THE SITE ⟶
+        </a>
+      </div>
+
+      <div class="flagship__shots" data-reveal>
+        {flagship.shots.map((label) => <Placeholder invert label={label} class="flagship__shot" />)}
+      </div>
+
+      <div class="notes" data-reveal>
+        {
+          flagship.notes.map((note) => (
+            <div class="notes__item">
+              <span class="notes__label label-mono">{note.label}</span>
+              {note.text}
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* --- the ledger: sticky index + six more workstreams ---------------- */}
+    <section class="ledger shell" aria-labelledby="ledger-title">
+      <aside class="ledger__index">
+        <p class="eyebrow label-mono">( THE LEDGER )</p>
+        <h2 class="ledger__title" id="ledger-title">
+          six more <em>workstreams.</em>
+        </h2>
+        <ol class="ledger__list">
+          {
+            chapters.map((chapter) => (
+              <li>
+                <a href={`#ws-${chapter.num}`}>
+                  <span class="ledger__num label-mono">{chapter.num}</span>
+                  <span>{chapter.title}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </aside>
+
+      <div class="ledger__body">
+        {/* 02 property sites */}
+        <article class="ws" id="ws-02" data-reveal>
+          <p class="eyebrow label-mono">( 02 ) PROPERTY SITES</p>
+          <h3 class="ws__title">a site <em>per address.</em></h3>
+          <p class="ws__intro">
+            Every community gets its own brand, site and hourly availability from the property
+            software. La Fortuna in North Dallas and The Landry in Arlington shipped first; both are
+            built on LucidOS and neither looks like the other.
+          </p>
+
+          <div class="properties">
+            {
+              properties.map((property) => (
+                <div class="property">
+                  <div class="property__head">
+                    <span class="property__name">{property.name}</span>
+                    <span class="property__meta label-mono">{property.meta}</span>
+                  </div>
+                  <BeforeAfter afterLabel={property.url} reveal={property.reveal} />
+                  <p class="property__blurb">{property.blurb}</p>
+                  <div class="property__stats">
+                    {property.stats.map((stat) => (
+                      <div>
+                        <div class="property__value">{stat.value}</div>
+                        <div class="property__label">{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </article>
+
+        {/* 03 brand */}
+        <article class="ws" id="ws-03" data-reveal>
+          <p class="eyebrow label-mono">( 03 ) BRAND</p>
+          <h3 class="ws__title">one origin, <em>every asset.</em></h3>
+          <p class="ws__intro">
+            Forest green, aged gold, a serif that reads like a prospectus. Built to hold from a
+            pitch deck to a leasing office sign to a 288-unit front door.
+          </p>
+
+          <div class="brand">
+            <div class="brand__tile brand__tile--forest brand__tile--hero">
+              <span class="brand__tag brand__tag--on-dark label-mono"
+                >logomark — gold on forest</span
+              >
+            </div>
+            <div class="brand__tile brand__tile--paper brand__tile--wide">
+              <span class="brand__tag brand__tag--on-light label-mono"
+                >wordmark — Playfair Display</span
+              >
+            </div>
+            <div class="brand__tile brand__tile--forest" aria-label="Forest green swatch"></div>
+            <div class="brand__tile brand__tile--gold" aria-label="Aged gold swatch"></div>
+            <div class="brand__tile brand__tile--sage" aria-label="Sage swatch"></div>
+            <div class="brand__tile brand__tile--slot">
+              <span class="brand__tag label-mono">signage</span>
+            </div>
+            <div class="brand__tile brand__tile--slot">
+              <span class="brand__tag label-mono">investor deck</span>
+            </div>
+            <div class="brand__tile brand__tile--slot">
+              <span class="brand__tag label-mono">sub-brands</span>
+            </div>
+          </div>
+        </article>
+
+        {/* 04 films */}
+        <article class="ws" id="ws-04" data-reveal>
+          <p class="eyebrow label-mono">( 04 ) FILMS</p>
+          <h3 class="ws__title">fourteen films, <em>no stock.</em></h3>
+
+          <div class="reel">
+            <Image
+              src={feature}
+              alt=""
+              layout="none"
+              widths={[768, 1280, 1920]}
+              sizes="(max-width: 1000px) 100vw, 70vw"
+              class="reel__still"
+            />
+            <div class="reel__center">
+              <span class="reel__play" aria-hidden="true">▶</span>
+              <span class="reel__tag label-mono">reel slot — 2:10 · drop MP4 or Vimeo link</span>
+            </div>
+          </div>
+
+          <ol class="films">
+            {
+              films.map((film) => (
+                <li class="films__row">
+                  <span class="films__dur label-mono">{film.dur}</span>
+                  <span>{film.title}</span>
+                  <span class="films__kind">{film.kind}</span>
+                </li>
+              ))
+            }
+          </ol>
+        </article>
+
+        {/* 05 lucidos — a light island in the dark page */}
+        <article class="ws os" id="ws-05" data-reveal>
+          <p class="eyebrow label-mono">( 05 ) THE OPERATING SYSTEM</p>
+          <h3 class="ws__title">lucidos, <em>tuned for reap.</em></h3>
+          <p class="ws__intro">
+            Our property platform already ran sites, tours and offers. For Reap we added AppFolio
+            sync for hourly availability, a portfolio dashboard across communities, Spanish mirrors,
+            and an offer engine that publishes one special to site, popup and inbox.
+          </p>
+
+          <Placeholder label="screenshot — LucidOS portfolio dashboard" class="os__shot" />
+
+          <div class="os__grid">
+            {
+              lucidos.map((cap) => (
+                <div class="os__cap">
+                  <strong>{cap.title}</strong>
+                  {cap.desc}
+                </div>
+              ))
+            }
+          </div>
+        </article>
+
+        {/* 06 social */}
+        <article class="ws" id="ws-06" data-reveal>
+          <p class="eyebrow label-mono">( 06 ) SOCIAL</p>
+          <h3 class="ws__title">the feed, <em>managed.</em></h3>
+          <p class="ws__intro">
+            Three accounts, a monthly calendar, one rule: every post comes from a real property, a
+            real deal or a real person. 312 posts, 4.1× LinkedIn growth.
+          </p>
+
+          <div class="posts">
+            {
+              posts.map((post) => (
+                <div class="tile">
+                  <span class="tile__tag label-mono">{post}</span>
+                </div>
+              ))
+            }
+          </div>
+        </article>
+
+        {/* 07 email */}
+        <article class="ws" id="ws-07" data-reveal>
+          <p class="eyebrow label-mono">( 07 ) EMAIL</p>
+          <h3 class="ws__title">two audiences, <em>one voice.</em></h3>
+
+          <div class="email">
+            <p class="ws__intro email__intro">
+              Investor updates that read like the founder wrote them (he did, we edited) and
+              resident campaigns that turn a leasing special into tours by Friday. 61 campaigns, 58%
+              investor open rate.
+            </p>
+            <div class="email__shots">
+              <div class="tile tile--portrait">
+                <span class="tile__tag label-mono">investor update — Q2</span>
+              </div>
+              <div class="tile tile--portrait">
+                <span class="tile__tag label-mono">six weeks free — La Fortuna</span>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    {/* --- stack ---------------------------------------------------------- */}
+    <section class="stack shell" aria-label="Stack and tools" data-reveal>
+      <p class="eyebrow label-mono">( STACK &amp; TOOLS )</p>
+      <div class="stack__groups">
+        {
+          stack.map((group) => (
+            <div>
+              <div class="stack__label label-mono">{group.label}</div>
+              {group.items.join(' · ')}
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* --- next project: the same full-bleed door the template uses -------- */}
+    <a class="nextup" href={'/work/' + next.id} data-card>
+      {
+        nextImage && (
+          <Image
+            src={nextImage}
+            alt=""
+            layout="none"
+            widths={[768, 1280, 1920]}
+            sizes="100vw"
+            class="nextup__img"
+          />
+        )
+      }
+      <div class="nextup__body shell">
+        <span class="label-mono">( NEXT PROJECT )</span>
+        <span class="nextup__title">{next.data.title}</span>
+      </div>
+    </a>
+  </article>
+
+  <Cta />
+</SiteLayout>
+
+<style>
+  /* The story sits on ink in both colour schemes. Rather than hard-coding ice
+     into every rule, the Tailwind tokens are remapped here the way
+     .invert-section does it — so PillButton, .label-mono and anything else
+     that reads a token inverts on its own. --dim is the footer-muted grey. */
+  .story {
+    --color-background: var(--ink-950);
+    --color-foreground: var(--ice-100);
+    --color-foreground-secondary: var(--ice-400);
+    --color-foreground-muted: var(--ice-500);
+    --color-border: var(--border-invert);
+    --color-border-strong: var(--border-invert-strong);
+    --color-primary: var(--ice-100);
+    --color-primary-foreground: var(--ink-950);
+    --color-ring: var(--ice-100);
+    --dim: var(--ink-500);
+    --hairline: 1px solid var(--border-invert);
+    background: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  /* The lighter second half of every headline — same move as the site's
+     display <em>, read off the same tokens. */
+  .story em {
+    font-style: var(--display-em-style);
+    font-weight: var(--display-em-weight);
+    font-stretch: var(--display-em-stretch);
+    letter-spacing: var(--display-em-tracking);
+  }
+
+  .eyebrow {
+    margin: 0;
+    color: var(--dim);
+  }
+
+  .pill {
+    padding: 14px 20px;
+    border-radius: var(--radius-full);
+    background: var(--ink-950);
+    color: var(--ice-100);
+  }
+
+  /* --- hero -------------------------------------------------------------- */
+
+  .hero {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 92svh;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .hero__img {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.05);
+    opacity: 0.5;
+  }
+
+  .hero__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      180deg,
+      rgb(12 16 22 / 0.2) 0%,
+      rgb(12 16 22 / 0.55) 55%,
+      var(--ink-950) 100%
+    );
+  }
+
+  .hero__body {
+    padding-block: 150px 64px;
+    animation: sw-rise 0.9s var(--ease-sw) both;
+  }
+
+  .hero__eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin: 0 0 28px;
+    color: var(--ice-500);
+  }
+
+  .hero__foot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: end;
+    margin-top: 40px;
+  }
+
+  .hero__intro {
+    margin: 0;
+    max-width: 560px;
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--ice-400);
+    text-wrap: pretty;
+  }
+
+  .hero__scroll {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    color: var(--ice-500);
+  }
+
+  .hero__scroll-line {
+    display: block;
+    width: 1px;
+    height: 36px;
+    background: var(--ice-100);
+    animation: sw-scrollpulse 1.6s ease-in-out infinite;
+  }
+
+  /* --- results ----------------------------------------------------------- */
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: var(--hairline);
+    border-bottom: var(--hairline);
+  }
+
+  .stats__item {
+    padding: 36px 28px 36px 24px;
+    border-right: var(--hairline);
+  }
+
+  .stats__item:first-child {
+    padding-left: 0;
+  }
+
+  .stats__item:last-child {
+    border-right: 0;
+  }
+
+  .stats__value {
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: min(5vw, 72px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+  }
+
+  .stats__label {
+    max-width: 220px;
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--ice-500);
+  }
+
+  /* --- flagship ---------------------------------------------------------- */
+
+  .flagship {
+    padding-block: 96px 64px;
+  }
+
+  .flagship__head {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: end;
+  }
+
+  .flagship__title {
+    margin: 20px 0 0;
+  }
+
+  .flagship__intro {
+    margin: 0;
+    max-width: 560px;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--ice-400);
+  }
+
+  .flagship__cover {
+    position: relative;
+    margin-top: 56px;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    background: var(--ink-900);
+  }
+
+  .flagship__cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .flagship__cover .pill {
+    position: absolute;
+    right: 24px;
+    bottom: 24px;
+  }
+
+  .flagship__shots {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  .flagship__shots :global(.flagship__shot) {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-lg);
+    background-color: rgb(238 242 244 / 0.04);
+    border: 1px solid rgb(238 242 244 / 0.1);
+  }
+
+  .notes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    margin-top: 48px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ice-400);
+  }
+
+  .notes__item {
+    padding-top: 16px;
+    border-top: var(--hairline);
+  }
+
+  .notes__label {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--ice-100);
+  }
+
+  /* --- the ledger -------------------------------------------------------- */
+
+  .ledger {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 64px;
+    padding-block: 64px;
+  }
+
+  /* The hairline is inside the shell, so it lines up with the stats above. */
+  .ledger::before {
+    content: '';
+    grid-column: 1 / -1;
+    border-top: var(--hairline);
+    margin-bottom: -16px;
+  }
+
+  .ledger__index {
+    position: sticky;
+    top: calc(var(--sw-nav-h, 76px) + 28px);
+    align-self: start;
+  }
+
+  .ledger__title {
+    margin: 24px 0 32px;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: 56px;
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+  }
+
+  .ledger__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+  }
+
+  .ledger__list a {
+    display: flex;
+    gap: 16px;
+    padding: 12px 0;
+    border-top: var(--hairline);
+    color: var(--ice-400);
+  }
+
+  .ledger__num {
+    padding-top: 2px;
+    color: var(--dim);
+  }
+
+  .ledger__body {
+    display: flex;
+    flex-direction: column;
+    gap: 96px;
+  }
+
+  .ws {
+    scroll-margin-top: calc(var(--sw-nav-h, 76px) + 28px);
+  }
+
+  .ws__title {
+    margin: 16px 0 0;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: min(4.4vw, 64px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+  }
+
+  .ws__intro {
+    max-width: 640px;
+    margin: 20px 0 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ice-400);
+  }
+
+  /* 02 property sites */
+
+  .properties {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 36px;
+  }
+
+  .property {
+    padding: 20px;
+    border: 1px solid rgb(238 242 244 / 0.12);
+    border-radius: var(--radius-lg);
+    background: var(--ink-900);
+  }
+
+  .property__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .property__name {
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: 26px;
+    letter-spacing: -0.03em;
+  }
+
+  .property__meta {
+    font-size: 11px;
+    color: var(--dim);
+    text-align: right;
+  }
+
+  .property__blurb {
+    margin: 16px 0 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ice-500);
+  }
+
+  .property__stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgb(238 242 244 / 0.12);
+  }
+
+  .property__value {
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: 28px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .property__label {
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--dim);
+  }
+
+  /* 03 brand */
+
+  .brand {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-rows: 140px;
+    gap: 12px;
+    margin-top: 36px;
+  }
+
+  .brand__tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+  }
+
+  .brand__tile--hero {
+    grid-column: span 3;
+    grid-row: span 2;
+  }
+
+  .brand__tile--wide {
+    grid-column: span 3;
+  }
+
+  .brand__tile--slot {
+    grid-column: span 2;
+    background: var(--ink-900);
+    border: 1px solid rgb(238 242 244 / 0.1);
+  }
+
+  /* Reap's own palette — literal on purpose, it isn't ours. */
+  .brand__tile--forest {
+    background: #394334;
+  }
+
+  .brand__tile--gold {
+    background: #c9a961;
+  }
+
+  .brand__tile--sage {
+    background: #5a6650;
+  }
+
+  .brand__tile--paper {
+    background: #f3efe6;
+  }
+
+  .brand__tag {
+    padding: 5px 12px;
+    border-radius: 4px;
+    color: rgb(255 255 255 / 0.5);
+  }
+
+  .brand__tag--on-dark {
+    color: rgb(238 242 244 / 0.7);
+    background: rgb(12 16 22 / 0.5);
+  }
+
+  .brand__tag--on-light {
+    color: rgb(12 16 22 / 0.5);
+    background: rgb(12 16 22 / 0.06);
+  }
+
+  /* 04 films */
+
+  .reel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 36px;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--ink-900);
+    border: 1px solid rgb(238 242 244 / 0.1);
+  }
+
+  .reel__still {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.35;
+    filter: grayscale(1);
+  }
+
+  .reel__center {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .reel__play {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: var(--ice-100);
+    color: var(--ink-950);
+    font-size: 20px;
+  }
+
+  .reel__tag {
+    padding: 5px 12px;
+    border-radius: 4px;
+    color: rgb(255 255 255 / 0.6);
+    background: rgb(255 255 255 / 0.08);
+  }
+
+  .films {
+    list-style: none;
+    margin: 24px 0 0;
+    padding: 0;
+  }
+
+  .films__row {
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    gap: 20px;
+    align-items: baseline;
+    padding: 14px 0;
+    border-top: 1px solid rgb(238 242 244 / 0.12);
+    font-size: 15px;
+  }
+
+  .films__dur,
+  .films__kind {
+    color: var(--dim);
+  }
+
+  .films__kind {
+    font-size: 13px;
+  }
+
+  /* 05 lucidos — an ice island inside the ink story. It re-declares the light
+     tokens on itself, in both colour schemes, the way service card 03 breaks
+     from the pile — so everything inside reads as the site's light mode
+     without a single one-off colour. */
+
+  .os {
+    --color-background: var(--ice-100);
+    --color-background-secondary: var(--ice-200);
+    --color-foreground: var(--ink-950);
+    --color-foreground-muted: var(--ink-600);
+    --color-border: rgb(12 16 22 / 0.12);
+    --dim: var(--ink-600);
+    padding: 40px;
+    margin: 0 -40px;
+    border-radius: var(--radius-xl);
+    background: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  .os .ws__intro {
+    color: var(--ink-700);
+  }
+
+  /* Pinned to the light stripes whatever the page's colour scheme is. */
+  .os :global(.placeholder) {
+    background-color: var(--ice-200);
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgb(12 16 22 / 0.06) 0,
+      rgb(12 16 22 / 0.06) 9px,
+      transparent 9px,
+      transparent 18px
+    );
+  }
+
+  .os :global(.placeholder__label) {
+    color: rgb(12 16 22 / 0.45);
+    background: rgb(255 255 255 / 0.75);
+  }
+
+  .os :global(.os__shot) {
+    margin-top: 32px;
+    aspect-ratio: 16 / 8;
+    border-radius: var(--radius-md);
+  }
+
+  .os__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-top: 28px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink-700);
+  }
+
+  .os__cap {
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .os__cap strong {
+    display: block;
+    font-weight: 600;
+    color: var(--ink-950);
+  }
+
+  /* 06 social, 07 email */
+
+  .posts {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-top: 32px;
+  }
+
+  .tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    padding: 8px;
+    border-radius: var(--radius-md);
+    background: var(--ink-900);
+    border: 1px solid rgb(238 242 244 / 0.1);
+    text-align: center;
+  }
+
+  .tile--portrait {
+    aspect-ratio: 3 / 4;
+  }
+
+  .tile__tag {
+    font-size: 11px;
+    line-height: 1.4;
+    color: rgb(255 255 255 / 0.5);
+  }
+
+  .email {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+    margin-top: 32px;
+  }
+
+  .email__intro {
+    margin: 0;
+  }
+
+  .email__shots {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* --- stack ------------------------------------------------------------- */
+
+  .stack {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 64px;
+    padding-block: 48px 96px;
+  }
+
+  .stack::before {
+    content: '';
+    grid-column: 1 / -1;
+    border-top: var(--hairline);
+    margin-bottom: -16px;
+  }
+
+  .stack__groups {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--ice-400);
+  }
+
+  .stack__label {
+    margin-bottom: 8px;
+    color: var(--ice-100);
+  }
+
+  /* --- next project — mirrors the door on /work/[...slug] ----------------- */
+
+  .nextup {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 52svh;
+    overflow: hidden;
+    border-top: var(--hairline);
+    background: var(--ink-950);
+    isolation: isolate;
+  }
+
+  .nextup__img {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.5;
+    filter: grayscale(1);
+    transition:
+      transform 0.9s var(--ease-sw),
+      opacity 0.5s ease,
+      filter 0.5s ease;
+  }
+
+  .nextup:hover .nextup__img,
+  .nextup:focus-visible .nextup__img {
+    transform: scale(1.04);
+    opacity: 0.75;
+    filter: grayscale(0);
+  }
+
+  .nextup__body {
+    padding-block: 56px;
+    color: var(--ice-100);
+  }
+
+  .nextup__body .label-mono {
+    opacity: 0.7;
+  }
+
+  .nextup__title {
+    display: block;
+    margin-top: 14px;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: min(8vw, 104px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+  }
+
+  /* --- responsive --------------------------------------------------------- */
+
+  @media (max-width: 1000px) {
+    .ledger,
+    .stack {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    .ledger__index {
+      position: static;
+    }
+
+    .ledger__title {
+      font-size: 44px;
+    }
+
+    .ledger__body {
+      gap: 72px;
+    }
+
+    .os {
+      margin: 0;
+      padding: 28px;
+    }
+
+    .os__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .brand {
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: 120px;
+    }
+
+    .brand__tile--hero {
+      grid-column: span 3;
+    }
+
+    .brand__tile--slot {
+      grid-column: span 1;
+    }
+
+    .posts {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 800px) {
+    .hero {
+      min-height: 80svh;
+    }
+
+    .hero__body {
+      padding-top: 120px;
+    }
+
+    .hero__foot {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    .hero__intro {
+      font-size: 17px;
+    }
+
+    .hero__scroll {
+      justify-content: flex-start;
+    }
+
+    .stats {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .stats__item {
+      padding: 24px 16px 24px 0;
+    }
+
+    .stats__item:nth-child(2n) {
+      padding-left: 16px;
+      border-right: 0;
+    }
+
+    .stats__item:nth-child(-n + 2) {
+      border-bottom: var(--hairline);
+    }
+
+    .stats__value {
+      font-size: 40px;
+    }
+
+    .flagship {
+      padding-top: 64px;
+    }
+
+    .flagship__head,
+    .properties,
+    .email,
+    .notes,
+    .stack__groups,
+    .flagship__shots {
+      grid-template-columns: 1fr;
+    }
+
+    .flagship__head {
+      gap: 24px;
+    }
+
+    .flagship__cover {
+      margin-top: 32px;
+      border-radius: var(--radius-lg);
+    }
+
+    .flagship__cover .pill {
+      right: 12px;
+      bottom: 12px;
+    }
+
+    .ws__title {
+      font-size: 9vw;
+    }
+
+    .brand {
+      grid-template-columns: repeat(2, 1fr);
+      grid-auto-rows: 110px;
+    }
+
+    .brand__tile--hero,
+    .brand__tile--wide {
+      grid-column: span 2;
+    }
+
+    .films__row {
+      grid-template-columns: 48px 1fr;
+    }
+
+    .films__kind {
+      grid-column: 2;
+    }
+
+    .posts {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .nextup__title {
+      font-size: 13vw;
+    }
+  }
+</style>

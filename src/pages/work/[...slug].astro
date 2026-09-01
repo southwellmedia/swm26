@@ -26,13 +26,18 @@ export async function getStaticPaths() {
 
   const ordered = [...projects].sort((a, b) => a.data.order - b.data.order);
 
-  return ordered.map((project, i) => ({
-    params: { slug: project.id },
-    props: {
-      project,
-      next: ordered[(i + 1) % ordered.length],
-    },
-  }));
+  // A project with `story: true` has its own page file beside this one, and
+  // Astro would otherwise build both to the same path. It stays in the ring so
+  // "next project" still walks the whole portfolio.
+  return ordered
+    .map((project, i) => ({
+      params: { slug: project.id },
+      props: {
+        project,
+        next: ordered[(i + 1) % ordered.length],
+      },
+    }))
+    .filter(({ props }) => !props.project.data.story);
 }
 
 const { project, next } = Astro.props;

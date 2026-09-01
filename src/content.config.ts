@@ -94,9 +94,7 @@ const work = defineCollection({
       cover: image().optional(),
       coverAlt: z.string().optional(),
       /** Further captures, shown down the case-study page. */
-      gallery: z
-        .array(z.object({ src: image(), alt: z.string().optional() }))
-        .default([]),
+      gallery: z.array(z.object({ src: image(), alt: z.string().optional() })).default([]),
       /** Caption for the striped placeholder standing in for the capture. */
       placeholder: z.string().optional(),
       /** The two halves of a case study, when they have been written. */
@@ -106,6 +104,11 @@ const work = defineCollection({
       features: z.array(z.string()).default([]),
       /** e.g. a partnership credit, shown by the project title. */
       badge: z.string().optional(),
+      /**
+       * The project has a hand-built story page at pages/work/<id>.astro.
+       * The generic [...slug] template skips it; the grid still links to it.
+       */
+      story: z.boolean().default(false),
       /** Lower sorts first — the homepage grid takes the first several. */
       order: z.number().default(99),
       featured: z.boolean().default(false),

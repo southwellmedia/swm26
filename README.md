@@ -32,9 +32,12 @@ src/
   content/
     work/*.mdx            one file per project — feeds the homepage grid,
                           /work, and each case-study page
+  data/
+    reap-capital.ts       long-form content for the Reap Capital story page
     blog/en/*.mdx         Lab posts
   components/
-    site/                 Nav (+ overlay menu), Footer, PillButton, Placeholder
+    site/                 Nav (+ overlay menu), Footer, PillButton, Placeholder,
+                          BeforeAfter (the slider on the Reap Capital story)
     sections/             Hero, WorkGrid, Services, Cta, SectionHead
     ui/ seo/ layout/      Velocity's own components, untouched
   layouts/
@@ -44,6 +47,7 @@ src/
     southwell.css         site-level extras — display type, reveals, shell
   pages/
     index / studio / work / work/[slug] / blog / contact / 404
+    work/reap-capital     hand-built story page; [slug] skips it (story: true)
 ```
 
 ## The design system
@@ -110,10 +114,27 @@ an `<Image>` and keeps the hover-zoom as-is.
   per project.
 - **Pages the prototype never had**: `/studio`, `/work`, `/work/<slug>`,
   `/contact`, `/blog`, `404`.
+- **Client stories.** `/work/reap-capital` is the first hand-built case study,
+  ported from `Reap Capital Case Study B.dc.html` in Claude Design. A project
+  opts in with `story: true` in its MDX frontmatter: `work/[...slug].astro`
+  then skips it (Astro would otherwise build two pages to one path) and
+  `pages/work/<id>.astro` owns the URL. The whole story sits on ink — you
+  leave the ice site, drop into the story, and the Cta hands you back — so
+  `SiteLayout` takes `navTone="dark"`, which makes the nav frost to ink
+  rather than the page ground. The long-form content lives in
+  `src/data/reap-capital.ts`, apart from the summary the grid reads from the
+  MDX. Every figure in it is the prototype's draft copy: confirm with Reap
+  before launch. Section 05 is an ice island inside the ink page; it
+  re-declares the light tokens on itself the way service card 03 breaks from
+  the pile. `BeforeAfter.astro` takes optional `before` / `after` images and
+  shows flat colour until they land.
 
 ## Still to do
 
 - **Assets.** Every render and project capture is still a striped placeholder.
+  On the Reap Capital story that means the three flagship detail shots, the
+  brand tiles, the reel, the social and email tiles, and the before/after
+  captures for La Fortuna and The Landry.
 - **Case-study copy.** The six work entries carry only the name and discipline
   the prototype had; their `description` is a generic stand-in marked `TODO`
   and their bodies are empty. Nothing was invented about real clients.
