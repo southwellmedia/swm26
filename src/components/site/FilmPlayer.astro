@@ -1,0 +1,246 @@
+---
+/**
+ * FilmPlayer
+ *
+ * A click-to-load YouTube facade. The poster frame and the play control ship
+ * as static HTML; the iframe is only injected once someone actually asks for
+ * the film. That keeps YouTube's player — several hundred kilobytes of script,
+ * plus its cookies — off the page for everyone who only scrolls past, the same
+ * click-to-load contract GoogleMap uses for Maps.
+ *
+ * The facade is a real link to the video, so without JS (or on a
+ * cmd/ctrl-click) the film is still one tap away on YouTube.
+ *
+ * Built for an ink surface, like BeforeAfter.
+ */
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  /** YouTube video id — the `g43k2Psr8dQ` in youtube.com/watch?v=… */
+  id: string;
+  /** Read out by the play control, shown in the caption, set as the iframe title. */
+  title: string;
+  /** Poster frame. A 16:9 still; YouTube's own maxresdefault works. */
+  poster: ImageMetadata;
+  /** Caption line — what kind of film this is. */
+  kind?: string;
+  /** Running time, e.g. '1:08'. */
+  dur?: string;
+  class?: string;
+}
+
+const { id, title, poster, kind, dur, class: className } = Astro.props;
+
+const watchUrl = `https://www.youtube.com/watch?v=${id}`;
+// nocookie host, no related-video grid, and autoplay because the click that
+// injected this iframe *was* the play.
+const embedUrl = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+---
+
+<figure class:list={['film', className]}>
+  <div class="film__box">
+    <a
+      class="film__stage"
+      href={watchUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Play ${title}`}
+      data-film-play
+      data-film-src={embedUrl}
+      data-film-title={title}
+    >
+      <Image
+        src={poster}
+        alt=""
+        layout="none"
+        widths={[768, 1280]}
+        sizes="(max-width: 1000px) 100vw, 70vw"
+        class="film__still"
+      />
+      <span class="film__scrim" aria-hidden="true"></span>
+      <span class="film__play" aria-hidden="true">▶</span>
+      {dur && <span class="film__dur">{dur}</span>}
+    </a>
+  </div>
+
+  <figcaption class="film__caption">
+    <span class="film__title">{title}</span>
+    {kind && <span class="film__kind">{kind}</span>}
+    <a class="film__link" href={watchUrl} target="_blank" rel="noopener noreferrer">
+      Watch on YouTube ⟶
+    </a>
+  </figcaption>
+</figure>
+
+<style>
+  .film {
+    margin: 0;
+  }
+
+  .film__box {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--ink-900);
+    border: 1px solid rgb(238 242 244 / 0.1);
+  }
+
+  /* The injected player. Written :global because the iframe is created at
+     runtime and never picks up Astro's scope attribute. */
+  .film__box :global(iframe) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .film__stage {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .film__still {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--ease-sw);
+  }
+
+  .film__scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgb(12 16 22 / 0.15) 0%, rgb(12 16 22 / 0.55) 100%);
+  }
+
+  .film__play {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 76px;
+    /* The glyph's own bearing sits it left of centre. */
+    padding-left: 4px;
+    border-radius: 50%;
+    background: var(--ice-100);
+    color: var(--ink-950);
+    font-size: 20px;
+    transition: transform 0.3s var(--ease-sw);
+  }
+
+  .film__stage:hover .film__still {
+    transform: scale(1.02);
+  }
+
+  .film__stage:hover .film__play {
+    transform: scale(1.06);
+  }
+
+  .film__stage:focus-visible {
+    outline: 2px solid var(--ice-100);
+    outline-offset: 4px;
+  }
+
+  .film__dur {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    color: rgb(238 242 244 / 0.8);
+    background: rgb(12 16 22 / 0.5);
+  }
+
+  .film__caption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 18px;
+    margin-top: 18px;
+    font-size: 15px;
+  }
+
+  .film__kind {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ice-500);
+  }
+
+  .film__link {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ice-400);
+    text-decoration: none;
+  }
+
+  .film__link:hover {
+    color: var(--ice-100);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  @media (max-width: 800px) {
+    .film__play {
+      width: 60px;
+      height: 60px;
+      font-size: 16px;
+    }
+
+    /* Two short lines beat one line with the link stranded on its own row. */
+    .film__link {
+      margin-left: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .film__still,
+    .film__play {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  // Swap the facade for the real player on click. Re-run after a
+  // view-transition swap, since the DOM is replaced.
+  function initFilms() {
+    for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-film-play]')) {
+      if (link.dataset.ready) continue;
+      link.dataset.ready = '';
+
+      link.addEventListener('click', (event) => {
+        // Modified clicks mean "open it over there" — let YouTube have them.
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+        const src = link.dataset.filmSrc;
+        if (!src) return;
+        event.preventDefault();
+
+        const iframe = document.createElement('iframe');
+        iframe.src = src;
+        iframe.title = link.dataset.filmTitle ?? 'Film';
+        iframe.allow =
+          'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+        iframe.allowFullscreen = true;
+        link.replaceWith(iframe);
+      });
+    }
+  }
+
+  initFilms();
+  document.addEventListener('astro:after-swap', initFilms);
+</script>

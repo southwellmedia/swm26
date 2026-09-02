@@ -88,15 +88,18 @@
   /* -----------------------------------------------------------------------
      Display type
      The prototype sizes headlines against the viewport, not a modular scale,
-     so the type stays edge-to-edge at every width. Values are the signed-off
-     ones; the breakpoints below were added when the desktop-only prototype
-     was made responsive.
+     so the type stays edge-to-edge at every width. The signed-off values are
+     the caps — a headline still fills a large monitor. What changed after the
+     desktop-only prototype went responsive is the ramp underneath: one clamp
+     per scale instead of min() plus a step-down, because the vw term alone
+     made a 1440 laptop read like a billboard and the breakpoints jumped the
+     size *up* as the window narrowed.
      ----------------------------------------------------------------------- */
   .display-hero {
     font-family: var(--font-display);
     font-weight: var(--display-weight);
     text-transform: var(--display-case);
-    font-size: min(11.5vw, 168px);
+    font-size: clamp(46px, 6.6vw + 22px, 168px);
     line-height: 0.93;
     letter-spacing: var(--display-tracking);
   }
@@ -105,7 +108,7 @@
     font-family: var(--font-display);
     font-weight: var(--display-weight);
     text-transform: var(--display-case);
-    font-size: min(8vw, 116px);
+    font-size: clamp(46px, 4.2vw + 24px, 116px);
     line-height: 1;
     letter-spacing: var(--display-tracking);
   }
@@ -114,7 +117,7 @@
     font-family: var(--font-display);
     font-weight: var(--display-weight);
     text-transform: var(--display-case);
-    font-size: min(6.4vw, 92px);
+    font-size: clamp(36px, 3.3vw + 20px, 92px);
     line-height: 0.96;
     letter-spacing: var(--display-tracking);
   }
@@ -123,7 +126,7 @@
     font-family: var(--font-display);
     font-weight: var(--display-weight);
     text-transform: var(--display-case);
-    font-size: min(13vw, 190px);
+    font-size: clamp(48px, 7vw + 22px, 190px);
     line-height: 0.9;
     letter-spacing: var(--display-tracking);
   }
@@ -152,26 +155,6 @@
   @media (max-width: 900px) {
     .display-mark {
       font-size: 22vw;
-    }
-  }
-
-  @media (max-width: 800px) {
-    .display-section {
-      font-size: 15vw;
-    }
-
-    .display-service {
-      font-size: 11vw;
-    }
-
-    .display-cta {
-      font-size: 15vw;
-    }
-  }
-
-  @media (max-width: 700px) {
-    .display-hero {
-      font-size: 13vw;
     }
   }
 

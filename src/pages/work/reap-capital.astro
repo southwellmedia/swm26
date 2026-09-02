@@ -18,7 +18,7 @@ import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import SiteLayout from '@/layouts/SiteLayout.astro';
 import Placeholder from '@/components/site/Placeholder.astro';
-import BeforeAfter from '@/components/site/BeforeAfter.astro';
+import FilmPlayer from '@/components/site/FilmPlayer.astro';
 import Cta from '@/components/sections/Cta.astro';
 import {
   hero,
@@ -33,6 +33,7 @@ import {
 } from '@/data/reap-capital';
 import feature from '@/assets/work/reap-capital/feature.webp';
 import cover from '@/assets/work/reap-capital/cover.webp';
+import filmPoster from '@/assets/work/reap-capital/film-pref-equity.webp';
 
 // Same ordering as the generic template, so "next" agrees with the grid.
 const projects = (
@@ -41,6 +42,9 @@ const projects = (
 
 const index = projects.findIndex((project) => project.id === 'reap-capital');
 if (index === -1) throw new Error('reap-capital is missing from src/content/work');
+
+// The section plays the first film and lists any others under it.
+const [reel, ...moreFilms] = films;
 
 const project = projects[index];
 const next = projects[(index + 1) % projects.length];
@@ -184,7 +188,25 @@ const nextImage = next.data.feature ?? next.data.cover;
                     <span class="property__name">{property.name}</span>
                     <span class="property__meta label-mono">{property.meta}</span>
                   </div>
-                  <BeforeAfter afterLabel={property.url} reveal={property.reveal} />
+                  <a
+                    class="property__shot"
+                    href={property.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Image
+                      src={property.shot}
+                      alt={property.shotAlt}
+                      layout="none"
+                      widths={[480, 720, 1080]}
+                      sizes="(max-width: 800px) 100vw, 45vw"
+                      class="property__shot-img"
+                    />
+                    <span class="property__url label-mono">
+                      {property.url}
+                      {property.status && <span class="property__status">{property.status}</span>}
+                    </span>
+                  </a>
                   <p class="property__blurb">{property.blurb}</p>
                   <div class="property__stats">
                     {property.stats.map((stat) => (
@@ -211,7 +233,16 @@ const nextImage = next.data.feature ?? next.data.cover;
 
           <div class="brand">
             <div class="brand__tile brand__tile--forest brand__tile--hero">
-              <span class="brand__tag brand__tag--on-dark label-mono"
+              <img
+                class="brand__logomark"
+                src="/reap-logomark-gold.svg"
+                alt="Reap Capital logomark"
+                width="288"
+                height="371"
+                loading="lazy"
+                decoding="async"
+              />
+              <span class="brand__tag brand__tag--on-dark brand__tag--corner label-mono"
                 >logomark — gold on forest</span
               >
             </div>
@@ -238,34 +269,37 @@ const nextImage = next.data.feature ?? next.data.cover;
         {/* 04 films */}
         <article class="ws" id="ws-04" data-reveal>
           <p class="eyebrow label-mono">( 04 ) FILMS</p>
-          <h3 class="ws__title">fourteen films, <em>no stock.</em></h3>
+          <h3 class="ws__title">the first film, <em>no stock.</em></h3>
+          <p class="ws__intro">
+            The founder series opens on the question every LP asks before the deck: if this goes
+            sideways, what protects my money? Shot on site, cut in-house, published to YouTube and
+            dropped into the invest flow. One film live, the rest in the edit.
+          </p>
 
-          <div class="reel">
-            <Image
-              src={feature}
-              alt=""
-              layout="none"
-              widths={[768, 1280, 1920]}
-              sizes="(max-width: 1000px) 100vw, 70vw"
-              class="reel__still"
+          <div class="ws__film">
+            <FilmPlayer
+              id={reel.id}
+              title={reel.title}
+              kind={reel.kind}
+              dur={reel.dur}
+              poster={filmPoster}
             />
-            <div class="reel__center">
-              <span class="reel__play" aria-hidden="true">▶</span>
-              <span class="reel__tag label-mono">reel slot — 2:10 · drop MP4 or Vimeo link</span>
-            </div>
           </div>
 
-          <ol class="films">
-            {
-              films.map((film) => (
-                <li class="films__row">
-                  <span class="films__dur label-mono">{film.dur}</span>
-                  <span>{film.title}</span>
-                  <span class="films__kind">{film.kind}</span>
-                </li>
-              ))
-            }
-          </ol>
+          {/* Everything after the featured film. Empty until the next one ships. */}
+          {
+            moreFilms.length > 0 && (
+              <ol class="films">
+                {moreFilms.map((film) => (
+                  <li class="films__row">
+                    <span class="films__dur label-mono">{film.dur}</span>
+                    <span>{film.title}</span>
+                    <span class="films__kind">{film.kind}</span>
+                  </li>
+                ))}
+              </ol>
+            )
+          }
         </article>
 
         {/* 05 lucidos — a light island in the dark page */}
@@ -735,6 +769,59 @@ const nextImage = next.data.feature ?? next.data.cover;
     text-align: right;
   }
 
+  .property__shot {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--ink-800);
+  }
+
+  .property__shot-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s var(--ease-sw);
+  }
+
+  .property__shot:hover .property__shot-img {
+    transform: scale(1.03);
+  }
+
+  .property__shot:focus-visible {
+    outline: 2px solid var(--ice-100);
+    outline-offset: 3px;
+  }
+
+  /* Same tag treatment the before/after used, so the card reads unchanged. */
+  .property__url {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 1;
+    color: rgb(238 242 244 / 0.85);
+    background: rgb(12 16 22 / 0.55);
+    backdrop-filter: blur(6px);
+  }
+
+  .property__status {
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-950);
+    background: var(--ice-100);
+  }
+
   .property__blurb {
     margin: 16px 0 0;
     font-size: 14px;
@@ -783,8 +870,16 @@ const nextImage = next.data.feature ?? next.data.cover;
   }
 
   .brand__tile--hero {
+    position: relative;
     grid-column: span 3;
     grid-row: span 2;
+  }
+
+  /* Reap's own mark, off /public and unprocessed — it's already an SVG.
+     Sized off the tile so it holds its margin at every breakpoint. */
+  .brand__logomark {
+    width: auto;
+    height: 56%;
   }
 
   .brand__tile--wide {
@@ -825,6 +920,13 @@ const nextImage = next.data.feature ?? next.data.cover;
     background: rgb(12 16 22 / 0.5);
   }
 
+  /* Out of the mark's way once a tile has real artwork in the middle. */
+  .brand__tag--corner {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+  }
+
   .brand__tag--on-light {
     color: rgb(12 16 22 / 0.5);
     background: rgb(12 16 22 / 0.06);
@@ -832,59 +934,14 @@ const nextImage = next.data.feature ?? next.data.cover;
 
   /* 04 films */
 
-  .reel {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 36px;
-    aspect-ratio: 16 / 9;
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    background: var(--ink-900);
-    border: 1px solid rgb(238 242 244 / 0.1);
+  .ws__film {
+    margin: 36px 0 0;
   }
 
-  .reel__still {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.35;
-    filter: grayscale(1);
-  }
-
-  .reel__center {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-  }
-
-  .reel__play {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 76px;
-    height: 76px;
-    border-radius: 50%;
-    background: var(--ice-100);
-    color: var(--ink-950);
-    font-size: 20px;
-  }
-
-  .reel__tag {
-    padding: 5px 12px;
-    border-radius: 4px;
-    color: rgb(255 255 255 / 0.6);
-    background: rgb(255 255 255 / 0.08);
-  }
-
+  /* The films after the featured one. Renders nothing until a second ships. */
   .films {
     list-style: none;
-    margin: 24px 0 0;
+    margin: 28px 0 0;
     padding: 0;
   }
 

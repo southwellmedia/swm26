@@ -59,3 +59,8 @@ package-lock.json
 # Internal docs
 southwell-astro-boilerplate-docs.md
 southwell-astro-boilerplate-prd.md
+
+# Full-res mockup exports. Astro cannot optimise anything under public/ —
+# it is copied verbatim — so the working copies live in src/assets/ and these
+# 4096px originals stay local.
+public/work/

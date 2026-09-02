@@ -1,3 +1,7 @@
+import type { ImageMetadata } from 'astro';
+import fortunaShot from '@/assets/work/reap-capital/fortuna-mockup.webp';
+import landryShot from '@/assets/work/reap-capital/landry-mockup.webp';
+
 // Content for the Reap Capital case study (/work/reap-capital).
 //
 // Ported from the Claude Design prototype (Reap Capital Case Study B.dc.html).
@@ -19,14 +23,22 @@ export interface Chapter {
 export interface Property {
   name: string;
   meta: string;
+  /** The domain as it should read on the page. Display only. */
   url: string;
+  /** Where the pane actually goes — a preview URL while a domain is pending. */
+  href: string;
+  /** Set while `url` isn't serving the new site yet. */
+  status?: string;
   blurb: string;
-  /** Initial slider position for the before/after, as a percentage. */
-  reveal: number;
+  /** The site on a laptop — a Mockuuups composite of the live homepage. */
+  shot: ImageMetadata;
+  shotAlt: string;
   stats: Stat[];
 }
 
 export interface Film {
+  /** YouTube video id — the `g43k2Psr8dQ` in youtube.com/watch?v=… */
+  id: string;
   title: string;
   kind: string;
   dur: string;
@@ -52,7 +64,7 @@ export const hero = {
 export const stats: Stat[] = [
   { value: '+212%', label: 'Qualified investor inquiries, year over year' },
   { value: '3.4×', label: 'Tour requests across property sites' },
-  { value: '14', label: 'Films shot and cut on Reap properties' },
+  { value: '16', label: 'Deals published as a living track record' },
   { value: '$325M', label: 'AUM represented on one platform' },
 ];
 
@@ -78,20 +90,25 @@ export const flagship = {
 export const chapters: Chapter[] = [
   { num: '02', title: 'Property sites — La Fortuna, The Landry' },
   { num: '03', title: 'Brand system' },
-  { num: '04', title: 'Films & showreel' },
+  { num: '04', title: 'Films — the founder series' },
   { num: '05', title: 'LucidOS, customized' },
   { num: '06', title: 'Social media' },
   { num: '07', title: 'Email campaigns' },
 ];
 
+// The shots are laptop mockups of the live homepages. Both are landscape 4:3
+// so the pair reads as one row; the frame crops them to 16:10 from the centre,
+// which keeps every screen fully inside the crop.
 export const properties: Property[] = [
   {
     name: 'la fortuna',
     meta: 'DALLAS · 230 UNITS',
     url: 'fortunaapartments.com',
-    reveal: 58,
+    href: 'https://www.fortunaapartments.com/',
     blurb:
       'Under new ownership, mid-renovation. Honest photography, hourly availability, a Spanish mirror and an offer published from LucidOS.',
+    shot: fortunaShot,
+    shotAlt: 'The La Fortuna homepage open on a laptop',
     stats: [
       { value: '17', label: 'Live units synced' },
       { value: '3.9×', label: 'Tour requests' },
@@ -99,12 +116,17 @@ export const properties: Property[] = [
     ],
   },
   {
+    // landryliving.com still resolves to the old template — the domain hasn't
+    // cut over yet, so the pane links to the build and says so.
     name: 'the landry',
     meta: 'ARLINGTON · 288 UNITS',
     url: 'landryliving.com',
-    reveal: 42,
+    href: 'https://landry26.vercel.app/',
+    status: 'launching',
     blurb:
       'Written as one day, morning to night, with a virtual tour path for renters relocating to North Arlington.',
+    shot: landryShot,
+    shotAlt: 'The Landry homepage open on a laptop',
     stats: [
       { value: '288', label: 'Homes, five plans' },
       { value: '2.8×', label: 'Tour requests' },
@@ -113,11 +135,16 @@ export const properties: Property[] = [
   },
 ];
 
+// What has actually shipped. films[0] is the one the section plays; anything
+// added after it lists underneath the player. One film so far — resist the
+// urge to pad this with the ones still in the edit.
 export const films: Film[] = [
-  { title: 'Preferred Equity, Explained', kind: 'Founder series', dur: '6:42' },
-  { title: 'La Fortuna — Hero Loop', kind: 'Site film · drone + interiors', dur: '0:48' },
-  { title: 'Rescue Capital: Creekside', kind: 'Founder series', dur: '9:15' },
-  { title: 'The Landry — A Day Here', kind: 'Property tour', dur: '2:36' },
+  {
+    id: 'g43k2Psr8dQ',
+    title: 'Pref Equity — How Is Your Investment Protected',
+    kind: 'Founder series · August 2026',
+    dur: '1:08',
+  },
 ];
 
 export const lucidos: Capability[] = [

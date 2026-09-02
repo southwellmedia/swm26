@@ -170,11 +170,12 @@
        04 shade — slate green, glow from the bottom-left
      ------------------------------------------------------------------------- */
   /* The nav's contextual label — the client name after the wordmark slash.
-     The one place the site allows itself a hue; it borrows the steel of
-     service card 01 so it doesn't read as a new colour. */
-  --nav-context: rgb(64 104 152);
-  /* Lifted for use over a dark hero image, in either colour scheme. */
-  --nav-context-on-media: rgb(132 176 226);
+     The one place the site allows itself a hue, and it is the studio's own:
+     the spring green off southwellmedia.com. Darkened here so 22px at weight
+     300 still holds on ice. */
+  --nav-context: rgb(0 122 85);
+  /* The brand green itself, for use over a dark hero image or on ink. */
+  --nav-context-on-media: rgb(0 212 146);
 
   --service-white-bg: #ffffff;
   --service-white-fg: var(--ink-950);
@@ -313,7 +314,7 @@
   /* Service cards in dark: the pile inverts, and card 03 still breaks the
      pattern — it goes to ice while the others stay on ink. */
   /* Lifted so it holds up on ink at the same perceived weight. */
-  --nav-context: rgb(132 176 226);
+  --nav-context: rgb(0 212 146);
 
   --service-white-bg: var(--ink-900);
   --service-white-fg: var(--ice-100);
