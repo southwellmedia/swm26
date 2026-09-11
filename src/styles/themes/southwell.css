@@ -129,6 +129,10 @@
   --hero-panel-display: block;
   --hero-headline-pull: -0.52em;
   --hero-headline-pull-sm: -0.4em;
+  /* Leading of the two-line hero headline only. .display-hero elsewhere
+     stays at 0.93; this pair is lowercase with no descenders on line one,
+     so it wants to sit tighter. Tune by eye between 0.86 and 0.92. */
+  --hero-leading: 0.88;
 
   --display-em-style: normal;
   --display-em-weight: 300;

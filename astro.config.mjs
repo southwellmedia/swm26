@@ -27,13 +27,23 @@ export default defineConfig({
     layout: 'constrained',
   },
 
+  // ClientRouter swaps pages client-side; without prefetch every swap is a
+  // cold fetch while the old page stays painted. Prefetch on hover by default,
+  // for every internal link.
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'hover',
+  },
+
   integrations: [
     react(),
     mdx(),
     sitemap(),
     // Iconify sets, inlined as SVG at build time - only the icons actually
     // referenced end up in the output, and none of it ships JavaScript.
-    icon({ include: { lucide: ['*'] } }),
+    // Lucide for UI glyphs; Font Awesome brands for real logos (LinkedIn,
+    // GitHub), which Lucide only approximates.
+    icon({ include: { lucide: ['*'], 'fa6-brands': ['linkedin-in', 'github'] } }),
   ],
 
   vite: {

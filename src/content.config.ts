@@ -109,6 +109,13 @@ const work = defineCollection({
        * The generic [...slug] template skips it; the grid still links to it.
        */
       story: z.boolean().default(false),
+      /**
+       * The id of the story page this project is told inside of, e.g. the six
+       * AKH builds inside `akh-digital`. A project with a parent keeps its own
+       * case-study page but leaves the grids, and its "next" door leads back
+       * to the parent.
+       */
+      parent: z.string().optional(),
       /** Lower sorts first — the homepage grid takes the first several. */
       order: z.number().default(99),
       featured: z.boolean().default(false),

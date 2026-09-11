@@ -2,62 +2,90 @@
 /**
  * Cta
  *
- * The sign-off: a soft object the headline overlaps, then the two buttons.
+ * The sign-off: the headline and the two buttons on a textured field.
  *
- * It uses the same HeroVisual treatment as the hero, in an organic silhouette,
- * so the two visuals on the page are demonstrably one system. Not the logomark
- * — that is a green gradient, which fights the monochrome identity.
+ * The field is the light colourway of the service cards — two soft blooms
+ * lit from opposite corners, grain over the top — run full-bleed behind the
+ * section, with the wordmark blown up and nearly transparent behind the
+ * headline. It gives the sign-off a surface of its own between the ink
+ * founder card above and the ink footer below, without adding an object the
+ * type has to negotiate with.
  */
 import siteConfig from '@/config/site.config';
-import HeroVisual from '@/components/site/HeroVisual.astro';
 import PillButton from '@/components/site/PillButton.astro';
 ---
 
-<section
-  class="cta relative flex flex-col items-center overflow-hidden shell pt-[70px] pb-[140px] max-[800px]:pb-[100px]"
->
-  <div class="cta__object" data-reveal>
-    <HeroVisual class="cta__blob" quiet />
+<section class="cta relative overflow-hidden">
+  <div class="cta__field" aria-hidden="true">
+    <span class="cta__watermark display-mark">{siteConfig.mark}</span>
   </div>
 
-  <h2 class="cta__headline display-cta m-0 text-center" data-reveal>
-    Don&rsquo;t be<br /><em>a stranger.</em>
-  </h2>
+  <div
+    class="relative flex flex-col items-center shell pt-[130px] pb-[130px] max-[800px]:pt-[100px] max-[800px]:pb-[100px]"
+  >
+    <h2 class="display-section m-0 text-center" data-reveal>
+      Don&rsquo;t be<br /><em>a stranger.</em>
+    </h2>
 
-  <div class="mt-13 flex flex-wrap justify-center gap-[18px] max-[800px]:mt-9" data-reveal>
-    <PillButton href={'mailto:' + siteConfig.email}>Chat with Southwell</PillButton>
-    <PillButton href="/contact" variant="outline">Book a meeting</PillButton>
+    <div class="mt-10 flex flex-wrap justify-center gap-[18px] max-[800px]:mt-8" data-reveal>
+      <PillButton href={'mailto:' + siteConfig.email}>Chat with Southwell</PillButton>
+      <PillButton href="/contact" variant="outline">Book a meeting</PillButton>
+    </div>
   </div>
 </section>
 
 <style>
-  /* The float loop and the scroll-driven reveal cannot share one animation
-     property, so the wrapper reveals and the inner element floats. */
-  .cta__object {
-    display: var(--hero-panel-display, block);
-    width: min(24vw, 300px);
-    height: min(24vw, 300px);
-    /* Tucked behind the headline, which overlaps its lower edge. */
-    margin-bottom: -100px;
+  .cta {
+    isolation: isolate;
   }
 
-  .cta__blob {
-    width: 100%;
-    height: 100%;
-    /* An organic silhouette, so it reads as an object rather than a panel. */
-    --hv-radius: 46% 54% 58% 42% / 52% 44% 56% 48%;
-    animation: sw-floaty 10s ease-in-out infinite;
+  /* Same construction as a service card ground: flat colour, two blooms,
+     grain. Reads from the white colourway tokens so it re-maps in dark mode. */
+  .cta__field {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.55;
+    background-image:
+      radial-gradient(70% 90% at var(--service-white-light), var(--service-white-glow-a), transparent 62%),
+      radial-gradient(60% 80% at var(--service-white-light-b), var(--service-white-glow-b), transparent 68%);
+    /* No edges: the field grows out of the page ground and dissolves again
+       before the footer, so it never reads as a band. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 42%, #000 78%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 42%, #000 78%, transparent 100%);
   }
 
-  .cta__headline {
-    position: relative;
+  .cta__field::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--sw-grain);
+    background-size: 180px 180px;
+    opacity: var(--service-white-grain, 0.5);
+    mix-blend-mode: soft-light;
+    pointer-events: none;
+  }
+
+  /* The wordmark as a watermark: huge, centred a little above the headline,
+     and only just there. */
+  .cta__watermark {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    font-size: clamp(240px, 36vw, 560px);
+    line-height: 1;
+    color: var(--color-foreground);
+    opacity: 0.06;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
   }
 
   @media (max-width: 800px) {
-    .cta__object {
-      width: 50vw;
-      height: 50vw;
-      margin-bottom: -60px;
+    .cta__watermark {
+      font-size: 64vw;
+      opacity: 0.07;
     }
   }
 </style>

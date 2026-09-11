@@ -1,0 +1,452 @@
+---
+/**
+ * Founder
+ *
+ * One ink card, the size of a service card, carrying the person behind the
+ * studio. The headline is the working model in six words — no agency
+ * handoffs, the founder is in the work — and two short paragraphs carry the
+ * biography: the background, then the desks he sits at now. Four numbers run along the bottom as a strip, the
+ * roles he holds now are pills, and LinkedIn is an icon in the corner. The
+ * portrait is cropped into the card's right edge and fades into the ground on
+ * its inner and lower sides, so the type and the photo read as one surface
+ * rather than copy beside a headshot.
+ *
+ * The card uses the same colourway tokens as the ink service card, so it
+ * re-maps itself in dark mode along with the rest of the stack.
+ */
+import { Image } from 'astro:assets';
+import { Icon } from 'astro-icon/components';
+import siteConfig from '@/config/site.config';
+import portrait from '@/assets/authors/MichaelFrosethColored-2.jpg';
+
+interface Stat {
+  value: string;
+  label: string;
+}
+
+const stats: Stat[] = [
+  { value: '14', label: 'Age at first website' },
+  { value: '20+', label: 'Years in the work' },
+  { value: '2024', label: 'Southwell Media founded' },
+  { value: '3', label: 'Roles, right now' },
+];
+
+interface Desk {
+  org: string;
+  role: string;
+  href: string;
+}
+
+const linkedIn = siteConfig.socialLinks.find((url) => url.includes('linkedin.com'));
+
+const desks: Desk[] = [
+  { org: 'Reap Capital', role: 'Brand Director', href: '/work/reap-capital' },
+  { org: 'MAD STACK', role: 'Co-Founder', href: 'https://madstack.io' },
+  { org: 'LucidOS', role: 'Engineer', href: 'https://lucidcre.com' },
+];
+---
+
+<section class="shell pt-[130px] pb-[40px] max-[800px]:pt-[90px] max-[800px]:pb-[30px]">
+  <article class="founder" aria-labelledby="founder" data-reveal>
+    {
+      linkedIn && (
+        <a
+          class="founder__linkedin"
+          href={linkedIn}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Michael Froseth on LinkedIn"
+        >
+          <Icon name="fa6-brands:linkedin-in" aria-hidden="true" />
+        </a>
+      )
+    }
+
+    <div class="founder__body">
+      <span class="label-mono founder__eyebrow">THE FOUNDER · MICHAEL FROSETH</span>
+
+      <h2 class="founder__headline display-service" id="founder">
+        Less handoff,<br />
+        <em>more hands-on.</em>
+      </h2>
+
+      <div class="founder__prose">
+        <p>
+          Twenty years across design, marketing, development and creative direction, with titles
+          from Junior Designer to Creative Director. Southwell Media is that experience with the
+          layers removed: the person who designs the thing also builds it, and is still around after
+          launch.
+        </p>
+        <p>
+          Outside the studio, I&rsquo;m Brand Director at Reap Capital and a co-founder of MAD
+          STACK, where we&rsquo;re building LucidOS, an operating system for real estate operators.
+        </p>
+      </div>
+
+      <ul class="founder__desks">
+        {
+          desks.map((desk) => {
+            const external = desk.href.startsWith('http');
+            return (
+              <li>
+                <a
+                  class="founder__desk"
+                  href={desk.href}
+                  target={external ? '_blank' : undefined}
+                  rel={external ? 'noopener noreferrer' : undefined}
+                >
+                  <span class="founder__desk-org">{desk.org}</span>
+                  <span class="founder__desk-role">{desk.role}</span>
+                </a>
+              </li>
+            );
+          })
+        }
+      </ul>
+    </div>
+
+    <figure class="founder__figure m-0">
+      <Image
+        src={portrait}
+        alt="Michael Froseth, founder of Southwell Media"
+        layout="none"
+        widths={[480, 768, 1024, 1536]}
+        sizes="(max-width: 800px) 100vw, 44vw"
+        class="founder__photo"
+      />
+    </figure>
+
+    <dl class="founder__stats">
+      {
+        stats.map((stat) => (
+          <div class="founder__stat">
+            <dt class="founder__label label-mono">{stat.label.toUpperCase()}</dt>
+            <dd class="founder__value">{stat.value}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </article>
+</section>
+
+<style>
+  .founder {
+    --card-bg: var(--service-ink-bg);
+    --card-fg: var(--service-ink-fg);
+    --card-chip: var(--service-ink-chip);
+    --card-glow-a: var(--service-ink-glow-a);
+    --card-glow-b: var(--service-ink-glow-b);
+    --card-light: var(--service-ink-light);
+    --card-light-b: var(--service-ink-light-b);
+    --card-grain: var(--service-ink-grain);
+    --card-pad-x: 60px;
+    --card-pad-y: 60px;
+    --card-rule: rgb(238 242 244 / 0.14);
+
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-rows: auto auto;
+    column-gap: 40px;
+    border: 1px solid var(--color-card-border);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 -12px 40px rgb(12 16 22 / 0.1);
+    color: var(--card-fg);
+    background-color: var(--card-bg);
+    background-image:
+      radial-gradient(120% 95% at var(--card-light), var(--card-glow-a), transparent 62%),
+      radial-gradient(95% 75% at var(--card-light-b), var(--card-glow-b), transparent 68%);
+  }
+
+  /* The ink card flips to ice in dark mode; the hairlines follow. */
+  :global(.dark) .founder {
+    --card-rule: rgb(12 16 22 / 0.14);
+  }
+
+  /* Same grain as the service cards, so the pile and this card are one
+     material. */
+  .founder::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background-image: var(--sw-grain);
+    background-size: 180px 180px;
+    opacity: var(--card-grain, 0.5);
+    mix-blend-mode: soft-light;
+    pointer-events: none;
+  }
+
+  .founder__body {
+    position: relative;
+    z-index: 2;
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: var(--card-pad-y) 0 56px var(--card-pad-x);
+  }
+
+  .founder__eyebrow {
+    opacity: 0.55;
+  }
+
+  .founder__headline {
+    margin: 28px 0 0;
+  }
+
+  .founder__prose {
+    margin: 40px 0 0;
+    max-width: 560px;
+  }
+
+  .founder__prose p {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.65;
+    opacity: 0.78;
+  }
+
+  .founder__prose p + p {
+    margin-top: 1.4em;
+  }
+
+  /* ---- linkedin ------------------------------------------------------- */
+  /* A round icon button in the card's corner, over the quiet part of the
+     portrait backdrop. */
+  .founder__linkedin {
+    position: absolute;
+    top: 28px;
+    right: 28px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border: 1.5px solid var(--card-chip);
+    border-radius: var(--radius-full);
+    color: var(--card-fg);
+    /* No backdrop blur: this sits inside a scroll-driven 3D reveal, and a
+       live blur inside an animating layer is re-sampled every frame. */
+    background-color: rgb(12 16 22 / 0.35);
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease,
+      border-color 0.25s ease,
+      transform 0.3s ease;
+  }
+
+  .founder__linkedin :global(svg) {
+    width: 18px;
+    height: 18px;
+  }
+
+  .founder__linkedin:hover {
+    background-color: var(--card-fg);
+    border-color: var(--card-fg);
+    color: var(--card-bg);
+    transform: scale(1.06);
+  }
+
+  /* ---- the roles ------------------------------------------------------ */
+  .founder__desks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 36px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .founder__desk {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 12px 20px;
+    border: 1.5px solid var(--card-chip);
+    border-radius: var(--radius-full);
+    font-size: 15px;
+    font-weight: 500;
+    color: inherit;
+    text-decoration: none;
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease,
+      border-color 0.25s ease;
+  }
+
+  .founder__desk:hover {
+    background-color: var(--card-fg);
+    border-color: var(--card-fg);
+    color: var(--card-bg);
+  }
+
+  .founder__desk-role {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    opacity: 0.6;
+  }
+
+  /* ---- the portrait --------------------------------------------------- */
+  /* Fills the card's right column edge to edge. The mask fades its inner and
+     lower edges into the ink, so the studio backdrop never reads as a grey
+     rectangle sitting on the card, and the numbers strip below it sits on
+     clean ground. */
+  .founder__figure {
+    position: relative;
+    z-index: 1;
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 100%;
+    -webkit-mask-image:
+      linear-gradient(to right, transparent 0%, #000 38%),
+      linear-gradient(to top, transparent 0%, #000 30%);
+    mask-image:
+      linear-gradient(to right, transparent 0%, #000 38%),
+      linear-gradient(to top, transparent 0%, #000 30%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
+  .founder__photo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 0%;
+  }
+
+  /* ---- the numbers ---------------------------------------------------- */
+  /* A strip across the full width of the card: four cells divided by
+     hairlines, each a mono label over a display-scale figure. */
+  .founder__stats {
+    position: relative;
+    z-index: 2;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0;
+    border-top: 1px solid var(--card-rule);
+  }
+
+  .founder__stat {
+    padding: 36px 32px 40px;
+    border-left: 1px solid var(--card-rule);
+  }
+
+  .founder__stat:first-child {
+    padding-left: var(--card-pad-x);
+    border-left: 0;
+  }
+
+  .founder__label {
+    opacity: 0.55;
+  }
+
+  .founder__value {
+    margin: 18px 0 0;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: clamp(48px, 4.6vw, 84px);
+    line-height: 0.95;
+    letter-spacing: var(--display-tracking);
+  }
+
+  @media (max-width: 1100px) {
+    .founder {
+      --card-pad-x: 40px;
+      --card-pad-y: 44px;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      column-gap: 24px;
+    }
+
+    .founder__stat {
+      padding: 28px 24px 32px;
+    }
+  }
+
+  @media (max-width: 800px) {
+    .founder {
+      --card-pad-x: 28px;
+      --card-pad-y: 36px;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+      column-gap: 0;
+    }
+
+    /* Photo first, fading down into the copy. */
+    .founder__figure {
+      grid-column: 1;
+      grid-row: 1;
+      min-height: 0;
+      aspect-ratio: 4 / 5;
+      max-height: 520px;
+      margin-bottom: -60px;
+      -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 42%);
+      mask-image: linear-gradient(to top, transparent 0%, #000 42%);
+      -webkit-mask-composite: initial;
+      mask-composite: initial;
+    }
+
+    .founder__body {
+      grid-column: 1;
+      grid-row: 2;
+      padding: 0 var(--card-pad-x) 40px;
+    }
+
+    .founder__linkedin {
+      top: 16px;
+      right: 16px;
+      width: 44px;
+      height: 44px;
+    }
+
+    .founder__headline {
+      margin-top: 20px;
+    }
+
+    .founder__prose {
+      margin-top: 28px;
+    }
+
+    .founder__prose p {
+      font-size: 16px;
+    }
+
+    .founder__desks {
+      margin-top: 28px;
+    }
+
+    .founder__stats {
+      grid-column: 1;
+      grid-row: 3;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .founder__stat {
+      padding: 24px var(--card-pad-x) 28px;
+    }
+
+    .founder__stat:nth-child(odd) {
+      border-left: 0;
+    }
+
+    .founder__stat:nth-child(n + 3) {
+      border-top: 1px solid var(--card-rule);
+    }
+
+    .founder__value {
+      margin-top: 12px;
+      font-size: 44px;
+    }
+  }
+</style>

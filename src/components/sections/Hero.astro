@@ -9,18 +9,26 @@
  * here; the first thing on the page has to carry the studio's own brand.
  * Setting the treatment to `none` removes the panel entirely and lets the type
  * carry the page, which is a legitimate answer rather than a fallback.
+ *
+ * HeroScene ("Clarity in Chaos") is slotted into the panel: an interactive
+ * WebGL rod field that resolves into order around the cursor. It hydrates on
+ * idle so it never competes with the type for the first paint; the CSS
+ * treatments underneath are the no-JS / pre-hydration state.
  */
 import siteConfig from '@/config/site.config';
 import HeroVisual from '@/components/site/HeroVisual.astro';
+import HeroScene from '@/components/site/HeroScene.tsx';
 ---
 
 <section class="hero flex min-h-screen flex-col justify-end shell pt-24 pb-9 max-[700px]:pt-[84px]">
-  <HeroVisual class="hero__render h-[58vh] max-[700px]:h-[42vh]" />
+  <HeroVisual class="hero__render h-[58vh] max-[700px]:h-[42vh]">
+    <HeroScene client:idle />
+  </HeroVisual>
 
   <h1 class="hero__headline display-hero">
-    <span class="hero__line"><span class="hero__word hero__word--1">Your growth</span></span>
+    <span class="hero__line"><span class="hero__word hero__word--1">Work that</span></span>
     <span class="hero__line"
-      ><span class="hero__word hero__word--2">builds <em>our</em> story.</span></span
+      ><span class="hero__word hero__word--2"><em>earns its keep.</em></span></span
     >
   </h1>
 
@@ -39,6 +47,11 @@ import HeroVisual from '@/components/site/HeroVisual.astro';
 <style>
   .hero {
     position: relative;
+    /* Art direction for the WebGL scene lives here as --hero-* custom
+       properties (see HeroScene.tsx for every hook). Unset, the scene is
+       monochrome from the theme greys with a neutral studio light. */
+    --hero-warm: #ffffff;
+    --hero-cool: #f4f7fa;
   }
 
   .hero__render {
@@ -59,18 +72,31 @@ import HeroVisual from '@/components/site/HeroVisual.astro';
      there is no panel it needs no overlap, so the pull-up is a token too. */
   .hero__headline {
     position: relative;
+    /* A flex column, not a block: each .hero__line below carries a negative
+       margin that must cancel its own mask padding exactly. Block siblings
+       collapse adjoining negative margins to the MOST negative one, not the
+       sum, which leaked 0.12em of air between the two lines. Flex items never
+       collapse margins. */
+    display: flex;
+    flex-direction: column;
     margin: var(--hero-headline-pull, -0.52em) 0 0;
+    /* Tighter than .display-hero's 0.93: this pair is lowercase, and line one
+       has no descenders, so the space under it reads as a gap. One token in
+       themes/southwell.css. */
+    line-height: var(--hero-leading, 0.88);
   }
 
   /* Each line masks its word so it rises out from behind the line above.
-     line-height 0.93 makes the line box SHORTER than the glyphs, so the mask
-     has to be padded out vertically or it shears the ascenders and descenders
-     off — the negative margins put the layout back exactly where it was. */
+     A line-height under 1 makes the line box SHORTER than the glyphs, so the
+     mask has to be padded out vertically or it shears the ascenders and
+     descenders off — the negative margins put the layout back exactly where
+     it was (see the flex note on .hero__headline). 0.2em covers the p in
+     "keep." at 0.88 leading with room to spare. */
   .hero__line {
     display: block;
     overflow: hidden;
-    padding-block: 0.2em 0.12em;
-    margin-block: -0.2em -0.12em;
+    padding-block: 0.2em;
+    margin-block: -0.2em;
   }
 
   /* The words rise inside their masks and nowhere else.

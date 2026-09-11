@@ -6,32 +6,17 @@
  * can be judged on the real pages: the actual hero, the actual work cards, the
  * actual footer. A specimen sheet flatters everything; the homepage does not.
  *
- * SiteLayout imports this behind `import.meta.env.DEV`, so neither the panel
- * nor these font files reach a production build.
+ * SiteLayout renders this only when `import.meta.env.DEV` is true — but a
+ * static import in the frontmatter is bundled regardless of whether the
+ * component renders, so the candidate fonts are loaded from the client script
+ * below, behind the same flag, where the production build can drop them.
  *
  * When a face wins, three lines go into styles/themes/southwell.css and this
  * whole directory gets deleted — the panel prints the exact lines to copy.
  */
 
-// Candidates. Loaded here and nowhere else.
-import '@fontsource-variable/geist/wght.css';
-import '@fontsource-variable/geist/wght-italic.css';
-import '@fontsource-variable/inter-tight/wght.css';
-import '@fontsource-variable/inter-tight/wght-italic.css';
-import '@fontsource-variable/instrument-sans/wght.css';
-import '@fontsource-variable/instrument-sans/wght-italic.css';
-import '@fontsource-variable/schibsted-grotesk/wght.css';
-import '@fontsource-variable/schibsted-grotesk/wght-italic.css';
-import '@fontsource-variable/host-grotesk/wght.css';
-import '@fontsource-variable/host-grotesk/wght-italic.css';
-import '@fontsource-variable/dm-sans/wght.css';
-import '@fontsource-variable/dm-sans/wght-italic.css';
-import '@fontsource-variable/outfit/wght.css';
-import '@fontsource-variable/space-grotesk/wght.css';
-import '@fontsource-variable/fraunces/wght.css';
-import '@fontsource-variable/fraunces/wght-italic.css';
-import '@fontsource/instrument-serif/400.css';
-import '@fontsource/instrument-serif/400-italic.css';
+// Candidate faces are loaded by the client script at the bottom of this
+// file, dev only. Outfit, the shipping face, comes from styles/global.css.
 
 interface Face {
   id: string;
@@ -437,6 +422,30 @@ const groups = [...new Set(faces.map((face) => face.group))];
 </style>
 
 <script>
+  // Candidates. Dev only: this branch is dead code in a production build, so
+  // Rollup drops both the imports and the woff2 files behind them.
+  if (import.meta.env.DEV) {
+    void Promise.all([
+      import('@fontsource-variable/geist/wght.css'),
+      import('@fontsource-variable/geist/wght-italic.css'),
+      import('@fontsource-variable/inter-tight/wght.css'),
+      import('@fontsource-variable/inter-tight/wght-italic.css'),
+      import('@fontsource-variable/instrument-sans/wght.css'),
+      import('@fontsource-variable/instrument-sans/wght-italic.css'),
+      import('@fontsource-variable/schibsted-grotesk/wght.css'),
+      import('@fontsource-variable/schibsted-grotesk/wght-italic.css'),
+      import('@fontsource-variable/host-grotesk/wght.css'),
+      import('@fontsource-variable/host-grotesk/wght-italic.css'),
+      import('@fontsource-variable/dm-sans/wght.css'),
+      import('@fontsource-variable/dm-sans/wght-italic.css'),
+      import('@fontsource-variable/space-grotesk/wght.css'),
+      import('@fontsource-variable/fraunces/wght.css'),
+      import('@fontsource-variable/fraunces/wght-italic.css'),
+      import('@fontsource/instrument-serif/400.css'),
+      import('@fontsource/instrument-serif/400-italic.css'),
+    ]);
+  }
+
   // Bumped when the committed defaults change, so a stale saved selection in
   // someone browser does not mask what the site actually ships.
   const STORAGE_KEY = 'sw-design-v3';

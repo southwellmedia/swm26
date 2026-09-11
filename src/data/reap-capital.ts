@@ -55,7 +55,7 @@ export interface StackGroup {
 }
 
 export const hero = {
-  eyebrow: ['( CLIENT STORY )', 'REAP CAPITAL · DALLAS–FORT WORTH', '2024 — 2026'],
+  eyebrow: ['CLIENT STORY', 'REAP CAPITAL · DALLAS–FORT WORTH', '2024 — 2026'],
   intro:
     'Reap Capital buys underperforming apartment communities across DFW and runs them with one team. Since 2024, that team has included us: the investor platform, every property’s site, the brand, the films, the inbox, and the software behind the leasing office.',
 };
@@ -76,14 +76,14 @@ export const flagship = {
   shots: ['track record grid', 'deal page — Sierra Heights', 'invest flow — mobile'],
   notes: [
     {
-      label: '( PROBLEM )',
+      label: 'PROBLEM',
       text: 'Slow template, stock hero, deal room hidden. Referrals arrived and bounced.',
     },
     {
-      label: '( ANSWER )',
+      label: 'ANSWER',
       text: 'Track record as database, perspectives as editorial system, qualifying invest flow to IR.',
     },
-    { label: '( STACK )', text: 'Astro · React · Tailwind · MDX · Vercel · 38 days to launch.' },
+    { label: 'STACK', text: 'Astro · React · Tailwind · MDX · Vercel · 38 days to launch.' },
   ],
 };
 

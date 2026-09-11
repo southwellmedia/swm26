@@ -8,6 +8,10 @@ import { ClientRouter } from 'astro:transitions';
 import { createWebsiteSchema, createOrganizationSchema } from '@/lib/schema';
 import type { WebSite, Organization, WithContext } from 'schema-dts';
 import siteConfig from '@/config/site.config';
+// The two faces every page paints first. Preloaded so the display headline
+// does not swap in after first paint and reflow at 168px.
+import outfitWoff2 from '@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url';
+import archivoWoff2 from '@fontsource-variable/archivo/files/archivo-latin-wght-normal.woff2?url';
 
 interface Props {
   title?: string;
@@ -44,7 +48,7 @@ if (includeOrgSchema) {
 ---
 
 <!doctype html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -54,6 +58,10 @@ if (includeOrgSchema) {
     <link rel="icon" type="image/svg+xml" href={siteConfig.branding.favicon.svg} />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content={siteConfig.branding.colors.themeColor} />
+
+    <!-- Fonts: latin subsets of the display and body faces -->
+    <link rel="preload" href={outfitWoff2} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={archivoWoff2} as="font" type="font/woff2" crossorigin />
 
     <!-- SEO -->
     <SEO

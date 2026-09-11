@@ -37,7 +37,10 @@ import filmPoster from '@/assets/work/reap-capital/film-pref-equity.webp';
 
 // Same ordering as the generic template, so "next" agrees with the grid.
 const projects = (
-  await getCollection('work', ({ data }) => (import.meta.env.PROD ? data.draft !== true : true))
+  await getCollection(
+    'work',
+    ({ data }) => (import.meta.env.PROD ? data.draft !== true : true) && !data.parent
+  )
 ).sort((a, b) => a.data.order - b.data.order);
 
 const index = projects.findIndex((project) => project.id === 'reap-capital');
@@ -110,7 +113,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     <section class="flagship shell" aria-labelledby="flagship-title">
       <div class="flagship__head" data-reveal>
         <div>
-          <p class="eyebrow label-mono">( 01 ) THE FLAGSHIP</p>
+          <p class="eyebrow label-mono">01 · THE FLAGSHIP</p>
           <h2 class="flagship__title display-section" id="flagship-title">
             reapcapital<em>.com</em>
           </h2>
@@ -151,7 +154,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     {/* --- the ledger: sticky index + six more workstreams ---------------- */}
     <section class="ledger shell" aria-labelledby="ledger-title">
       <aside class="ledger__index">
-        <p class="eyebrow label-mono">( THE LEDGER )</p>
+        <p class="eyebrow label-mono">THE LEDGER</p>
         <h2 class="ledger__title" id="ledger-title">
           six more <em>workstreams.</em>
         </h2>
@@ -172,7 +175,7 @@ const nextImage = next.data.feature ?? next.data.cover;
       <div class="ledger__body">
         {/* 02 property sites */}
         <article class="ws" id="ws-02" data-reveal>
-          <p class="eyebrow label-mono">( 02 ) PROPERTY SITES</p>
+          <p class="eyebrow label-mono">02 · PROPERTY SITES</p>
           <h3 class="ws__title">a site <em>per address.</em></h3>
           <p class="ws__intro">
             Every community gets its own brand, site and hourly availability from the property
@@ -224,7 +227,7 @@ const nextImage = next.data.feature ?? next.data.cover;
 
         {/* 03 brand */}
         <article class="ws" id="ws-03" data-reveal>
-          <p class="eyebrow label-mono">( 03 ) BRAND</p>
+          <p class="eyebrow label-mono">03 · BRAND</p>
           <h3 class="ws__title">one origin, <em>every asset.</em></h3>
           <p class="ws__intro">
             Forest green, aged gold, a serif that reads like a prospectus. Built to hold from a
@@ -268,7 +271,7 @@ const nextImage = next.data.feature ?? next.data.cover;
 
         {/* 04 films */}
         <article class="ws" id="ws-04" data-reveal>
-          <p class="eyebrow label-mono">( 04 ) FILMS</p>
+          <p class="eyebrow label-mono">04 · FILMS</p>
           <h3 class="ws__title">the first film, <em>no stock.</em></h3>
           <p class="ws__intro">
             The founder series opens on the question every LP asks before the deck: if this goes
@@ -304,7 +307,7 @@ const nextImage = next.data.feature ?? next.data.cover;
 
         {/* 05 lucidos — a light island in the dark page */}
         <article class="ws os" id="ws-05" data-reveal>
-          <p class="eyebrow label-mono">( 05 ) THE OPERATING SYSTEM</p>
+          <p class="eyebrow label-mono">05 · THE OPERATING SYSTEM</p>
           <h3 class="ws__title">lucidos, <em>tuned for reap.</em></h3>
           <p class="ws__intro">
             Our property platform already ran sites, tours and offers. For Reap we added AppFolio
@@ -328,7 +331,7 @@ const nextImage = next.data.feature ?? next.data.cover;
 
         {/* 06 social */}
         <article class="ws" id="ws-06" data-reveal>
-          <p class="eyebrow label-mono">( 06 ) SOCIAL</p>
+          <p class="eyebrow label-mono">06 · SOCIAL</p>
           <h3 class="ws__title">the feed, <em>managed.</em></h3>
           <p class="ws__intro">
             Three accounts, a monthly calendar, one rule: every post comes from a real property, a
@@ -348,7 +351,7 @@ const nextImage = next.data.feature ?? next.data.cover;
 
         {/* 07 email */}
         <article class="ws" id="ws-07" data-reveal>
-          <p class="eyebrow label-mono">( 07 ) EMAIL</p>
+          <p class="eyebrow label-mono">07 · EMAIL</p>
           <h3 class="ws__title">two audiences, <em>one voice.</em></h3>
 
           <div class="email">
@@ -372,7 +375,7 @@ const nextImage = next.data.feature ?? next.data.cover;
 
     {/* --- stack ---------------------------------------------------------- */}
     <section class="stack shell" aria-label="Stack and tools" data-reveal>
-      <p class="eyebrow label-mono">( STACK &amp; TOOLS )</p>
+      <p class="eyebrow label-mono">STACK &amp; TOOLS</p>
       <div class="stack__groups">
         {
           stack.map((group) => (
@@ -400,7 +403,7 @@ const nextImage = next.data.feature ?? next.data.cover;
         )
       }
       <div class="nextup__body shell">
-        <span class="label-mono">( NEXT PROJECT )</span>
+        <span class="label-mono">NEXT PROJECT</span>
         <span class="nextup__title">{next.data.title}</span>
       </div>
     </a>

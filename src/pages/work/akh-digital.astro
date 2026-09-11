@@ -1,0 +1,1252 @@
+---
+/**
+ * AKH Digital — partner story
+ * URL: /work/akh-digital
+ *
+ * Six builds for one agency, told as one relationship rather than six cards.
+ * Same contract as reap-capital.astro: content/work/akh-digital.mdx sets
+ * `story: true`, the generic [...slug] template skips it, and this file owns
+ * the URL. The six projects keep their own case-study pages (each sets
+ * `parent: "akh-digital"`, which takes it out of the grids and points its
+ * "next project" door back here), but this page doesn't link to them: each
+ * build shows its captures and, where there is one, a link to the live site.
+ *
+ * Sits on the site's own light ground, the way Vana sits on paper: ice
+ * behind, ink type, panels a shade lighter than the page. Only the next-project
+ * door drops to ink. Content lives in @/data/akh-digital.ts; every figure and
+ * date there is draft copy.
+ */
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import SiteLayout from '@/layouts/SiteLayout.astro';
+import Cta from '@/components/sections/Cta.astro';
+import { hero, stats, steps, launches, chapters, projects as builds, stack } from '@/data/akh-digital';
+import feature from '@/assets/work/akh-digital/hero.webp';
+import cover from '@/assets/work/cirries/cover.jpg';
+
+// Same ordering as the generic template, so "next" agrees with the grid.
+const projects = (
+  await getCollection(
+    'work',
+    ({ data }) => (import.meta.env.PROD ? data.draft !== true : true) && !data.parent
+  )
+).sort((a, b) => a.data.order - b.data.order);
+
+const index = projects.findIndex((project) => project.id === 'akh-digital');
+if (index === -1) throw new Error('akh-digital is missing from src/content/work');
+
+const project = projects[index];
+const next = projects[(index + 1) % projects.length];
+const nextImage = next.data.feature ?? next.data.cover;
+
+// The launch rail groups by year so the year reads once, not six times.
+const years = [...new Set(launches.map((launch) => launch.year))];
+---
+
+<SiteLayout
+  title={project.data.title}
+  description={project.data.description}
+  image={cover.src}
+  imageAlt={project.data.coverAlt ?? project.data.title}
+  navContext="akh digital"
+>
+  <article class="story">
+    {/* --- hero: full-bleed, the feature photograph fading into ice --------- */}
+    <header class="hero">
+      <Image
+        src={feature}
+        alt=""
+        layout="none"
+        widths={[768, 1280, 1920, 2560]}
+        sizes="100vw"
+        class="hero__img"
+        loading="eager"
+        fetchpriority="high"
+      />
+      <div class="hero__scrim" aria-hidden="true"></div>
+
+      <div class="hero__body shell">
+        <p class="hero__eyebrow label-mono">
+          {hero.eyebrow.map((item) => <span>{item}</span>)}
+        </p>
+        <h1 class="display-hero m-0">
+          one partner,<br /><em>six launches.</em>
+        </h1>
+        <div class="hero__foot">
+          <p class="hero__intro">{hero.intro}</p>
+          <div class="hero__scroll label-mono" aria-hidden="true">
+            <span>scroll</span>
+            <span class="hero__scroll-line"></span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    {/* --- results ------------------------------------------------------- */}
+    <section class="shell" aria-label="The partnership in numbers">
+      <div class="stats" data-reveal>
+        {
+          stats.map((stat) => (
+            <div class="stats__item">
+              <div class="stats__value">{stat.value}</div>
+              <div class="stats__label">{stat.label}</div>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* --- 01 the partnership -------------------------------------------- */}
+    <section class="partner shell" aria-labelledby="partner-title">
+      <div class="partner__head" data-reveal>
+        <div>
+          <p class="eyebrow label-mono">01 · THE PARTNERSHIP</p>
+          <h2 class="partner__title display-section" id="partner-title">
+            how it <em>works.</em>
+          </h2>
+        </div>
+        <p class="partner__intro">
+          {/* TODO: draft copy. */}
+          An agency and a studio, each doing the half it is best at. AKH is the client's agency of
+          record; we are the team that turns the brief into a build. Nobody hands anything over a
+          wall: one Slack channel, one launch checklist, one set of numbers after.
+        </p>
+      </div>
+
+      <ol class="steps" data-reveal>
+        {
+          steps.map((step, i) => (
+            <li class="step">
+              <span class="step__num label-mono">0{i + 1}</span>
+              <span class="step__who label-mono">{step.who}</span>
+              <span class="step__title">{step.title}</span>
+              <p class="step__desc">{step.desc}</p>
+            </li>
+          ))
+        }
+      </ol>
+
+      <div class="rail" data-reveal>
+        <p class="eyebrow label-mono">THE LAUNCHES</p>
+        <ol class="rail__list">
+          {
+            years.map((year) => (
+              <li class="rail__year">
+                <span class="rail__year-label">{year}</span>
+                <ol class="rail__launches">
+                  {launches
+                    .filter((launch) => launch.year === year)
+                    .map((launch) => (
+                      <li class="rail__item">
+                        <a href={`#${launch.anchor}`}>
+                          <span class="rail__dot" aria-hidden="true" />
+                          <span class="rail__name">{launch.name}</span>
+                          <span class="rail__when label-mono">{launch.when}</span>
+                        </a>
+                      </li>
+                    ))}
+                </ol>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+
+      <div class="cover" data-reveal>
+        <Image
+          src={cover}
+          alt="The Cirries homepage on a laptop — the largest of the six builds"
+          layout="none"
+          widths={[768, 1280, 1920, 2560]}
+          sizes="100vw"
+          class="cover__img"
+        />
+        <span class="cover__tag label-mono">cirries.com — the largest of the six</span>
+      </div>
+    </section>
+
+    {/* --- the ledger: sticky index + a chapter per build ------------------ */}
+    <section class="ledger shell" aria-labelledby="ledger-title">
+      <aside class="ledger__index">
+        <p class="eyebrow label-mono">THE LEDGER</p>
+        <h2 class="ledger__title" id="ledger-title">
+          six <em>builds.</em>
+        </h2>
+        <ol class="ledger__list">
+          {
+            chapters.map((chapter) => (
+              <li>
+                <a href={`#ws-${chapter.num}`}>
+                  <span class="ledger__num label-mono">{chapter.num}</span>
+                  <span>{chapter.title}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </aside>
+
+      <div class="ledger__body">
+        {
+          builds.map((build) => (
+            <article class="ws" id={`ws-${build.num}`} data-reveal>
+              <p class="eyebrow label-mono">
+                {build.num} · {build.eyebrow}
+              </p>
+              <h3 class="ws__title">
+                {build.title[0]} <em>{build.title[1]}</em>
+              </h3>
+              <p class="ws__intro">{build.intro}</p>
+
+              <div class="proj">
+                {build.url ? (
+                  <a
+                    class="proj__main"
+                    href={build.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Image
+                      src={build.main.src}
+                      alt={build.main.alt}
+                      layout="none"
+                      widths={[768, 1280, 1920]}
+                      sizes="(max-width: 1000px) 100vw, 62vw"
+                      class="proj__main-img"
+                    />
+                    {build.domain && <span class="proj__url label-mono">{build.domain}</span>}
+                  </a>
+                ) : (
+                  <div class="proj__main">
+                    <Image
+                      src={build.main.src}
+                      alt={build.main.alt}
+                      layout="none"
+                      widths={[768, 1280, 1920]}
+                      sizes="(max-width: 1000px) 100vw, 62vw"
+                      class="proj__main-img"
+                    />
+                  </div>
+                )}
+
+                {build.products && (
+                  <div class="products">
+                    {build.products.map((product) => (
+                      <div class="product">
+                        <div class="product__shot">
+                          <Image
+                            src={product.shot.src}
+                            alt={product.shot.alt}
+                            layout="none"
+                            widths={[480, 720, 1080]}
+                            sizes="(max-width: 800px) 100vw, 30vw"
+                            class="product__shot-img"
+                          />
+                        </div>
+                        <span class="product__kind label-mono">{product.kind}</span>
+                        <span class="product__name">{product.name}</span>
+                        <p class="product__desc">{product.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {build.shots.length > 0 && (
+                  <div class="proj__shots" data-count={build.shots.length}>
+                    {build.shots.map((shot) => (
+                      <div class="proj__shot">
+                        <Image
+                          src={shot.src}
+                          alt={shot.alt}
+                          layout="none"
+                          widths={[480, 720, 1080]}
+                          sizes="(max-width: 800px) 100vw, 30vw"
+                          class="proj__shot-img"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div class="proj__foot">
+                <div class="proj__stats">
+                  {build.stats.map((stat) => (
+                    <div>
+                      <div class="proj__value" data-tbd={stat.value === 'TBD'}>
+                        {stat.value}
+                      </div>
+                      <div class="proj__label">{stat.label}</div>
+                    </div>
+                  ))}
+                </div>
+                <div class="proj__meta">
+                  <span class="proj__services">{build.services.join(' · ')}</span>
+                  {build.sites ? (
+                    <div class="proj__links">
+                      {build.sites.map((site) => (
+                        <a
+                          class="pill label-mono"
+                          href={site.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {site.domain.toUpperCase()} ⟶
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    build.url && (
+                      <div class="proj__links">
+                        <a
+                          class="pill label-mono"
+                          href={build.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          VISIT THE SITE ⟶
+                        </a>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* --- stack ---------------------------------------------------------- */}
+    <section class="stack shell" aria-label="Stack and tools" data-reveal>
+      <p class="eyebrow label-mono">STACK &amp; TOOLS</p>
+      <div class="stack__groups">
+        {
+          stack.map((group) => (
+            <div>
+              <div class="stack__label label-mono">{group.label}</div>
+              {group.items.join(' · ')}
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* --- next project: the same full-bleed door the template uses -------- */}
+    <a class="nextup" href={'/work/' + next.id} data-card>
+      {
+        nextImage && (
+          <Image
+            src={nextImage}
+            alt=""
+            layout="none"
+            widths={[768, 1280, 1920]}
+            sizes="100vw"
+            class="nextup__img"
+          />
+        )
+      }
+      <div class="nextup__body shell">
+        <span class="label-mono">NEXT PROJECT</span>
+        <span class="nextup__title">{next.data.title}</span>
+      </div>
+    </a>
+  </article>
+
+  <Cta />
+</SiteLayout>
+
+<style>
+  /* The story sits on the site's light ground in both colour schemes, so the
+     tokens are pinned here rather than inherited — the way vana.astro pins
+     paper. Panels are a shade lighter than the page. */
+  .story {
+    --line: rgb(12 16 22 / 0.12);
+    --color-background: var(--ice-100);
+    --color-background-secondary: var(--ice-200);
+    --color-foreground: var(--ink-950);
+    --color-foreground-secondary: var(--ink-700);
+    --color-foreground-muted: var(--ink-600);
+    --color-border: var(--line);
+    --color-border-strong: rgb(12 16 22 / 0.24);
+    --color-primary: var(--ink-950);
+    --color-primary-foreground: var(--ice-100);
+    --color-ring: var(--ink-950);
+    --dim: var(--ink-600);
+    --hairline: 1px solid var(--line);
+    --panel: 1px solid rgb(12 16 22 / 0.1);
+    --card: var(--ice-50);
+    background: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  .story em {
+    font-style: var(--display-em-style);
+    font-weight: var(--display-em-weight);
+    font-stretch: var(--display-em-stretch);
+    letter-spacing: var(--display-em-tracking);
+  }
+
+  .eyebrow {
+    margin: 0;
+    color: var(--dim);
+  }
+
+  .pill {
+    display: inline-block;
+    padding: 14px 20px;
+    border-radius: var(--radius-full);
+    background: var(--ink-950);
+    color: var(--ice-100);
+  }
+
+  /* --- hero -------------------------------------------------------------- */
+
+  .hero {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 92svh;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .hero__img {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 40%;
+  }
+
+  /* Ice rising from the foot so the story picks up where the photograph
+     leaves off, and pooling in from the left so the headline sits on
+     near-solid ground while the room, right, stays in colour. */
+  .hero__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(
+        180deg,
+        rgb(238 242 244 / 0.15) 0%,
+        rgb(238 242 244 / 0) 30%,
+        rgb(238 242 244 / 0.6) 64%,
+        var(--ice-100) 100%
+      ),
+      linear-gradient(
+        100deg,
+        rgb(238 242 244 / 0.9) 0%,
+        rgb(238 242 244 / 0.7) 34%,
+        rgb(238 242 244 / 0) 62%
+      );
+  }
+
+  .hero__body {
+    padding-block: 150px 64px;
+    animation: sw-rise 0.9s var(--ease-sw) both;
+  }
+
+  .hero__eyebrow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin: 0 0 28px;
+    color: var(--ink-600);
+  }
+
+  .hero__foot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: end;
+    margin-top: 40px;
+  }
+
+  .hero__intro {
+    margin: 0;
+    max-width: 560px;
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--ink-950);
+    text-wrap: pretty;
+  }
+
+  .hero__scroll {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink-600);
+  }
+
+  .hero__scroll-line {
+    display: block;
+    width: 1px;
+    height: 36px;
+    background: var(--ink-950);
+    animation: sw-scrollpulse 1.6s ease-in-out infinite;
+  }
+
+  /* --- results ----------------------------------------------------------- */
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: var(--hairline);
+    border-bottom: var(--hairline);
+  }
+
+  .stats__item {
+    padding: 36px 28px 36px 24px;
+    border-right: var(--hairline);
+  }
+
+  .stats__item:first-child {
+    padding-left: 0;
+  }
+
+  .stats__item:last-child {
+    border-right: 0;
+  }
+
+  .stats__value {
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: min(5vw, 72px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+  }
+
+  .stats__label {
+    max-width: 240px;
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--ink-600);
+  }
+
+  /* --- 01 the partnership ------------------------------------------------ */
+
+  .partner {
+    padding-block: 96px 64px;
+  }
+
+  .partner__head {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: end;
+  }
+
+  .partner__title {
+    margin: 20px 0 0;
+  }
+
+  .partner__intro {
+    margin: 0;
+    max-width: 560px;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--ink-700);
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    list-style: none;
+    margin: 56px 0 0;
+    padding: 0;
+  }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    border: var(--panel);
+    border-radius: var(--radius-lg);
+    background: var(--card);
+    box-shadow: 0 18px 40px -28px rgb(12 16 22 / 0.35);
+  }
+
+  .step__num {
+    color: var(--dim);
+  }
+
+  .step__who {
+    margin-top: 28px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--ink-600);
+  }
+
+  .step__title {
+    margin-top: 8px;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .step__desc {
+    margin: 14px 0 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-600);
+  }
+
+  /* The launch rail: a year, then its launches along one line. */
+
+  .rail {
+    margin-top: 64px;
+    padding-top: 40px;
+    border-top: var(--hairline);
+  }
+
+  .rail__list {
+    display: grid;
+    grid-template-columns: 1fr 5fr;
+    gap: 24px;
+    list-style: none;
+    margin: 28px 0 0;
+    padding: 0;
+  }
+
+  .rail__year {
+    display: contents;
+  }
+
+  .rail__year-label {
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: 44px;
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+    color: var(--ink-950);
+  }
+
+  .rail__launches {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .rail__item a {
+    position: relative;
+    display: block;
+    padding-top: 20px;
+    color: var(--ink-700);
+  }
+
+  .rail__item a::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 0;
+    right: -16px;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .rail__item:last-child a::before {
+    right: 0;
+  }
+
+  .rail__dot {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--ink-950);
+  }
+
+  .rail__name {
+    display: block;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink-950);
+  }
+
+  .rail__when {
+    display: block;
+    margin-top: 6px;
+    color: var(--dim);
+  }
+
+  .rail__item a:hover .rail__name {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .cover {
+    position: relative;
+    margin-top: 56px;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    background: var(--card);
+  }
+
+  .cover__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cover__tag {
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    color: rgb(238 242 244 / 0.85);
+    background: rgb(12 16 22 / 0.55);
+    backdrop-filter: blur(6px);
+  }
+
+  /* --- the ledger -------------------------------------------------------- */
+
+  .ledger {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 64px;
+    padding-block: 64px;
+  }
+
+  .ledger::before {
+    content: '';
+    grid-column: 1 / -1;
+    border-top: var(--hairline);
+    margin-bottom: -16px;
+  }
+
+  .ledger__index {
+    position: sticky;
+    top: calc(var(--sw-nav-h, 76px) + 28px);
+    align-self: start;
+  }
+
+  .ledger__title {
+    margin: 24px 0 32px;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: 56px;
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+  }
+
+  .ledger__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+  }
+
+  .ledger__list a {
+    display: flex;
+    gap: 16px;
+    padding: 12px 0;
+    border-top: var(--hairline);
+    color: var(--ink-700);
+  }
+
+  .ledger__num {
+    padding-top: 2px;
+    color: var(--dim);
+  }
+
+  .ledger__body {
+    display: flex;
+    flex-direction: column;
+    gap: 112px;
+  }
+
+  .ws {
+    scroll-margin-top: calc(var(--sw-nav-h, 76px) + 28px);
+  }
+
+  .ws__title {
+    margin: 16px 0 0;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: min(4.4vw, 64px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+  }
+
+  .ws__intro {
+    max-width: 640px;
+    margin: 20px 0 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink-700);
+  }
+
+  /* A build: the mockup, then its captures in a row. */
+
+  .proj {
+    margin-top: 36px;
+  }
+
+  .proj__main {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--card);
+  }
+
+  .proj__main-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s var(--ease-sw);
+  }
+
+  .proj__main:hover .proj__main-img {
+    transform: scale(1.03);
+  }
+
+  .proj__main:focus-visible {
+    outline: 2px solid var(--ink-950);
+    outline-offset: 3px;
+  }
+
+  .proj__url {
+    position: absolute;
+    left: 14px;
+    top: 14px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 1;
+    color: rgb(238 242 244 / 0.85);
+    background: rgb(12 16 22 / 0.55);
+    backdrop-filter: blur(6px);
+  }
+
+  .proj__shots {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  /* One capture reads better wide than as a lonely third; four make a 2×2. */
+  .proj__shots[data-count='1'] {
+    grid-template-columns: 1fr;
+  }
+
+  .proj__shots[data-count='4'] {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .proj__shots[data-count='4'] .proj__shot {
+    aspect-ratio: 16 / 10;
+  }
+
+  /* A build that is several products: one tile each, named. */
+  .products {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .product {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 12px 18px;
+    border: var(--panel);
+    border-radius: var(--radius-lg);
+    background: var(--card);
+    box-shadow: 0 18px 40px -28px rgb(12 16 22 / 0.35);
+  }
+
+  .product__shot {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--ice-200);
+  }
+
+  .product__shot-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .product__kind {
+    margin-top: 16px;
+    padding-inline: 6px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--dim);
+  }
+
+  .product__name {
+    margin-top: 8px;
+    padding-inline: 6px;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .product__desc {
+    margin: 10px 0 0;
+    padding-inline: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink-600);
+  }
+
+  .proj__shots[data-count='1'] .proj__shot {
+    aspect-ratio: 16 / 7;
+  }
+
+  .proj__shot {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: var(--card);
+    border: var(--panel);
+  }
+
+  .proj__shot-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .proj__foot {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 32px;
+    align-items: end;
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: var(--hairline);
+  }
+
+  .proj__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .proj__value {
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  /* A figure still to be confirmed reads as a slot, not a number. */
+  .proj__value[data-tbd='true'] {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 30px;
+    letter-spacing: 0.08em;
+    color: var(--dim);
+  }
+
+  .proj__label {
+    max-width: 200px;
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--dim);
+  }
+
+  .proj__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  .proj__services {
+    font-size: 13px;
+    text-align: right;
+    color: var(--ink-600);
+  }
+
+  .proj__links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  /* --- stack ------------------------------------------------------------- */
+
+  .stack {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 64px;
+    padding-block: 48px 96px;
+  }
+
+  .stack::before {
+    content: '';
+    grid-column: 1 / -1;
+    border-top: var(--hairline);
+    margin-bottom: -16px;
+  }
+
+  .stack__groups {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--ink-700);
+  }
+
+  .stack__label {
+    margin-bottom: 8px;
+    color: var(--ink-950);
+  }
+
+  /* --- next project — mirrors the door on /work/[...slug] ----------------- */
+
+  .nextup {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 52svh;
+    overflow: hidden;
+    border-top: var(--hairline);
+    background: var(--ink-950);
+    isolation: isolate;
+  }
+
+  .nextup__img {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.5;
+    filter: grayscale(1);
+    transition:
+      transform 0.9s var(--ease-sw),
+      opacity 0.5s ease,
+      filter 0.5s ease;
+  }
+
+  .nextup:hover .nextup__img,
+  .nextup:focus-visible .nextup__img {
+    transform: scale(1.04);
+    opacity: 0.75;
+    filter: grayscale(0);
+  }
+
+  .nextup__body {
+    padding-block: 56px;
+    color: var(--ice-100);
+  }
+
+  .nextup__body .label-mono {
+    opacity: 0.7;
+  }
+
+  .nextup__title {
+    display: block;
+    margin-top: 14px;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: min(8vw, 104px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+  }
+
+  /* --- responsive --------------------------------------------------------- */
+
+  @media (max-width: 1000px) {
+    .ledger,
+    .stack {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    .ledger__index {
+      position: static;
+    }
+
+    .ledger__title {
+      font-size: 44px;
+    }
+
+    .ledger__body {
+      gap: 80px;
+    }
+
+    .rail__list {
+      grid-template-columns: 1fr;
+      gap: 12px 0;
+    }
+
+    .rail__year {
+      display: block;
+    }
+
+    .rail__year + .rail__year {
+      margin-top: 28px;
+    }
+
+    .rail__year-label {
+      display: block;
+      margin-bottom: 16px;
+      font-size: 36px;
+    }
+
+    .rail__launches {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .proj__foot {
+      grid-template-columns: 1fr;
+      align-items: start;
+    }
+
+
+    .proj__meta {
+      align-items: flex-start;
+    }
+
+    .proj__services {
+      text-align: left;
+    }
+
+    .proj__links {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 800px) {
+    .hero {
+      min-height: 80svh;
+    }
+
+    .hero__body {
+      padding-top: 120px;
+    }
+
+    .hero__foot {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    .hero__intro {
+      font-size: 17px;
+    }
+
+    .hero__scroll {
+      justify-content: flex-start;
+    }
+
+    .stats {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .stats__item {
+      padding: 24px 16px 24px 0;
+    }
+
+    .stats__item:nth-child(2n) {
+      padding-left: 16px;
+      border-right: 0;
+    }
+
+    .stats__item:nth-child(-n + 2) {
+      border-bottom: var(--hairline);
+    }
+
+    .stats__value {
+      font-size: 40px;
+    }
+
+    .partner {
+      padding-top: 64px;
+    }
+
+    .partner__head,
+    .steps,
+    .stack__groups {
+      grid-template-columns: 1fr;
+    }
+
+    .partner__head {
+      gap: 24px;
+    }
+
+    .steps {
+      margin-top: 36px;
+    }
+
+    .rail__launches {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px 16px;
+    }
+
+    .rail__item:nth-child(2n) a::before {
+      right: 0;
+    }
+
+    .cover {
+      margin-top: 32px;
+      aspect-ratio: 4 / 3;
+      border-radius: var(--radius-lg);
+    }
+
+    .ws__title {
+      font-size: 9vw;
+    }
+
+    .proj__shots,
+    .proj__shots[data-count='4'] {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .products {
+      grid-template-columns: 1fr;
+    }
+
+    .proj__stats {
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .proj__value {
+      font-size: 24px;
+    }
+
+    .nextup__title {
+      font-size: 13vw;
+    }
+  }
+</style>

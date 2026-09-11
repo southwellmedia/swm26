@@ -11,7 +11,8 @@ export interface FooterLink {
   label: string;
   href: string;
   external?: boolean;
-  /** Lucide icon name, without the `lucide:` prefix. */
+  /** Iconify icon name with its set prefix, e.g. `lucide:mail` or
+   *  `fa6-brands:github`. Brand marks use fa6-brands; UI glyphs use lucide. */
   icon?: string;
 }
 
@@ -35,23 +36,23 @@ export const footerColumns: FooterColumn[] = [
     links: [
       {
         label: 'LinkedIn',
-        href: 'https://www.linkedin.com/in/michaelfroseth',
+        href: 'https://www.linkedin.com/in/michael-froseth/',
         external: true,
-        icon: 'linkedin',
+        icon: 'fa6-brands:linkedin-in',
       },
       {
         label: 'GitHub',
         href: 'https://github.com/southwellmedia-dev',
         external: true,
-        icon: 'github',
+        icon: 'fa6-brands:github',
       },
     ],
   },
   {
     heading: 'SAY HI',
     links: [
-      { label: siteConfig.email, href: `mailto:${siteConfig.email}`, icon: 'mail' },
-      { label: siteConfig.phone ?? '', href: `tel:${siteConfig.phoneHref}`, icon: 'phone' },
+      { label: siteConfig.email, href: `mailto:${siteConfig.email}`, icon: 'lucide:mail' },
+      { label: siteConfig.phone ?? '', href: `tel:${siteConfig.phoneHref}`, icon: 'lucide:phone' },
     ],
   },
 ];

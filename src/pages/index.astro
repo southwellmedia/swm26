@@ -7,12 +7,13 @@ import SiteLayout from '@/layouts/SiteLayout.astro';
 import Hero from '@/components/sections/Hero.astro';
 import WorkGrid from '@/components/sections/WorkGrid.astro';
 import Services from '@/components/sections/Services.astro';
+import Founder from '@/components/sections/Founder.astro';
 import Cta from '@/components/sections/Cta.astro';
 import siteConfig from '@/config/site.config';
 ---
 
 <SiteLayout
-  title="Your growth builds our story."
+  title="Work that earns its keep."
   description={siteConfig.description}
   includeOrgSchema
 >
@@ -21,5 +22,6 @@ import siteConfig from '@/config/site.config';
       first five of the pattern over three. Any of 1, 6 or 11 tiles cleanly. */}
   <WorkGrid count={6} />
   <Services />
+  <Founder />
   <Cta />
 </SiteLayout>

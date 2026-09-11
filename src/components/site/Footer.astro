@@ -33,7 +33,7 @@ const year = new Date().getFullYear();
                   target={link.external ? '_blank' : undefined}
                   rel={link.external ? 'noopener noreferrer' : undefined}
                 >
-                  {link.icon && <Icon name={'lucide:' + link.icon} aria-hidden="true" />}
+                  {link.icon && <Icon name={link.icon} aria-hidden="true" />}
                   {link.label}
                 </a>
               ))}

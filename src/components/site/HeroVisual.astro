@@ -15,6 +15,9 @@
  *
  * Which one is live is set by tokens in styles/themes/southwell.css, so the
  * dev panel can swap treatments at runtime without a rebuild.
+ *
+ * The default slot sits between the gradient layers and the grain, for an
+ * interactive scene (see HeroScene.tsx) that should keep the grain on top.
  */
 interface Props {
   class?: string;
@@ -29,6 +32,7 @@ const { class: className, quiet = false } = Astro.props;
   <div class="hv__layer hv__mesh"></div>
   <div class="hv__layer hv__grid"></div>
   <div class="hv__layer hv__duotone"></div>
+  <slot />
   <div class="hv__grain"></div>
 </div>
 
@@ -118,6 +122,12 @@ const { class: className, quiet = false } = Astro.props;
     opacity: 0.1;
     mix-blend-mode: overlay;
     pointer-events: none;
+  }
+
+  /* Once the WebGL scene is up it carries its own grain in-shader; a blended
+     layer over a live canvas would be recomposited every frame for nothing. */
+  .hv:has(.hero-scene.is-ready) .hv__grain {
+    display: none;
   }
 
   .hv--quiet .hv__layer {

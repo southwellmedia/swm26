@@ -3,12 +3,13 @@
  * Studio page
  * URL: /studio
  *
- * Replaces Velocity's demo /about. The copy here is drawn from the material
- * that already existed — the hero lede and the four service cards — rather
- * than invented; the marked sections still need real writing.
+ * Replaces Velocity's demo /about. The hero lede and the four service cards
+ * are drawn from material that already existed; the founder section is
+ * Michael's own story. The marked section still needs real writing.
  */
 import SiteLayout from '@/layouts/SiteLayout.astro';
 import SectionHead from '@/components/sections/SectionHead.astro';
+import Founder from '@/components/sections/Founder.astro';
 import Services from '@/components/sections/Services.astro';
 import Cta from '@/components/sections/Cta.astro';
 import { Image } from 'astro:assets';
@@ -62,10 +63,11 @@ import studioPhoto from '@/assets/studio/michael-froseth.jpg';
     </dl>
   </section>
 
-  {/* TODO: the studio story, the team and the process still need writing.
-      Left out rather than filled with placeholder prose. */}
+  {/* TODO: the process still needs writing. Left out rather than filled with
+      placeholder prose. */}
 
   <Services />
 
+  <Founder />
   <Cta />
 </SiteLayout>

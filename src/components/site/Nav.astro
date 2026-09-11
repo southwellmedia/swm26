@@ -97,7 +97,7 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
                 aria-current={isCurrent(item.href) ? 'page' : undefined}
               >
                 <span class="sw-menu__index label-mono" aria-hidden="true">
-                  ( 0{i + 1} )
+                  0{i + 1}
                 </span>
                 <span class="sw-menu__label">{item.label}</span>
                 <Icon name="lucide:arrow-up-right" class="sw-menu__arrow" aria-hidden="true" />
@@ -138,12 +138,9 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     inset: 0 0 auto;
     z-index: 60;
     padding-block: 22px;
-    /* The wordmark unfurls by animating grid-template-columns, which is a
-       layout animation and so repaints the bar every frame. The page below now
-       carries 3D-composited layers (card tilt, the service stack), and a large
-       fixed layer repainting over those is where stutter shows up. Giving the
-       bar its own layer keeps that repaint to itself. */
-    will-change: transform;
+    /* No will-change here: a fixed element already composites on its own
+       layer, and the bar never animates transform. Pinning a second hint just
+       kept a full-width layer resident for nothing. */
     color: var(--color-foreground);
     background: transparent;
     animation: sw-fadein 1s 0.9s both;
@@ -530,8 +527,25 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       );
     };
     publishHeight();
-    window.addEventListener('resize', publishHeight, { passive: true });
+    // One measurement per frame at most, however fast resize events arrive.
+    let resizeRaf = 0;
+    const onResize = () => {
+      if (resizeRaf) return;
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        publishHeight();
+      });
+    };
+    window.addEventListener('resize', onResize, { passive: true });
     if (document.fonts?.ready) void document.fonts.ready.then(publishHeight);
+    // The bar is shorter once it frosts. Measure when that transition has
+    // finished rather than inside the scroll handler: reading layout and
+    // writing to <html> mid-scroll forces a reflow in the same frame the
+    // frost switches on.
+    const onTransitionEnd = (event: TransitionEvent) => {
+      if (event.target === nav && event.propertyName.startsWith('padding')) publishHeight();
+    };
+    nav.addEventListener('transitionend', onTransitionEnd);
 
     const setOpen = (next: boolean) => {
       open = next;
@@ -558,9 +572,6 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       if (next === scrolled) return;
       scrolled = next;
       nav.classList.toggle('is-scrolled', next);
-      // The bar is shorter once it frosts, so anything measuring against it —
-      // the sticky band headings on a case study — needs the new number.
-      publishHeight();
     };
 
     const onKeydown = (event: KeyboardEvent) => {
@@ -581,6 +592,9 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       'astro:before-swap',
       () => {
         window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', onResize);
+        nav.removeEventListener('transitionend', onTransitionEnd);
+        cancelAnimationFrame(resizeRaf);
         document.removeEventListener('keydown', onKeydown);
         document.documentElement.style.overflow = '';
       },

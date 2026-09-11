@@ -71,7 +71,7 @@ const siteConfig: SiteConfig = {
   // address in structured data is worse than none at all.
   // Feeds Organization.sameAs in the JSON-LD.
   socialLinks: [
-    'https://www.linkedin.com/in/michaelfroseth',
+    'https://www.linkedin.com/in/michael-froseth/',
     'https://github.com/southwellmedia-dev',
   ],
   verification: {

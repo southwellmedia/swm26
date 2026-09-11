@@ -17,6 +17,10 @@
 @import '@fontsource-variable/archivo/wght.css';
 @import '@fontsource-variable/archivo/wght-italic.css';
 
+/* Display face. themes/southwell.css points --theme-font-display at Outfit;
+   it has to be loaded here, on purpose, not by the dev-only font switcher. */
+@import '@fontsource-variable/outfit/wght.css';
+
 /* Meta and eyebrow labels. */
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
@@ -144,7 +148,9 @@
 
   html {
     font-family: var(--font-sans);
-    scroll-behavior: smooth;
+    /* No scroll-behavior: smooth here. Inertial scrolling is Lenis
+       (src/scripts/smooth-scroll.ts); native smooth scrolling on top of it
+       double-eases every anchor jump. */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

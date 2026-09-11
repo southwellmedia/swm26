@@ -26,17 +26,22 @@ export async function getStaticPaths() {
 
   const ordered = [...projects].sort((a, b) => a.data.order - b.data.order);
 
+  // "Next project" walks the portfolio as the grids show it: projects told
+  // inside a story page (`parent`) are skipped, and from one of those the
+  // door leads back to the story it belongs to.
+  const ring = ordered.filter((project) => !project.data.parent);
+
   // A project with `story: true` has its own page file beside this one, and
   // Astro would otherwise build both to the same path. It stays in the ring so
   // "next project" still walks the whole portfolio.
   return ordered
-    .map((project, i) => ({
-      params: { slug: project.id },
-      props: {
-        project,
-        next: ordered[(i + 1) % ordered.length],
-      },
-    }))
+    .map((project) => {
+      const parent = project.data.parent
+        ? ordered.find((candidate) => candidate.id === project.data.parent)
+        : undefined;
+      const next = parent ?? ring[(ring.indexOf(project) + 1) % ring.length];
+      return { params: { slug: project.id }, props: { project, next } };
+    })
     .filter(({ props }) => !props.project.data.story);
 }
 
@@ -83,8 +88,8 @@ const shots = feature && cover ? [{ src: cover, alt: coverAlt ?? title }, ...gal
    writing is missing. */
 const half = Math.ceil(shots.length / 2);
 const bands = [
-  { key: 'problem', label: '( THE PROBLEM )', prose: challenge, shots: shots.slice(0, half) },
-  { key: 'solution', label: '( WHAT WE BUILT )', prose: solution, shots: shots.slice(half) },
+  { key: 'problem', label: 'THE PROBLEM', prose: challenge, shots: shots.slice(0, half) },
+  { key: 'solution', label: 'WHAT WE BUILT', prose: solution, shots: shots.slice(half) },
 ].filter((band) => band.prose || band.shots.length > 0);
 
 const hasBuild = technologies.length > 0 || features.length > 0;
@@ -183,7 +188,7 @@ const nextImage = next.data.feature ?? next.data.cover;
           <div class="case__build-inner shell">
             {technologies.length > 0 && (
               <div>
-                <span class="label-mono text-foreground-muted">( STACK )</span>
+                <span class="label-mono text-foreground-muted">STACK</span>
                 <ul class="case__chips">
                   {technologies.map((item) => (
                     <li>{item}</li>
@@ -193,7 +198,7 @@ const nextImage = next.data.feature ?? next.data.cover;
             )}
             {features.length > 0 && (
               <div>
-                <span class="label-mono text-foreground-muted">( SHIPPED )</span>
+                <span class="label-mono text-foreground-muted">SHIPPED</span>
                 <ul class="case__shipped">
                   {features.map((item) => (
                     <li>{item}</li>
@@ -238,7 +243,7 @@ const nextImage = next.data.feature ?? next.data.cover;
         )
       }
       <div class="nextup__body shell">
-        <span class="label-mono">( NEXT PROJECT )</span>
+        <span class="label-mono">NEXT PROJECT</span>
         <span class="nextup__title">{next.data.title}</span>
       </div>
     </a>
