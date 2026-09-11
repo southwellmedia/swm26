@@ -2,7 +2,12 @@
 /**
  * Giant section title paired with a short right-hand blurb. Shared by Work and
  * Services so the two headers stay identical.
+ *
+ * Entrance: the title rises out of its baseline one glyph at a time, and the
+ * blurb follows a beat later. See "Reveals" in styles/southwell.css.
  */
+import SplitChars from '@/components/site/SplitChars.astro';
+
 interface Props {
   title: string;
   blurb: string;
@@ -19,10 +24,16 @@ const { title, blurb, id, class: className } = Astro.props;
     'max-[800px]:flex-col max-[800px]:items-start max-[800px]:gap-5',
     className,
   ]}
-  data-reveal
+  data-reveal="group"
 >
-  <h2 class="display-section m-0" id={id}>{title}</h2>
-  <p class="m-0 max-w-[380px] text-[18px] leading-[1.55] text-foreground-secondary max-[800px]:text-base">
+  <h2 class="display-section m-0" id={id} aria-label={title}>
+    <SplitChars text={title} />
+  </h2>
+  <p
+    class="m-0 max-w-[380px] text-[18px] leading-[1.55] text-foreground-secondary max-[800px]:text-base"
+    data-rv="fade"
+    style="--d: 260ms"
+  >
     {blurb}
   </p>
 </header>

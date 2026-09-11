@@ -1,0 +1,28 @@
+---
+/**
+ * SplitChars
+ *
+ * Splits a short string into one masked glyph per span so a heading can rise
+ * out of its baseline one letter at a time. Done here at build time: no
+ * client script measures anything, so there is nothing to flash or reflow.
+ *
+ * The letters are aria-hidden; give the parent heading an aria-label with the
+ * plain text so the accessible name survives the split. Spaces stay as real
+ * spaces (white-space: pre on the glyph) so words keep their gap.
+ *
+ * Each glyph carries --i for the stagger in the reveal system
+ * (styles/southwell.css, "Reveals").
+ */
+interface Props {
+  text: string;
+  /** Index the first glyph starts at, to chain after an earlier group. */
+  from?: number;
+}
+
+const { text, from = 0 } = Astro.props;
+const chars = Array.from(text);
+---
+
+<span class="rv-mask" aria-hidden="true"
+  >{chars.map((ch, i) => <span data-rv="char" style={`--i:${from + i}`}>{ch}</span>)}</span
+>

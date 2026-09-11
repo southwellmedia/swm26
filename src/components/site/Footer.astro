@@ -14,17 +14,21 @@ import Placeholder from './Placeholder.astro';
 const year = new Date().getFullYear();
 ---
 
+<div class="footer-stage">
 <footer
   class="invert-section rounded-t-[24px] bg-background pt-[90px] pb-10 text-foreground max-[900px]:pt-[60px]"
+  data-reveal="group"
 >
   <div class="shell">
     <div class="flex items-start justify-between gap-10 max-[900px]:flex-col max-[900px]:gap-12">
-      <span class="display-mark">{siteConfig.mark}</span>
+      <span class="display-mark">
+        <span class="rv-mask"><span data-rv="line">{siteConfig.mark}</span></span>
+      </span>
 
       <nav class="flex flex-wrap gap-[72px] text-[15px] max-[900px]:gap-10" aria-label="Footer">
         {
-          footerColumns.map((column) => (
-            <div class="flex flex-col gap-3">
+          footerColumns.map((column, i) => (
+            <div class="flex flex-col gap-3" data-rv="fade" style={`--i:${i}; --d: 180ms`}>
               <span class="label-mono text-foreground-muted">{column.heading}</span>
               {column.links.map((link) => (
                 <a
@@ -43,22 +47,63 @@ const year = new Date().getFullYear();
       </nav>
     </div>
 
-    <Placeholder
-      invert
-      label="[ footer 3d render — cropped, bleeds off bottom ]"
-      class="mt-16 h-[220px] max-[900px]:mt-12 max-[900px]:h-[150px]"
-    />
+    <div data-rv="wipe" style="--d: 300ms; --rv-radius: var(--radius-sm)">
+      <Placeholder
+        invert
+        label="[ footer 3d render — cropped, bleeds off bottom ]"
+        class="mt-16 h-[220px] max-[900px]:mt-12 max-[900px]:h-[150px]"
+      />
+    </div>
 
     <div
       class="mt-9 flex justify-between gap-5 text-[13px] text-foreground-muted max-[900px]:flex-col max-[900px]:gap-2"
+      data-rv="fade"
+      style="--d: 480ms"
     >
       <span>&copy; {year} {siteConfig.name} — {siteConfig.location}</span>
       <span>Working with clients across the globe</span>
     </div>
   </div>
 </footer>
+</div>
 
 <style>
+  /* --- the sheet ---------------------------------------------------------
+     The slab does not scroll in with the page; it rises up through the last
+     stretch of it, like a drawer closing, and settles as the page ends. A
+     view timeline on the stage drives the footer's translate, so it is
+     scroll-linked and costs one composited transform. The stage clips so the
+     translated slab never adds scrollable overflow (which would move the
+     end of the page while the animation is reading it). Without scroll
+     timelines the footer just sits in flow. */
+  .footer-stage {
+    view-timeline-name: --footer;
+    /* Tight clip, no clip margin: anything the translated slab could paint
+       past the stage would count as scrollable overflow, lengthen the page
+       while it animates, and leave a strip of ground under the footer once
+       it settled. */
+    overflow: clip;
+  }
+
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .footer-stage > footer {
+        animation: footer-rise linear both;
+        animation-timeline: --footer;
+        animation-range: entry 0% entry 100%;
+      }
+    }
+  }
+
+  @keyframes footer-rise {
+    from {
+      translate: 0 42%;
+    }
+    to {
+      translate: 0 0;
+    }
+  }
+
   .footer__link {
     display: inline-flex;
     align-items: center;

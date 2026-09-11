@@ -23,11 +23,12 @@ import PillButton from '@/components/site/PillButton.astro';
   <div
     class="relative flex flex-col items-center shell pt-[130px] pb-[130px] max-[800px]:pt-[100px] max-[800px]:pb-[100px]"
   >
-    <h2 class="display-section m-0 text-center" data-reveal>
-      Don&rsquo;t be<br /><em>a stranger.</em>
+    <h2 class="display-section m-0 text-center" data-reveal="group">
+      <span class="rv-mask"><span data-rv="line" style="--i:0">Don&rsquo;t be</span></span>
+      <span class="rv-mask"><span data-rv="line" style="--i:1"><em>a stranger.</em></span></span>
     </h2>
 
-    <div class="mt-10 flex flex-wrap justify-center gap-[18px] max-[800px]:mt-8" data-reveal>
+    <div class="mt-10 flex flex-wrap justify-center gap-[18px] max-[800px]:mt-8" data-reveal style="--d: 320ms">
       <PillButton href={'mailto:' + siteConfig.email}>Chat with Southwell</PillButton>
       <PillButton href="/contact" variant="outline">Book a meeting</PillButton>
     </div>

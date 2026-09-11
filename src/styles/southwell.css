@@ -185,79 +185,124 @@
   }
 
   /* -----------------------------------------------------------------------
-     Scroll-driven reveals
-     Driven by CSS scroll timelines, not JS — nothing to break, nothing left
-     stuck at opacity 0 if a script fails to run. Browsers without
-     animation-timeline render the content as-is via the @supports fallback.
+     Reveals
+     Play-once entrances. src/scripts/reveal.ts adds `is-in` to a
+     [data-reveal] element the first time it is 12% into the viewport; the
+     motion itself is all here. Two moves, both borrowed from the hero's
+     load-in so the whole page speaks one language: type rises out of a mask,
+     surfaces wipe open from the bottom. Nothing scales and nothing tilts.
+
+       [data-reveal]           the trigger. Bare, it fade-rises as a block —
+                               the case studies and blog use it that way.
+       [data-reveal="group"]   a trigger that does nothing itself and lets
+                               the parts below choreograph inside it.
+       .rv-mask                the clip a line or glyph rises out of.
+       [data-rv="line"]        a masked line; --i staggers by 100 ms.
+       [data-rv="char"]        a masked glyph (SplitChars); --i by 34 ms.
+       [data-rv="fade"]        opacity and 18px; --i by 70 ms.
+       [data-rv="wipe"]        clip-path wipe; --i by 90 ms; --rv-radius
+                               keeps rounded corners through the wipe.
+       --d                     an extra delay on any of them, to sequence
+                               one part after another.
+
+     All movement uses `translate` / `rotate`, never `transform`, so it
+     composes with the hover and parallax transforms already on cards and
+     captions. Hidden states are gated on html.js (set inline in BaseLayout)
+     and on motion being allowed, so no page ever ships invisible.
      ----------------------------------------------------------------------- */
-  [data-reveal] {
-    animation: sw-reveal 0.9s var(--ease-settle) both;
-    animation-timeline: view();
-    animation-range: entry calc(4% + var(--reveal-in, 0%)) entry calc(38% + var(--reveal-out, 0%));
+  .rv-mask {
+    display: block;
+    /* Clips the rise without touching layout: the extension below the line
+       box covers the descenders a sub-1 line-height lets hang out. */
+    clip-path: inset(-0.2em 0 -0.3em);
   }
 
-  /* Uniform reveals read as mechanical: same distance, same angle, same
-     moment, every time. Rotating four sets of values off nth-child gives each
-     element its own arrival without any component having to opt in. Set
-     --reveal-* inline to override a specific one. */
-  [data-reveal]:nth-child(4n + 1) {
-    --reveal-y: 74px;
-    --reveal-z: -240px;
-    --reveal-rot: 7deg;
-    --reveal-out: 2%;
+  [data-rv='line'] {
+    display: block;
   }
 
-  [data-reveal]:nth-child(4n + 2) {
-    --reveal-y: 52px;
-    --reveal-z: -150px;
-    --reveal-rot: 4deg;
-    --reveal-in: 3%;
-    --reveal-out: 6%;
+  [data-rv='char'] {
+    display: inline-block;
+    white-space: pre;
+    transform-origin: 0% 100%;
   }
 
-  [data-reveal]:nth-child(4n + 3) {
-    --reveal-y: 66px;
-    --reveal-z: -280px;
-    --reveal-rot: 8deg;
-    --reveal-in: 1.5%;
-    --reveal-out: -2%;
-  }
+  @media (prefers-reduced-motion: no-preference) {
+    [data-rv='line'],
+    [data-rv='char'] {
+      transition:
+        translate 1.05s var(--ease-settle),
+        rotate 1.05s var(--ease-settle);
+      transition-delay: calc(var(--d, 0ms) + var(--i, 0) * var(--rv-step, 100ms));
+    }
 
-  [data-reveal]:nth-child(4n) {
-    --reveal-y: 58px;
-    --reveal-z: -190px;
-    --reveal-rot: 5deg;
-    --reveal-in: 4.5%;
-    --reveal-out: 3%;
-  }
+    [data-rv='char'] {
+      --rv-step: 34ms;
+      transition-duration: 0.95s;
+    }
 
-  @supports not (animation-timeline: view()) {
-    [data-reveal] {
-      animation: none;
-      opacity: 1 !important;
-      transform: none !important;
+    [data-rv='fade'] {
+      transition:
+        opacity 0.9s var(--ease-quart),
+        translate 0.9s var(--ease-quart);
+      transition-delay: calc(var(--d, 0ms) + var(--i, 0) * var(--rv-step, 70ms));
+    }
+
+    [data-rv='wipe'] {
+      clip-path: inset(0 round var(--rv-radius, 0px));
+      transition: clip-path 1.15s var(--ease-quart);
+      transition-delay: calc(var(--d, 0ms) + var(--i, 0) * 90ms);
+    }
+
+    [data-reveal=''] {
+      transition:
+        opacity 1s var(--ease-quart),
+        translate 1s var(--ease-quart);
+      transition-delay: var(--d, 0ms);
+    }
+
+    /* Resting positions before the trigger. */
+    html.js [data-reveal]:not(.is-in) [data-rv='line'],
+    html.js [data-reveal]:not(.is-in)[data-rv='line'] {
+      translate: 0 118%;
+    }
+
+    html.js [data-reveal]:not(.is-in) [data-rv='char'] {
+      translate: 0 118%;
+      rotate: 5deg;
+    }
+
+    html.js [data-reveal]:not(.is-in) [data-rv='fade'],
+    html.js [data-reveal]:not(.is-in)[data-rv='fade'] {
+      opacity: 0;
+      translate: 0 18px;
+    }
+
+    html.js [data-reveal]:not(.is-in) [data-rv='wipe'],
+    html.js [data-reveal]:not(.is-in)[data-rv='wipe'] {
+      clip-path: inset(100% 0 0 0 round var(--rv-radius, 0px));
+    }
+
+    html.js [data-reveal='']:not(.is-in) {
+      opacity: 0;
+      translate: 0 40px;
     }
   }
+}
+
+/* Animatable custom properties. Registered here, at the top level, so any
+   component's keyframes can drive them. */
+
+/* How far a covered service card has receded into shadow (Services.astro). */
+@property --svc-dim {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
 }
 
 /* -------------------------------------------------------------------------
    Keyframes
    ------------------------------------------------------------------------- */
-/* Elements arrive from behind the page, not just below it. The perspective
-   lives in the transform rather than on an ancestor so nothing has to be
-   wrapped for this to work. */
-@keyframes sw-reveal {
-  from {
-    opacity: 0;
-    transform: perspective(var(--depth)) translate3d(0, var(--reveal-y, 62px), var(--reveal-z, -200px))
-      rotateX(var(--reveal-rot, 6deg)) scale(var(--reveal-scale, 0.965));
-  }
-  to {
-    opacity: 1;
-    transform: perspective(var(--depth)) translate3d(0, 0, 0) rotateX(0) scale(1);
-  }
-}
-
 /* Depth emergence: rises from behind, comes past the viewer, settles back.
    The mid keyframe is the arc — without it this is just a fade with extra
    steps. Each phase carries its own timing function, which is the two-phase
@@ -425,10 +470,5 @@
     animation-iteration-count: 1 !important;
     animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
-  }
-
-  [data-reveal] {
-    opacity: 1 !important;
-    transform: none !important;
   }
 }

@@ -47,7 +47,7 @@ const desks: Desk[] = [
 ---
 
 <section class="shell pt-[130px] pb-[40px] max-[800px]:pt-[90px] max-[800px]:pb-[30px]">
-  <article class="founder" aria-labelledby="founder" data-reveal>
+  <article class="founder" aria-labelledby="founder" data-reveal="group" data-rv="fade">
     {
       linkedIn && (
         <a
@@ -63,21 +63,27 @@ const desks: Desk[] = [
     }
 
     <div class="founder__body">
-      <span class="label-mono founder__eyebrow">THE FOUNDER · MICHAEL FROSETH</span>
+      <span class="label-mono founder__eyebrow" data-rv="fade" style="--d: 120ms">
+        THE FOUNDER · MICHAEL FROSETH
+      </span>
 
       <h2 class="founder__headline display-service" id="founder">
-        Less handoff,<br />
-        <em>more hands-on.</em>
+        <span class="rv-mask">
+          <span data-rv="line" style="--i:0; --d: 180ms">Less handoff,</span>
+        </span>
+        <span class="rv-mask">
+          <span data-rv="line" style="--i:1; --d: 180ms"><em>more hands-on.</em></span>
+        </span>
       </h2>
 
       <div class="founder__prose">
-        <p>
+        <p data-rv="fade" style="--i:0; --d: 440ms">
           Twenty years across design, marketing, development and creative direction, with titles
           from Junior Designer to Creative Director. Southwell Media is that experience with the
           layers removed: the person who designs the thing also builds it, and is still around after
           launch.
         </p>
-        <p>
+        <p data-rv="fade" style="--i:1; --d: 440ms">
           Outside the studio, I&rsquo;m Brand Director at Reap Capital and a co-founder of MAD
           STACK, where we&rsquo;re building LucidOS, an operating system for real estate operators.
         </p>
@@ -85,10 +91,10 @@ const desks: Desk[] = [
 
       <ul class="founder__desks">
         {
-          desks.map((desk) => {
+          desks.map((desk, i) => {
             const external = desk.href.startsWith('http');
             return (
-              <li>
+              <li data-rv="fade" style={`--i:${i}; --d: 600ms`}>
                 <a
                   class="founder__desk"
                   href={desk.href}
@@ -105,7 +111,7 @@ const desks: Desk[] = [
       </ul>
     </div>
 
-    <figure class="founder__figure m-0">
+    <figure class="founder__figure m-0" data-rv="wipe" style="--d: 200ms">
       <Image
         src={portrait}
         alt="Michael Froseth, founder of Southwell Media"
@@ -118,8 +124,8 @@ const desks: Desk[] = [
 
     <dl class="founder__stats">
       {
-        stats.map((stat) => (
-          <div class="founder__stat">
+        stats.map((stat, i) => (
+          <div class="founder__stat" data-rv="fade" style={`--i:${i}; --d: 680ms`}>
             <dt class="founder__label label-mono">{stat.label.toUpperCase()}</dt>
             <dd class="founder__value">{stat.value}</dd>
           </div>

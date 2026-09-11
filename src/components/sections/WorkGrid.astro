@@ -104,7 +104,15 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
         const span = spanFor(i);
         const sizing = SIZING[span];
         return (
-        <a class="card" href={'/work/' + project.id} data-span={span} data-card data-reveal>
+        <a
+          class="card"
+          href={'/work/' + project.id}
+          data-span={span}
+          data-card
+          data-reveal="group"
+          style={`--i:${i % 3}`}
+        >
+          <div class="card__inner" data-rv="wipe">
           <div class="card__media" data-swaps={project.data.feature && project.data.cover ? '' : undefined}>
             {/* The feature photograph rests; the mockup is what hover reveals.
                 With only one of the two, it just sits there and nothing swaps. */}
@@ -156,6 +164,7 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
           {/* Light that follows the cursor. Screen blend so it adds light
               rather than washing a grey film over the picture. */}
           <span class="card__glare" aria-hidden="true" />
+          </div>
         </a>
         );
       })
@@ -194,15 +203,30 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
     position: relative;
     display: block;
     min-width: 0;
-    overflow: hidden;
     border-radius: var(--radius-lg);
-    background: var(--work-media-bg);
-    box-shadow: 0 18px 36px rgb(12 16 22 / 0.1);
-    transition: box-shadow 0.4s ease;
+    /* The entrance wipe keeps the corners while it opens. */
+    --rv-radius: var(--radius-lg);
   }
 
-  .card:hover,
-  .card:focus-visible {
+  /* Everything visible lives one level down. The entrance wipe clips this
+     surface, not the card: an IntersectionObserver honours clip-path, and a
+     fully clipped trigger never intersects, so it would never be revealed. */
+  .card__inner {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    background: var(--work-media-bg);
+    box-shadow: 0 18px 36px rgb(12 16 22 / 0.1);
+    /* Both transitions have to be declared here: the reveal system's
+       [data-rv] rule loses to this scoped one on specificity. */
+    transition:
+      box-shadow 0.4s ease,
+      clip-path 1.15s var(--ease-quart) calc(var(--i, 0) * 90ms);
+  }
+
+  .card:hover .card__inner,
+  .card:focus-visible .card__inner {
     box-shadow: 0 30px 56px rgb(12 16 22 / 0.22);
   }
 
@@ -260,6 +284,28 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
       transform var(--pt, 0.7s) var(--ease-quart),
       filter 0.5s ease,
       opacity 0.5s ease;
+  }
+
+  /* Entrance: the card wipes open from the bottom (data-rv="wipe" on the
+     card) while the picture inside settles down to meet it. `translate` so
+     it composes with the parallax transform above. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js) .card:not(.is-in) .card__media {
+      translate: 0 -48px;
+    }
+
+    .card.is-in .card__media {
+      animation: rv-settle 1.15s var(--ease-quart) calc(var(--i, 0) * 90ms) both;
+    }
+  }
+
+  @keyframes rv-settle {
+    from {
+      translate: 0 -48px;
+    }
+    to {
+      translate: 0 0;
+    }
   }
 
   .card__img {
