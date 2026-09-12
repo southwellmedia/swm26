@@ -13,13 +13,15 @@ import siteConfig from '@/config/site.config';
 ---
 
 <SiteLayout
-  title="Work that earns its keep."
+  title="Dallas Creative Agency for Websites, Apps & Brands"
   description={siteConfig.description}
   includeOrgSchema
 >
   <Hero />
-  {/* Six lands on a row boundary: the full-width lead over two rows, then the
-      first five of the pattern over three. Any of 1, 6 or 11 tiles cleanly. */}
+  {
+    /* Six lands on a row boundary: the full-width lead over two rows, then the
+      first five of the pattern over three. Any of 1, 6 or 11 tiles cleanly. */
+  }
   <WorkGrid count={6} />
   <Services />
   <Founder />

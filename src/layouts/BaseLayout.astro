@@ -75,7 +75,12 @@ if (includeOrgSchema) {
     />
 
     <!-- RSS Feed -->
-    <link rel="alternate" type="application/rss+xml" title={`${siteConfig.name} RSS Feed`} href="/rss.xml" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`${siteConfig.name} RSS Feed`}
+      href="/rss.xml"
+    />
 
     <!-- JSON-LD Structured Data -->
     <JsonLd schema={schemas} />
@@ -85,6 +90,12 @@ if (includeOrgSchema) {
 
     <!-- Client-side routing for view transitions -->
     <ClientRouter />
+
+    <!-- Motion (src/scripts/motion) hides what it is about to reveal behind
+         this class, so nothing is ever hidden for a visitor without JS. -->
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
 
     <!-- Theme script (runs before render to prevent flash) -->
     <script is:inline>
@@ -101,11 +112,11 @@ if (includeOrgSchema) {
     </script>
   </head>
 
-  <body class="min-h-screen bg-background text-foreground antialiased">
+  <body class="bg-background text-foreground min-h-screen antialiased">
     <!-- Skip to content link -->
     <a
       href="#main-content"
-      class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
+      class="focus:bg-primary focus:text-primary-foreground sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:px-4 focus:py-2"
     >
       Skip to content
     </a>

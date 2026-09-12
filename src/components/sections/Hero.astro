@@ -3,7 +3,9 @@
  * Hero
  *
  * A panel with the headline overlapping its lower edge, and a staggered
- * load-in: the panel fades, each headline line rises, then the foot fades in.
+ * load-in: the panel settles, each headline line rises out of its mask, then
+ * the foot follows. The sequence lives in src/scripts/motion/hero.ts; the
+ * stylesheet only holds the pre-animation state, behind `html.js`.
  *
  * The panel is HeroVisual — CSS, not an image. Client work does not belong
  * here; the first thing on the page has to carry the studio's own brand.
@@ -15,26 +17,36 @@
  * idle so it never competes with the type for the first paint; the CSS
  * treatments underneath are the no-JS / pre-hydration state.
  */
-import siteConfig from '@/config/site.config';
 import HeroVisual from '@/components/site/HeroVisual.astro';
 import HeroScene from '@/components/site/HeroScene.tsx';
 ---
 
-<section class="hero flex min-h-screen flex-col justify-end shell pt-24 pb-9 max-[700px]:pt-[84px]">
+<section class="hero shell flex min-h-screen flex-col justify-end pt-24 pb-9 max-[700px]:pt-[84px]">
   <HeroVisual class="hero__render h-[58vh] max-[700px]:h-[42vh]">
     <HeroScene client:idle />
+    {
+      /* The panel dissolves into the page along its lower edge rather than
+        ending in a hard line behind the headline. A painted gradient in the
+        page colour, not a mask: masking a container with a live WebGL canvas
+        inside costs a compositing pass every frame. */
+    }
+    <div class="hero__fade" aria-hidden="true"></div>
   </HeroVisual>
 
   <h1 class="hero__headline display-hero">
-    <span class="hero__line"><span class="hero__word hero__word--1">Work that</span></span>
     <span class="hero__line"
-      ><span class="hero__word hero__word--2"><em>earns its keep.</em></span></span
+      ><span class="hero__word hero__word--1">A Dallas creative agency</span></span
+    >
+    <span class="hero__line"
+      ><span class="hero__word hero__word--2"><em>for websites, apps and brands.</em></span></span
     >
   </h1>
 
   <div class="hero__foot mt-9 flex items-end justify-between gap-10">
-    <p class="m-0 max-w-[400px] text-[17px] leading-[1.6] text-foreground-secondary">
-      {siteConfig.description}
+    <p class="text-foreground-secondary m-0 max-w-[440px] text-[17px] leading-[1.6]">
+      <strong class="text-foreground font-medium">Work that earns its keep.</strong>
+      {' '}Southwell Media is a Dallas-based creative agency building original websites, apps and
+      brands: no templates, no themes, shipped in weeks.
     </p>
 
     <div class="hero__scroll" aria-hidden="true">
@@ -47,6 +59,10 @@ import HeroScene from '@/components/site/HeroScene.tsx';
 <style>
   .hero {
     position: relative;
+    /* The headline is sized in container units off this box, so it is one
+       line per row at every width. Inline-size containment only; the section
+       still grows to its content vertically. */
+    container-type: inline-size;
     /* Art direction for the WebGL scene lives here as --hero-* custom
        properties (see HeroScene.tsx for every hook). Unset, the scene is
        monochrome from the theme greys with a neutral studio light. */
@@ -58,14 +74,19 @@ import HeroScene from '@/components/site/HeroScene.tsx';
     /* Set to `none` by the treatment token, which collapses the panel and
        leaves a type-only hero. */
     display: var(--hero-panel-display, block);
-    /* Comes from behind and settles — no forward arc. The panel is shell-wide,
-       and anything crossing Z 0 magnifies out through the gutter. */
-    --emerge-z: -300px;
-    --emerge-y: 34px;
-    --emerge-rot: 3.5deg;
-    --emerge-scale: 0.97;
-    animation: sw-emerge 1.5s 0.15s var(--ease-settle) both;
     transform-origin: 50% 80%;
+  }
+
+  /* Pre-animation state. Motion writes its first keyframe inline, and inline
+     beats these, so there is never a frame of the finished layout before the
+     entrance. Without JS the class is absent and everything simply shows. */
+  :global(html.js) .hero__render,
+  :global(html.js) .hero__foot {
+    opacity: 0;
+  }
+
+  :global(html.js) .hero__word {
+    transform: translateY(112%);
   }
 
   /* The headline rides up over the panel rather than sitting under it. When
@@ -84,6 +105,12 @@ import HeroScene from '@/components/site/HeroScene.tsx';
        has no descenders, so the space under it reads as a gap. One token in
        themes/southwell.css. */
     line-height: var(--hero-leading, 0.88);
+    /* Sized to the shell, not the viewport: the second line is about 12.4em
+       of light Outfit at this tracking, and 7.7cqi puts it at roughly 95% of
+       the container's width at every size — one row per line on a phone as
+       well as on a 1440px shell. The shell caps at 1440px, so this caps
+       itself. */
+    font-size: 7.7cqi;
   }
 
   /* Each line masks its word so it rises out from behind the line above.
@@ -91,7 +118,7 @@ import HeroScene from '@/components/site/HeroScene.tsx';
      mask has to be padded out vertically or it shears the ascenders and
      descenders off — the negative margins put the layout back exactly where
      it was (see the flex note on .hero__headline). 0.2em covers the p in
-     "keep." at 0.88 leading with room to spare. */
+     "apps" at 0.88 leading with room to spare. */
   .hero__line {
     display: block;
     overflow: hidden;
@@ -99,37 +126,24 @@ import HeroScene from '@/components/site/HeroScene.tsx';
     margin-block: -0.2em;
   }
 
-  /* The words rise inside their masks and nowhere else.
-
-     Depth is deliberately NOT used here: the mask is a tight overflow:hidden
-     box tuned to this line-height, so rotating or scaling the word inside it
-     shears the glyphs against the mask edge, and any forward Z magnifies a
-     shell-wide line straight off the left of the screen. The two-phase settle
-     is the upgrade — the travel stays flat and clean.
-
-     Line two is lighter: less distance, arrives faster. Delays are uneven on
-     purpose; equal spacing is what makes a stagger look mechanical. */
+  /* The words rise inside their masks and nowhere else: the mask is a tight
+     box tuned to this line-height, so anything but a flat vertical travel
+     would shear the glyphs against its edge. */
   .hero__word {
     display: block;
-    animation: sw-rise 0.95s var(--ease-settle) both;
   }
 
-  .hero__word--1 {
-    animation-delay: 0.35s;
-  }
-
-  .hero__word--2 {
-    animation-delay: 0.47s;
-    animation-duration: 0.86s;
-  }
-
-  /* Not masked and not full-bleed, so it can carry a little depth. */
-  .hero__foot {
-    --emerge-z: -260px;
-    --emerge-y: 34px;
-    --emerge-rot: 2.5deg;
-    --emerge-scale: 0.985;
-    animation: sw-emerge 1s 0.95s var(--ease-settle) both;
+  .hero__fade {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      transparent 38%,
+      color-mix(in srgb, var(--color-background) 55%, transparent) 72%,
+      var(--color-background) 100%
+    );
   }
 
   .hero__scroll {
@@ -157,6 +171,15 @@ import HeroScene from '@/components/site/HeroScene.tsx';
 
     .hero__scroll {
       display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__render,
+    .hero__word,
+    .hero__foot {
+      opacity: 1 !important;
+      transform: none !important;
     }
   }
 </style>

@@ -11,13 +11,17 @@
  * its inner and lower sides, so the type and the photo read as one surface
  * rather than copy beside a headshot.
  *
- * The card uses the same colourway tokens as the ink service card, so it
- * re-maps itself in dark mode along with the rest of the stack.
+ * The card uses the same colourway tokens as the ink service card, minus its
+ * blue glows, so it is plain ink and re-maps itself in dark mode along with
+ * the rest of the stack.
  */
 import { Image } from 'astro:assets';
 import { Icon } from 'astro-icon/components';
 import siteConfig from '@/config/site.config';
 import portrait from '@/assets/authors/MichaelFrosethColored-2.jpg';
+import relightPhoto from '@/assets/authors/MichaelFroseth-relight.webp';
+import relightDepth from '@/assets/authors/MichaelFroseth-relight-depth.webp';
+import FounderRelight from '@/components/site/FounderRelight.tsx';
 
 interface Stat {
   value: string;
@@ -114,6 +118,7 @@ const desks: Desk[] = [
         sizes="(max-width: 800px) 100vw, 44vw"
         class="founder__photo"
       />
+      <FounderRelight client:visible src={relightPhoto.src} depthSrc={relightDepth.src} />
     </figure>
 
     <dl class="founder__stats">
@@ -134,8 +139,10 @@ const desks: Desk[] = [
     --card-bg: var(--service-ink-bg);
     --card-fg: var(--service-ink-fg);
     --card-chip: var(--service-ink-chip);
-    --card-glow-a: var(--service-ink-glow-a);
-    --card-glow-b: var(--service-ink-glow-b);
+    /* Plain ink, the colour of the type: the blue glows the service card
+       carries stay off this one. Colour is left to the case study pages. */
+    --card-glow-a: transparent;
+    --card-glow-b: transparent;
     --card-light: var(--service-ink-light);
     --card-light-b: var(--service-ink-light-b);
     --card-grain: var(--service-ink-grain);
@@ -324,6 +331,136 @@ const desks: Desk[] = [
     object-position: 50% 0%;
   }
 
+  /* The lit portrait sits exactly over the photograph and fades in once its
+     first frame is drawn; without WebGL it never does, and the photograph
+     stays. Opacity only: this sits inside a scroll-driven reveal. */
+  .founder__figure :global(.founder-relight) {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+
+  .founder__figure :global(.founder-relight.is-ready) {
+    opacity: 1;
+  }
+
+  /* ---- the relight's controls ----------------------------------------- */
+  /* An info button to the left of the LinkedIn one, and the panel it opens: what the
+     effect is, and a switch between the lit portrait, the relief as clay,
+     the raw depth map and the photograph. Portaled onto the card by the
+     island, so the figure's fade never dims them. */
+  .founder :global(.founder-relight__ui) {
+    position: absolute;
+    top: 28px;
+    right: 86px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+  }
+
+  .founder :global(.founder-relight__info) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 1.5px solid var(--card-chip);
+    border-radius: var(--radius-full);
+    color: var(--card-fg);
+    background-color: rgb(12 16 22 / 0.35);
+    cursor: pointer;
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease,
+      border-color 0.25s ease,
+      transform 0.3s ease;
+  }
+
+  .founder :global(.founder-relight__info svg) {
+    width: 20px;
+    height: 20px;
+  }
+
+  .founder :global(.founder-relight__info:hover),
+  .founder :global(.founder-relight__info[aria-expanded='true']) {
+    background-color: var(--card-fg);
+    border-color: var(--card-fg);
+    color: var(--card-bg);
+  }
+
+  .founder :global(.founder-relight__info:hover) {
+    transform: scale(1.06);
+  }
+
+  .founder :global(.founder-relight__panel) {
+    width: min(300px, calc(100vw - 80px));
+    padding: 20px 22px 18px;
+    border: 1px solid var(--card-chip);
+    border-radius: var(--radius-lg, 16px);
+    color: var(--card-fg);
+    background-color: rgb(12 16 22 / 0.86);
+    box-shadow: 0 18px 50px rgb(0 0 0 / 0.35);
+  }
+
+  .founder :global(.founder-relight__title) {
+    margin: 0;
+    opacity: 0.55;
+  }
+
+  .founder :global(.founder-relight__text) {
+    margin: 12px 0 0;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .founder :global(.founder-relight__text--dim) {
+    margin-top: 8px;
+    opacity: 0.6;
+  }
+
+  .founder :global(.founder-relight__views) {
+    display: flex;
+    gap: 6px;
+    margin-top: 16px;
+  }
+
+  .founder :global(.founder-relight__view) {
+    flex: 1 1 0;
+    padding: 8px 0;
+    border: 1.5px solid var(--card-chip);
+    border-radius: var(--radius-full);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--card-fg);
+    background: transparent;
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  .founder :global(.founder-relight__view:hover) {
+    border-color: var(--card-fg);
+  }
+
+  .founder :global(.founder-relight__view[aria-pressed='true']) {
+    background-color: var(--card-fg);
+    border-color: var(--card-fg);
+    color: var(--card-bg);
+  }
+
+  /* The card flips to ice in dark mode: the glass panel and button follow. */
+  :global(.dark) .founder :global(.founder-relight__info),
+  :global(.dark) .founder :global(.founder-relight__panel) {
+    background-color: rgb(238 242 244 / 0.82);
+  }
+
   /* ---- the numbers ---------------------------------------------------- */
   /* A strip across the full width of the card: four cells divided by
      hairlines, each a mono label over a display-scale figure. */
@@ -406,6 +543,16 @@ const desks: Desk[] = [
     .founder__linkedin {
       top: 16px;
       right: 16px;
+      width: 44px;
+      height: 44px;
+    }
+
+    .founder :global(.founder-relight__ui) {
+      top: 16px;
+      right: 68px;
+    }
+
+    .founder :global(.founder-relight__info) {
       width: 44px;
       height: 44px;
     }

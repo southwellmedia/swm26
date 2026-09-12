@@ -8,8 +8,9 @@
  * The first hand-built work page. The generic /work/[...slug] template skips
  * any project whose frontmatter sets `story: true`, and this file owns the URL
  * instead. It keeps the site's Nav, Cta and Footer; what changes is that the
- * whole story sits on ink. You leave the ice-white site, drop into the story,
- * and the Cta hands you back.
+ * whole story sits on its own paper — the site's ice with a breath of Reap's
+ * forest in it — and the next-project door drops to ink to hand you on.
+ * The client's own colours stay on the brand tiles.
  *
  * Content lives in @/data/reap-capital.ts. Every figure there is the
  * prototype's draft copy and needs confirming with Reap.
@@ -60,8 +61,6 @@ const nextImage = next.data.feature ?? next.data.cover;
   image={cover.src}
   imageAlt={project.data.coverAlt ?? project.data.title}
   navContext={project.data.client ?? project.data.title}
-  navOverMedia
-  navTone="dark"
 >
   <article class="story">
     {/* --- hero: full-bleed, the feature photograph made safe for type ------ */}
@@ -413,24 +412,45 @@ const nextImage = next.data.feature ?? next.data.cover;
 </SiteLayout>
 
 <style>
-  /* The story sits on ink in both colour schemes. Rather than hard-coding ice
-     into every rule, the Tailwind tokens are remapped here the way
-     .invert-section does it — so PillButton, .label-mono and anything else
-     that reads a token inverts on its own. --dim is the footer-muted grey. */
+  /* The story sits on light paper like the other case studies, tinted a
+     breath toward Reap's forest — the same move Vana makes with its warm
+     paper. The palette is declared once here and the Tailwind tokens
+     remapped to it, so PillButton, .label-mono and anything else that reads
+     a token follows on its own. --dim is the muted grey; --story-raised is
+     the panel tone a step up from the ground. */
   .story {
-    --color-background: var(--ink-950);
-    --color-foreground: var(--ice-100);
-    --color-foreground-secondary: var(--ice-400);
-    --color-foreground-muted: var(--ice-500);
-    --color-border: var(--border-invert);
-    --color-border-strong: var(--border-invert-strong);
-    --color-primary: var(--ice-100);
-    --color-primary-foreground: var(--ink-950);
-    --color-ring: var(--ice-100);
-    --dim: var(--ink-500);
-    --hairline: 1px solid var(--border-invert);
+    --reap-paper: #eef1ea;
+    --reap-cream: #e3e8dd;
+    --reap-card: #f7f9f4;
+    --reap-ink: #1c231a;
+    --reap-ink-soft: #46503f;
+    --reap-mute: #6e7867;
+    --reap-line: rgb(28 35 26 / 0.12);
+
+    --story-bg: var(--reap-paper);
+    --story-raised: var(--reap-card);
+    --color-background: var(--story-bg);
+    --color-background-secondary: var(--reap-cream);
+    --color-foreground: var(--reap-ink);
+    --color-foreground-secondary: var(--reap-ink-soft);
+    --color-foreground-muted: var(--reap-mute);
+    --color-border: var(--reap-line);
+    --color-border-strong: rgb(28 35 26 / 0.24);
+    --color-primary: var(--reap-ink);
+    --color-primary-foreground: var(--reap-paper);
+    --color-ring: var(--reap-ink);
+    --dim: var(--reap-mute);
+    --hairline: 1px solid var(--reap-line);
     background: var(--color-background);
     color: var(--color-foreground);
+  }
+
+  /* The bar frosts to the page ground once scrolled; on this page the ground
+     is Reap's paper, not ice. Scoped to the page file, so nothing else sees
+     it — and hairline follows, so the bar's shadow matches the story's. */
+  :global(#sw-nav.is-scrolled) {
+    --color-background: #eef1ea;
+    --color-border: rgb(28 35 26 / 0.12);
   }
 
   /* The lighter second half of every headline — same move as the site's
@@ -450,8 +470,8 @@ const nextImage = next.data.feature ?? next.data.cover;
   .pill {
     padding: 14px 20px;
     border-radius: var(--radius-full);
-    background: var(--ink-950);
-    color: var(--ice-100);
+    background: var(--reap-ink);
+    color: var(--reap-paper);
   }
 
   /* --- hero -------------------------------------------------------------- */
@@ -480,12 +500,23 @@ const nextImage = next.data.feature ?? next.data.cover;
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: linear-gradient(
-      180deg,
-      rgb(12 16 22 / 0.2) 0%,
-      rgb(12 16 22 / 0.55) 55%,
-      var(--ink-950) 100%
-    );
+    /* Two washes, as on Vana: paper rising from the foot so the story picks
+       up where the photograph leaves off, and paper pooling in from the
+       left so the headline sits on near-solid ground. */
+    background:
+      linear-gradient(
+        180deg,
+        rgb(238 241 234 / 0.15) 0%,
+        rgb(238 241 234 / 0) 30%,
+        rgb(238 241 234 / 0.7) 62%,
+        var(--story-bg) 100%
+      ),
+      linear-gradient(
+        100deg,
+        rgb(238 241 234 / 0.9) 0%,
+        rgb(238 241 234 / 0.75) 38%,
+        rgb(238 241 234 / 0) 68%
+      );
   }
 
   .hero__body {
@@ -498,7 +529,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     flex-wrap: wrap;
     gap: 18px;
     margin: 0 0 28px;
-    color: var(--ice-500);
+    color: var(--color-foreground-muted);
   }
 
   .hero__foot {
@@ -514,7 +545,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     max-width: 560px;
     font-size: 20px;
     line-height: 1.5;
-    color: var(--ice-400);
+    color: var(--color-foreground-secondary);
     text-wrap: pretty;
   }
 
@@ -523,14 +554,14 @@ const nextImage = next.data.feature ?? next.data.cover;
     justify-content: flex-end;
     align-items: center;
     gap: 10px;
-    color: var(--ice-500);
+    color: var(--color-foreground-muted);
   }
 
   .hero__scroll-line {
     display: block;
     width: 1px;
     height: 36px;
-    background: var(--ice-100);
+    background: var(--reap-ink);
     animation: sw-scrollpulse 1.6s ease-in-out infinite;
   }
 
@@ -569,7 +600,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     margin-top: 12px;
     font-size: 14px;
     line-height: 1.4;
-    color: var(--ice-500);
+    color: var(--color-foreground-muted);
   }
 
   /* --- flagship ---------------------------------------------------------- */
@@ -594,7 +625,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     max-width: 560px;
     font-size: 17px;
     line-height: 1.6;
-    color: var(--ice-400);
+    color: var(--color-foreground-secondary);
   }
 
   .flagship__cover {
@@ -603,7 +634,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     aspect-ratio: 16 / 9;
     border-radius: var(--radius-xl);
     overflow: hidden;
-    background: var(--ink-900);
+    background: var(--story-raised);
   }
 
   .flagship__cover-img {
@@ -628,8 +659,8 @@ const nextImage = next.data.feature ?? next.data.cover;
   .flagship__shots :global(.flagship__shot) {
     aspect-ratio: 4 / 3;
     border-radius: var(--radius-lg);
-    background-color: rgb(238 242 244 / 0.04);
-    border: 1px solid rgb(238 242 244 / 0.1);
+    background-color: var(--reap-card);
+    border: 1px solid var(--reap-line);
   }
 
   .notes {
@@ -639,7 +670,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     margin-top: 48px;
     font-size: 15px;
     line-height: 1.55;
-    color: var(--ice-400);
+    color: var(--color-foreground-secondary);
   }
 
   .notes__item {
@@ -650,7 +681,7 @@ const nextImage = next.data.feature ?? next.data.cover;
   .notes__label {
     display: block;
     margin-bottom: 10px;
-    color: var(--ice-100);
+    color: var(--color-foreground);
   }
 
   /* --- the ledger -------------------------------------------------------- */
@@ -698,7 +729,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     gap: 16px;
     padding: 12px 0;
     border-top: var(--hairline);
-    color: var(--ice-400);
+    color: var(--color-foreground-secondary);
   }
 
   .ledger__num {
@@ -731,7 +762,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     margin: 20px 0 0;
     font-size: 16px;
     line-height: 1.6;
-    color: var(--ice-400);
+    color: var(--color-foreground-secondary);
   }
 
   /* 02 property sites */
@@ -745,9 +776,9 @@ const nextImage = next.data.feature ?? next.data.cover;
 
   .property {
     padding: 20px;
-    border: 1px solid rgb(238 242 244 / 0.12);
+    border: 1px solid var(--reap-line);
     border-radius: var(--radius-lg);
-    background: var(--ink-900);
+    background: var(--story-raised);
   }
 
   .property__head {
@@ -794,7 +825,7 @@ const nextImage = next.data.feature ?? next.data.cover;
   }
 
   .property__shot:focus-visible {
-    outline: 2px solid var(--ice-100);
+    outline: 2px solid var(--reap-ink);
     outline-offset: 3px;
   }
 
@@ -811,7 +842,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     font-size: 11px;
     line-height: 1;
     color: rgb(238 242 244 / 0.85);
-    background: rgb(12 16 22 / 0.55);
+    background: rgb(37 44 33 / 0.55);
     backdrop-filter: blur(6px);
   }
 
@@ -821,15 +852,15 @@ const nextImage = next.data.feature ?? next.data.cover;
     font-size: 9px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--ink-950);
-    background: var(--ice-100);
+    color: var(--reap-paper);
+    background: var(--reap-ink);
   }
 
   .property__blurb {
     margin: 16px 0 0;
     font-size: 14px;
     line-height: 1.55;
-    color: var(--ice-500);
+    color: var(--color-foreground-muted);
   }
 
   .property__stats {
@@ -838,7 +869,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     gap: 12px;
     margin-top: 18px;
     padding-top: 14px;
-    border-top: 1px solid rgb(238 242 244 / 0.12);
+    border-top: var(--hairline);
   }
 
   .property__value {
@@ -891,8 +922,8 @@ const nextImage = next.data.feature ?? next.data.cover;
 
   .brand__tile--slot {
     grid-column: span 2;
-    background: var(--ink-900);
-    border: 1px solid rgb(238 242 244 / 0.1);
+    background: var(--story-raised);
+    border: 1px solid var(--reap-line);
   }
 
   /* Reap's own palette — literal on purpose, it isn't ours. */
@@ -915,12 +946,12 @@ const nextImage = next.data.feature ?? next.data.cover;
   .brand__tag {
     padding: 5px 12px;
     border-radius: 4px;
-    color: rgb(255 255 255 / 0.5);
+    color: var(--color-foreground-muted);
   }
 
   .brand__tag--on-dark {
     color: rgb(238 242 244 / 0.7);
-    background: rgb(12 16 22 / 0.5);
+    background: rgb(37 44 33 / 0.5);
   }
 
   /* Out of the mark's way once a tile has real artwork in the middle. */
@@ -954,7 +985,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     gap: 20px;
     align-items: baseline;
     padding: 14px 0;
-    border-top: 1px solid rgb(238 242 244 / 0.12);
+    border-top: var(--hairline);
     font-size: 15px;
   }
 
@@ -967,13 +998,13 @@ const nextImage = next.data.feature ?? next.data.cover;
     font-size: 13px;
   }
 
-  /* 05 lucidos — an ice island inside the ink story. It re-declares the light
-     tokens on itself, in both colour schemes, the way service card 03 breaks
-     from the pile — so everything inside reads as the site's light mode
-     without a single one-off colour. */
+  /* 05 lucidos — a white island on the tinted paper. It re-declares the
+     site's light tokens on itself, in both colour schemes, the way service
+     card 03 breaks from the pile — so everything inside reads as the site's
+     own light mode, untinted, without a single one-off colour. */
 
   .os {
-    --color-background: var(--ice-100);
+    --color-background: var(--ice-50);
     --color-background-secondary: var(--ice-200);
     --color-foreground: var(--ink-950);
     --color-foreground-muted: var(--ink-600);
@@ -981,6 +1012,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     --dim: var(--ink-600);
     padding: 40px;
     margin: 0 -40px;
+    border: 1px solid var(--reap-line);
     border-radius: var(--radius-xl);
     background: var(--color-background);
     color: var(--color-foreground);
@@ -1050,8 +1082,8 @@ const nextImage = next.data.feature ?? next.data.cover;
     aspect-ratio: 1;
     padding: 8px;
     border-radius: var(--radius-md);
-    background: var(--ink-900);
-    border: 1px solid rgb(238 242 244 / 0.1);
+    background: var(--story-raised);
+    border: 1px solid var(--reap-line);
     text-align: center;
   }
 
@@ -1062,7 +1094,7 @@ const nextImage = next.data.feature ?? next.data.cover;
   .tile__tag {
     font-size: 11px;
     line-height: 1.4;
-    color: rgb(255 255 255 / 0.5);
+    color: var(--color-foreground-muted);
   }
 
   .email {
@@ -1105,12 +1137,12 @@ const nextImage = next.data.feature ?? next.data.cover;
     gap: 32px;
     font-size: 15px;
     line-height: 1.7;
-    color: var(--ice-400);
+    color: var(--color-foreground-secondary);
   }
 
   .stack__label {
     margin-bottom: 8px;
-    color: var(--ice-100);
+    color: var(--color-foreground);
   }
 
   /* --- next project — mirrors the door on /work/[...slug] ----------------- */
@@ -1150,7 +1182,7 @@ const nextImage = next.data.feature ?? next.data.cover;
 
   .nextup__body {
     padding-block: 56px;
-    color: var(--ice-100);
+    color: var(--ice-100); /* the door is ink, like Vana's */
   }
 
   .nextup__body .label-mono {

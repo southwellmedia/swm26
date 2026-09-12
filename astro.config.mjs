@@ -11,15 +11,46 @@ export default defineConfig({
   env: {
     schema: {
       SITE_URL: envField.string({ context: 'server', access: 'public', optional: true }),
-      PUBLIC_GA_MEASUREMENT_ID: envField.string({ context: 'client', access: 'public', optional: true }),
+      PUBLIC_GA_MEASUREMENT_ID: envField.string({
+        context: 'client',
+        access: 'public',
+        optional: true,
+      }),
       PUBLIC_GTM_ID: envField.string({ context: 'client', access: 'public', optional: true }),
-      CONTACT_FORM_ENDPOINT: envField.string({ context: 'server', access: 'secret', optional: true }),
+      CONTACT_FORM_ENDPOINT: envField.string({
+        context: 'server',
+        access: 'secret',
+        optional: true,
+      }),
       NEWSLETTER_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
-      GOOGLE_SITE_VERIFICATION: envField.string({ context: 'server', access: 'public', optional: true }),
-      BING_SITE_VERIFICATION: envField.string({ context: 'server', access: 'public', optional: true }),
-      PUBLIC_GOOGLE_MAPS_API_KEY: envField.string({ context: 'client', access: 'public', optional: true, default: '' }),
-      PUBLIC_CONSENT_ENABLED: envField.boolean({ context: 'client', access: 'public', optional: true, default: false }),
-      PUBLIC_PRIVACY_POLICY_URL: envField.string({ context: 'client', access: 'public', optional: true, default: '' }),
+      GOOGLE_SITE_VERIFICATION: envField.string({
+        context: 'server',
+        access: 'public',
+        optional: true,
+      }),
+      BING_SITE_VERIFICATION: envField.string({
+        context: 'server',
+        access: 'public',
+        optional: true,
+      }),
+      PUBLIC_GOOGLE_MAPS_API_KEY: envField.string({
+        context: 'client',
+        access: 'public',
+        optional: true,
+        default: '',
+      }),
+      PUBLIC_CONSENT_ENABLED: envField.boolean({
+        context: 'client',
+        access: 'public',
+        optional: true,
+        default: false,
+      }),
+      PUBLIC_PRIVACY_POLICY_URL: envField.string({
+        context: 'client',
+        access: 'public',
+        optional: true,
+        default: '',
+      }),
     },
   },
 
@@ -42,8 +73,11 @@ export default defineConfig({
     // Iconify sets, inlined as SVG at build time - only the icons actually
     // referenced end up in the output, and none of it ships JavaScript.
     // Lucide for UI glyphs; Font Awesome brands for real logos (LinkedIn,
-    // GitHub), which Lucide only approximates.
-    icon({ include: { lucide: ['*'], 'fa6-brands': ['linkedin-in', 'github'] } }),
+    // GitHub), which Lucide only approximates; Font Awesome solid for the
+    // handset in the nav.
+    icon({
+      include: { lucide: ['*'], 'fa6-brands': ['linkedin-in', 'github'], 'fa6-solid': ['phone'] },
+    }),
   ],
 
   vite: {
@@ -60,5 +94,4 @@ export default defineConfig({
       wrap: true,
     },
   },
-
 });

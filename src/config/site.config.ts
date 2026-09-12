@@ -62,8 +62,8 @@ const siteConfig: SiteConfig = {
   ogImage: '/og-default.png',
   author: 'Southwell Media',
   email: 'hello@southwellmedia.com',
-  phone: '945-545-2608',
-  phoneHref: '+19455452608',
+  phone: '945-397-0408',
+  phoneHref: '+19453970408',
   location: 'Dallas, TX',
   mark: 'sw/',
   // TODO: add the street address to promote Organization schema to

@@ -68,19 +68,31 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       {context && <span class="mark__context">{context}</span>}
     </div>
 
-    <button
-      class="burger"
-      id="sw-nav-toggle"
-      type="button"
-      aria-expanded="false"
-      aria-controls="sw-menu"
-    >
-      <span class="burger__lines" aria-hidden="true">
-        <span class="burger__line"></span>
-        <span class="burger__line"></span>
-      </span>
-      <span class="sr-only" id="sw-nav-toggle-label">Open menu</span>
-    </button>
+    <div class="sw-nav__actions">
+      {
+        /* The studio's number, one tap away on every page. The digits drop
+          on narrow screens and the handset stays. */
+      }
+      <a class="sw-nav__phone" href={'tel:' + siteConfig.phoneHref}>
+        <Icon name="fa6-solid:phone" aria-hidden="true" />
+        <span class="sw-nav__phone-number label-mono">{siteConfig.phone}</span>
+        <span class="sr-only">Call {siteConfig.name}</span>
+      </a>
+
+      <button
+        class="burger"
+        id="sw-nav-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="sw-menu"
+      >
+        <span class="burger__lines" aria-hidden="true">
+          <span class="burger__line"></span>
+          <span class="burger__line"></span>
+        </span>
+        <span class="sr-only" id="sw-nav-toggle-label">Open menu</span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -269,6 +281,40 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   }
 
   /* --- menu control ----------------------------------------------------- */
+
+  .sw-nav__actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  /* The number: a mono label with the handset, in the bar's current colour
+     so it follows the bar over media and into the open overlay. */
+  .sw-nav__phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: var(--radius-full);
+    color: inherit;
+    text-decoration: none;
+    transition: background 0.3s ease;
+  }
+
+  .sw-nav__phone:hover {
+    background: color-mix(in srgb, currentColor 10%, transparent);
+  }
+
+  .sw-nav__phone :global(svg) {
+    width: 14px;
+    height: 14px;
+    flex: none;
+  }
+
+  .sw-nav__phone-number {
+    color: inherit;
+    letter-spacing: 0.04em;
+  }
 
   .burger {
     display: inline-flex;
@@ -480,6 +526,14 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   }
 
   @media (max-width: 700px) {
+    .sw-nav__phone {
+      padding: 10px;
+    }
+
+    .sw-nav__phone-number {
+      display: none;
+    }
+
     .sw-menu {
       padding-top: 110px;
     }

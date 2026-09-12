@@ -67,27 +67,28 @@ const PATTERN = [
 
 const spanFor = (index: number) => (index === 0 ? 'hero' : PATTERN[(index - 1) % PATTERN.length]);
 
-const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[]; sizes: string }> = {
-  hero: {
-    widths: [640, 1024, 1536, 2048],
-    sizes: '(max-width: 1100px) 100vw, 1344px',
-  },
-  large: {
-    widths: [480, 896, 1440],
-    sizes: '(max-width: 700px) 100vw, (max-width: 1100px) 100vw, 896px',
-  },
-  wide: {
-    widths: [480, 896, 1440],
-    sizes: '(max-width: 700px) 100vw, (max-width: 1100px) 100vw, 896px',
-  },
-  standard: {
-    widths: [360, 640, 960],
-    sizes: '(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 448px',
-  },
-};
+const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[]; sizes: string }> =
+  {
+    hero: {
+      widths: [640, 1024, 1536, 2048],
+      sizes: '(max-width: 1100px) 100vw, 1344px',
+    },
+    large: {
+      widths: [480, 896, 1440],
+      sizes: '(max-width: 700px) 100vw, (max-width: 1100px) 100vw, 896px',
+    },
+    wide: {
+      widths: [480, 896, 1440],
+      sizes: '(max-width: 700px) 100vw, (max-width: 1100px) 100vw, 896px',
+    },
+    standard: {
+      widths: [360, 640, 960],
+      sizes: '(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 448px',
+    },
+  };
 ---
 
-<section class:list={['pt-[130px] pb-15 shell max-[800px]:pt-[90px]', className]}>
+<section class:list={['shell pt-[130px] pb-15 max-[800px]:pt-[90px]', className]}>
   {
     showHead && (
       <SectionHead
@@ -98,65 +99,69 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
     )
   }
 
-  <div class="bento mt-16 max-[800px]:mt-10" data-parallax-grid>
+  <div class="bento mt-16 max-[800px]:mt-10" data-work-grid>
     {
       shown.map((project, i) => {
         const span = spanFor(i);
         const sizing = SIZING[span];
+        const rest = project.data.feature ?? project.data.cover;
+        const reveal = project.data.cover ?? project.data.feature;
         return (
-        <a class="card" href={'/work/' + project.id} data-span={span} data-card data-reveal>
-          <div class="card__media" data-swaps={project.data.feature && project.data.cover ? '' : undefined}>
-            {/* The feature photograph rests; the mockup is what hover reveals.
-                With only one of the two, it just sits there and nothing swaps. */}
-            {project.data.feature && (
-              <Image
-                src={project.data.feature}
-                alt={project.data.coverAlt ?? project.data.title}
-                layout="none"
-                widths={sizing.widths}
-                sizes={sizing.sizes}
-                class="card__img card__img--rest"
-                loading={i === 0 ? 'eager' : 'lazy'}
-                fetchpriority={i === 0 ? 'high' : undefined}
-              />
-            )}
+          <a class="card" href={'/work/' + project.id} data-span={span} data-card>
+            <div class="card__media">
+              {/* Two layers: the rest picture, desaturated in the stylesheet,
+                and the colour picture that dissolves over it on hover. With a
+                feature and a cover the hover also swaps photograph for mockup;
+                with only one, both layers hold the same file (one download,
+                one decode) and the hover is purely the colour coming up.
+                Colour never comes from animating a filter — that is what
+                made the first hover snap; see the stylesheet. */}
+              {rest && (
+                <Image
+                  src={rest}
+                  alt={project.data.coverAlt ?? project.data.title}
+                  layout="none"
+                  widths={sizing.widths}
+                  sizes={sizing.sizes}
+                  class="card__img card__img--rest"
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  fetchpriority={i === 0 ? 'high' : undefined}
+                />
+              )}
 
-            {project.data.cover && (
-              <Image
-                src={project.data.cover}
-                alt={project.data.feature ? '' : (project.data.coverAlt ?? project.data.title)}
-                layout="none"
-                widths={sizing.widths}
-                sizes={sizing.sizes}
-                class="card__img card__img--reveal"
-              />
-            )}
+              {reveal && (
+                <Image
+                  src={reveal}
+                  alt=""
+                  layout="none"
+                  widths={sizing.widths}
+                  sizes={sizing.sizes}
+                  class="card__img card__img--reveal"
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                />
+              )}
 
-            {!project.data.feature && !project.data.cover && (
-              <Placeholder
-                class="h-full w-full rounded-none"
-                label={project.data.placeholder ?? project.data.title}
-              />
-            )}
-          </div>
+              {!rest && (
+                <Placeholder
+                  class="h-full w-full rounded-none"
+                  label={project.data.placeholder ?? project.data.title}
+                />
+              )}
+            </div>
 
-          <div class="card__view" aria-hidden="true">
-            <span class="card__view-pill">
-              View project
-              <Icon name="lucide:arrow-up-right" aria-hidden="true" />
-            </span>
-          </div>
+            <div class="card__view" aria-hidden="true">
+              <span class="card__view-pill">
+                View project
+                <Icon name="lucide:arrow-up-right" aria-hidden="true" />
+              </span>
+            </div>
 
-          <div class="card__caption">
-            <span class="card__name">{project.data.title}</span>
-          </div>
+            <div class="card__caption">
+              <span class="card__name">{project.data.title}</span>
+            </div>
 
-          <span class="card__meta label-mono">{project.data.discipline}</span>
-
-          {/* Light that follows the cursor. Screen blend so it adds light
-              rather than washing a grey film over the picture. */}
-          <span class="card__glare" aria-hidden="true" />
-        </a>
+            <span class="card__meta label-mono">{project.data.discipline}</span>
+          </a>
         );
       })
     }
@@ -189,7 +194,17 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
      drifting against each other, which `overflow: hidden` then clips — so a
      card can't reach into the 20px gap and touch its neighbours no matter how
      far the pointer travels. Rotating the card itself is what did that: at 9°
-     the projected corners overrun the gap on their own. */
+     the projected corners overrun the gap on their own.
+
+     The shadow is static. Animating it repaints a 36px blur across the
+     whole card every frame, and it never read as part of the hover anyway.
+
+     Hover, in general: only opacity and transform ever animate in here, on
+     layers that already exist. The first version animated a grayscale filter
+     on the media wrapper, and Chrome had to build a filtered surface and
+     raster both full-size pictures before it could show the first hover
+     frame — by which time the transition had already run out, so the first
+     hover on each card cut straight to its end state. */
   .card {
     position: relative;
     display: block;
@@ -198,33 +213,12 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
     border-radius: var(--radius-lg);
     background: var(--work-media-bg);
     box-shadow: 0 18px 36px rgb(12 16 22 / 0.1);
-    transition: box-shadow 0.4s ease;
   }
 
-  .card:hover,
-  .card:focus-visible {
-    box-shadow: 0 30px 56px rgb(12 16 22 / 0.22);
-  }
-
-  .card__glare {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    border-radius: inherit;
-    pointer-events: none;
+  /* Pre-arrival state; Motion's first keyframe overrides it inline. See
+     src/scripts/motion/work.ts. */
+  :global(html.js) .card:not(.is-in) {
     opacity: 0;
-    background: radial-gradient(
-      ellipse 70% 70% at var(--mx, 50%) var(--my, 50%),
-      rgb(255 255 255 / 0.18),
-      transparent 65%
-    );
-    mix-blend-mode: screen;
-    transition: opacity 0.35s ease;
-  }
-
-  .card:hover .card__glare,
-  .card:focus-visible .card__glare {
-    opacity: 1;
   }
 
   /* The lead project takes the full width of the grid. */
@@ -243,23 +237,14 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
   }
 
   /* The media fills the cell and is the zoom target, so the card's footprint
-     is set by the grid rather than by the image.
-
-     At rest it is desaturated and dimmed; hovering brings it up to full
-     colour. See --work-rest-* in themes/southwell.css. */
+     is set by the grid rather than by the image. Its transform (arrival zoom,
+     hover drift and zoom) belongs to Motion — nothing here touches it. It is
+     a layer of its own from the start, so Motion's per-frame writes never
+     re-raster the pictures inside. */
   .card__media {
     position: absolute;
     inset: 0;
-    filter: grayscale(var(--work-rest-grayscale)) contrast(var(--work-rest-contrast));
-    opacity: var(--work-rest-opacity);
-    /* Drift and zoom share the one transform. The zoom is what buys the drift
-       its headroom: at 1.06 there is 3% of overhang on every side, and the
-       drift is capped at 6px, so an edge can never be pulled into view. */
-    transform: translate3d(var(--px, 0px), var(--py, 0px), 0) scale(var(--media-scale, 1));
-    transition:
-      transform var(--pt, 0.7s) var(--ease-quart),
-      filter 0.5s ease,
-      opacity 0.5s ease;
+    will-change: transform;
   }
 
   .card__img {
@@ -270,44 +255,45 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
     object-fit: cover;
   }
 
-  /* Where a card has both images, the mockup waits underneath at a slight
-     scale and crossfades up on hover. Where it has only one, that image is
-     simply always visible — hence [data-swaps] gating rather than a blanket
-     rule that would hide a lone cover. */
-  .card__media[data-swaps] .card__img--reveal {
-    opacity: 0;
-    transform: scale(1.06);
-    transition:
-      opacity 0.55s var(--ease-sw),
-      transform 0.7s var(--ease-sw);
+  /* The rest picture is desaturated and dimmed for good — a static filter is
+     baked into the raster once and costs nothing after. See --work-rest-* in
+     themes/southwell.css. It stays put under the colour layer rather than
+     fading out against it: two pictures crossing at half opacity let the
+     card's background through mid-fade, which is what read as a flash. */
+  .card__img--rest {
+    filter: grayscale(var(--work-rest-grayscale)) contrast(var(--work-rest-contrast));
+    opacity: var(--work-rest-opacity);
   }
 
-  .card__media[data-swaps] .card__img--rest {
+  /* The colour picture waits on top, near-invisible, and dissolves in. The
+     settle-from-a-zoom that goes with it is the media wrapper's, driven by
+     Motion, not a transform transition here: Chrome re-rasters a layer at
+     its final scale the moment a CSS transform transition ends, and on a
+     card this size that takes longer than a frame — so the layer drew empty
+     for one frame, a flash of the grey picture under a fully-risen pill.
+     Opacity never re-rasters.
+
+     Near-zero rather than zero: Chrome does not raster a layer at exactly 0,
+     and rastering it on the first hover is the pause that made that hover
+     snap. At 0.001 the layer is drawn (and so kept ready) while contributing
+     nothing you could see. */
+  .card__img--reveal {
+    opacity: 0.001;
+    will-change: opacity;
+    transition: opacity 0.9s var(--ease-sw);
+  }
+
+  .card:hover .card__img--reveal,
+  .card:focus-visible .card__img--reveal {
     opacity: 1;
-    transition: opacity 0.55s var(--ease-sw);
   }
 
-  .card:hover .card__media[data-swaps] .card__img--reveal,
-  .card:focus-visible .card__media[data-swaps] .card__img--reveal {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  .card:hover .card__media[data-swaps] .card__img--rest,
-  .card:focus-visible .card__media[data-swaps] .card__img--rest {
-    opacity: 0;
-  }
-
-  /* No hover on touch: show the mockup, since that is the more informative
-     of the two, and never leave a half-faded state. */
+  /* No hover on touch: show the colour picture, and never leave a half-faded
+     state. */
   @media (hover: none) {
-    .card__media[data-swaps] .card__img--reveal {
+    .card__img--reveal {
       opacity: 1;
-      transform: none;
-    }
-
-    .card__media[data-swaps] .card__img--rest {
-      opacity: 0;
+      transition: none;
     }
   }
 
@@ -322,22 +308,9 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
     );
   }
 
-  .card:hover .card__media,
-  .card:focus-visible .card__media {
-    filter: grayscale(0) contrast(1);
-    opacity: 1;
-    --media-scale: 1.06;
-  }
-
-  /* Touch has no hover state, so the work would sit permanently greyed out.
-     Show it in full there instead. */
-  @media (hover: none) {
-    .card__media {
-      filter: none;
-      opacity: 1;
-    }
-  }
-
+  /* The pill follows the dissolve in by a beat and leaves at once. Same
+     near-zero resting opacity as the colour layer, for the same reason, and
+     it rises rather than scales so its raster scale never changes either. */
   .card__view {
     position: absolute;
     inset: 0;
@@ -345,17 +318,21 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
     align-items: center;
     justify-content: center;
     pointer-events: none;
-    opacity: 0;
-    transform: translateY(12px) scale(0.95);
+    opacity: 0.001;
+    transform: translateY(12px);
+    will-change: opacity, transform;
     transition:
       opacity 0.35s ease,
-      transform 0.35s var(--ease-sw);
+      transform 0.45s var(--ease-sw);
   }
 
   .card:hover .card__view,
   .card:focus-visible .card__view {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
+    transition:
+      opacity 0.5s ease 0.15s,
+      transform 0.7s var(--ease-sw) 0.15s;
   }
 
   .card__view-pill {
@@ -387,10 +364,10 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
     padding: 24px 26px;
     pointer-events: none;
     background: linear-gradient(to top, rgb(12 16 22 / 0.6), transparent);
-    /* Moves with the pointer while the picture moves against it. The opposition
-       is the whole effect — same direction would just look like sliding. */
-    transform: translate3d(var(--cx, 0px), var(--cy, 0px), 0);
-    transition: transform var(--pt, 0.7s) var(--ease-quart);
+    /* Motion moves this against the picture under the pointer. The
+       opposition is the whole effect — same direction would just look like
+       sliding. A layer of its own for the same reason as the media. */
+    will-change: transform;
   }
 
   .card__name {
@@ -482,98 +459,3 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
     }
   }
 </style>
-
-<script>
-  /* Interior parallax and glare on the work cards.
-
-     The card's own box is never touched — only the layers inside it and the
-     glare position. That is deliberate: the previous version rotated the card
-     itself, and a rotated card's projected corners overrun the 20px bento gap
-     and collide with its neighbours. Clipping the motion inside the frame
-     makes that impossible rather than merely unlikely.
-
-     Everything written here is a custom property the stylesheet already reads,
-     so this only ever sets numbers. Skipped on touch and under
-     prefers-reduced-motion. */
-  function initParallax() {
-    const grid = document.querySelector<HTMLElement>('[data-parallax-grid]');
-    if (!grid || grid.dataset.parallaxBound === 'true') return;
-    if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    grid.dataset.parallaxBound = 'true';
-
-    // Capped against the zoom's 3% overhang so the picture's edge can never be
-    // pulled inside the frame. The caption moves less, and the other way.
-    const MEDIA = 6;
-    const CAPTION = 4;
-
-    let active: HTMLElement | null = null;
-    let frame = 0;
-    // Pointer position in client space; the card-relative maths happens in the
-    // frame, against a rect that is measured only when it could have moved.
-    let next: { card: HTMLElement; clientX: number; clientY: number } | null = null;
-    let rect: DOMRect | null = null;
-    let rectDirty = true;
-    const markDirty = () => {
-      rectDirty = true;
-    };
-
-    const paint = () => {
-      frame = 0;
-      if (!next) return;
-      const { card, clientX, clientY } = next;
-      if (rectDirty || !rect) {
-        rect = card.getBoundingClientRect();
-        rectDirty = false;
-      }
-      const x = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-      const y = Math.min(1, Math.max(0, (clientY - rect.top) / rect.height));
-      const dx = x - 0.5;
-      const dy = y - 0.5;
-      card.style.setProperty('--mx', (x * 100).toFixed(2) + '%');
-      card.style.setProperty('--my', (y * 100).toFixed(2) + '%');
-      card.style.setProperty('--px', (-dx * 2 * MEDIA).toFixed(2) + 'px');
-      card.style.setProperty('--py', (-dy * 2 * MEDIA).toFixed(2) + 'px');
-      card.style.setProperty('--cx', (dx * 2 * CAPTION).toFixed(2) + 'px');
-      card.style.setProperty('--cy', (dy * 2 * CAPTION).toFixed(2) + 'px');
-    };
-
-    const release = (card: HTMLElement | null) => {
-      if (!card) return;
-      card.style.setProperty('--pt', '0.7s');
-      for (const prop of ['--px', '--py', '--cx', '--cy']) card.style.removeProperty(prop);
-    };
-
-    grid.addEventListener('pointermove', (event) => {
-      if (event.pointerType !== 'mouse') return;
-      const card = (event.target as Element).closest<HTMLElement>('.card');
-      if (!card) return;
-
-      // Crossing straight from one card to the next never fires a leave, so the
-      // one being left has to be released here.
-      if (active !== card) {
-        release(active);
-        active = card;
-        rectDirty = true;
-        card.style.setProperty('--pt', '0.14s');
-      }
-
-      next = { card, clientX: event.clientX, clientY: event.clientY };
-      if (!frame) frame = requestAnimationFrame(paint);
-    });
-
-    grid.addEventListener('pointerleave', () => {
-      release(active);
-      active = null;
-      next = null;
-      rect = null;
-    });
-
-    // The cached rect goes stale when the page moves under the cursor.
-    window.addEventListener('scroll', markDirty, { passive: true });
-    window.addEventListener('resize', markDirty, { passive: true });
-  }
-
-  // Fires on first load and after every ClientRouter navigation.
-  document.addEventListener('astro:page-load', initParallax);
-</script>

@@ -74,7 +74,9 @@ const showFontSwitcher = import.meta.env.DEV;
   {showFontSwitcher && <FontSwitcher slot="footer" />}
 </BaseLayout>
 
-<!-- Inertial scrolling. Hoisted and bundled once; see src/scripts/smooth-scroll.ts. -->
+<!-- Inertial scrolling and every arrival/hover animation. Hoisted and bundled
+     once; see src/scripts/smooth-scroll.ts and src/scripts/motion/. -->
 <script>
   import '@/scripts/smooth-scroll';
+  import '@/scripts/motion';
 </script>

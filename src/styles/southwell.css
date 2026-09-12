@@ -185,107 +185,25 @@
   }
 
   /* -----------------------------------------------------------------------
-     Scroll-driven reveals
-     Driven by CSS scroll timelines, not JS — nothing to break, nothing left
-     stuck at opacity 0 if a script fails to run. Browsers without
-     animation-timeline render the content as-is via the @supports fallback.
+     Reveals
+     Arrivals are Motion's job (src/scripts/motion/reveal.ts). The stylesheet
+     only holds the pre-arrival state, and only once `html.js` says the
+     script is coming — without JS nothing is ever hidden.
      ----------------------------------------------------------------------- */
-  [data-reveal] {
-    animation: sw-reveal 0.9s var(--ease-settle) both;
-    animation-timeline: view();
-    animation-range: entry calc(4% + var(--reveal-in, 0%)) entry calc(38% + var(--reveal-out, 0%));
+  html.js [data-reveal]:not(.is-in) {
+    opacity: 0;
   }
 
-  /* Uniform reveals read as mechanical: same distance, same angle, same
-     moment, every time. Rotating four sets of values off nth-child gives each
-     element its own arrival without any component having to opt in. Set
-     --reveal-* inline to override a specific one. */
-  [data-reveal]:nth-child(4n + 1) {
-    --reveal-y: 74px;
-    --reveal-z: -240px;
-    --reveal-rot: 7deg;
-    --reveal-out: 2%;
-  }
-
-  [data-reveal]:nth-child(4n + 2) {
-    --reveal-y: 52px;
-    --reveal-z: -150px;
-    --reveal-rot: 4deg;
-    --reveal-in: 3%;
-    --reveal-out: 6%;
-  }
-
-  [data-reveal]:nth-child(4n + 3) {
-    --reveal-y: 66px;
-    --reveal-z: -280px;
-    --reveal-rot: 8deg;
-    --reveal-in: 1.5%;
-    --reveal-out: -2%;
-  }
-
-  [data-reveal]:nth-child(4n) {
-    --reveal-y: 58px;
-    --reveal-z: -190px;
-    --reveal-rot: 5deg;
-    --reveal-in: 4.5%;
-    --reveal-out: 3%;
-  }
-
-  @supports not (animation-timeline: view()) {
-    [data-reveal] {
-      animation: none;
-      opacity: 1 !important;
-      transform: none !important;
-    }
+  /* A masked rise starts below its clipping parent, fully opaque. */
+  html.js [data-reveal='rise']:not(.is-in) {
+    opacity: 1;
+    transform: translateY(112%);
   }
 }
 
 /* -------------------------------------------------------------------------
-   Keyframes
+   Keyframes — the few loops and one-offs still in CSS (nav, story pages).
    ------------------------------------------------------------------------- */
-/* Elements arrive from behind the page, not just below it. The perspective
-   lives in the transform rather than on an ancestor so nothing has to be
-   wrapped for this to work. */
-@keyframes sw-reveal {
-  from {
-    opacity: 0;
-    transform: perspective(var(--depth)) translate3d(0, var(--reveal-y, 62px), var(--reveal-z, -200px))
-      rotateX(var(--reveal-rot, 6deg)) scale(var(--reveal-scale, 0.965));
-  }
-  to {
-    opacity: 1;
-    transform: perspective(var(--depth)) translate3d(0, 0, 0) rotateX(0) scale(1);
-  }
-}
-
-/* Depth emergence: rises from behind, comes past the viewer, settles back.
-   The mid keyframe is the arc — without it this is just a fade with extra
-   steps. Each phase carries its own timing function, which is the two-phase
-   pattern expressed in keyframes rather than in one curve. */
-@keyframes sw-emerge {
-  0% {
-    opacity: 0;
-    transform: perspective(var(--depth)) translate3d(0, var(--emerge-y, 70px), var(--emerge-z, -560px))
-      rotateX(var(--emerge-rot, 8deg)) scale(var(--emerge-scale, 0.94));
-    animation-timing-function: var(--ease-quart);
-  }
-  /* The forward half of the arc is OPT-IN and defaults to zero. Positive Z
-     magnifies through the perspective — at 1100px, +70px is ~6% — and on
-     anything as wide as the shell that pushes the element straight past the
-     gutter and out of the viewport. Only give --emerge-arc a value to
-     something with room around it to grow into. */
-  62% {
-    opacity: 1;
-    transform: perspective(var(--depth)) translate3d(0, -6px, var(--emerge-arc, 0px)) rotateX(-1.2deg)
-      scale(var(--emerge-mid-scale, 1));
-    animation-timing-function: var(--ease-back);
-  }
-  100% {
-    opacity: 1;
-    transform: perspective(var(--depth)) translate3d(0, 0, 0) rotateX(0) scale(1);
-  }
-}
-
 @keyframes sw-rise {
   from {
     opacity: 0;
@@ -427,7 +345,8 @@
     transition-duration: 0.01ms !important;
   }
 
-  [data-reveal] {
+  [data-reveal],
+  .card {
     opacity: 1 !important;
     transform: none !important;
   }
