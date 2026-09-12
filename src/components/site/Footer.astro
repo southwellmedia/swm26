@@ -14,51 +14,95 @@ import Placeholder from './Placeholder.astro';
 const year = new Date().getFullYear();
 ---
 
-<footer
-  class="invert-section rounded-t-[24px] bg-background pt-[90px] pb-10 text-foreground max-[900px]:pt-[60px]"
->
-  <div class="shell">
-    <div class="flex items-start justify-between gap-10 max-[900px]:flex-col max-[900px]:gap-12">
-      <span class="display-mark">{siteConfig.mark}</span>
+<div class="footer-stage">
+  <footer
+    class="invert-section bg-background text-foreground rounded-t-[24px] pt-[90px] pb-10 max-[900px]:pt-[60px]"
+  >
+    <div class="shell">
+      <div class="flex items-start justify-between gap-10 max-[900px]:flex-col max-[900px]:gap-12">
+        <span class="display-mark">
+          <span class="rv-mask"><span data-reveal="rise">{siteConfig.mark}</span></span>
+        </span>
 
-      <nav class="flex flex-wrap gap-[72px] text-[15px] max-[900px]:gap-10" aria-label="Footer">
-        {
-          footerColumns.map((column) => (
-            <div class="flex flex-col gap-3">
-              <span class="label-mono text-foreground-muted">{column.heading}</span>
-              {column.links.map((link) => (
-                <a
-                  class="footer__link"
-                  href={link.href}
-                  target={link.external ? '_blank' : undefined}
-                  rel={link.external ? 'noopener noreferrer' : undefined}
-                >
-                  {link.icon && <Icon name={link.icon} aria-hidden="true" />}
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          ))
-        }
-      </nav>
+        <nav class="flex flex-wrap gap-[72px] text-[15px] max-[900px]:gap-10" aria-label="Footer">
+          {
+            footerColumns.map((column, i) => (
+              <div class="flex flex-col gap-3" data-reveal data-reveal-delay={0.18 + i * 0.06}>
+                <span class="label-mono text-foreground-muted">{column.heading}</span>
+                {column.links.map((link) => (
+                  <a
+                    class="footer__link"
+                    href={link.href}
+                    target={link.external ? '_blank' : undefined}
+                    rel={link.external ? 'noopener noreferrer' : undefined}
+                  >
+                    {link.icon && <Icon name={link.icon} aria-hidden="true" />}
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            ))
+          }
+        </nav>
+      </div>
+
+      <div data-reveal data-reveal-delay="0.3">
+        <Placeholder
+          invert
+          label="[ footer 3d render — cropped, bleeds off bottom ]"
+          class="mt-16 h-[220px] max-[900px]:mt-12 max-[900px]:h-[150px]"
+        />
+      </div>
+
+      <div
+        class="text-foreground-muted mt-9 flex justify-between gap-5 text-[13px] max-[900px]:flex-col max-[900px]:gap-2"
+        data-reveal
+        data-reveal-delay="0.48"
+      >
+        <span>&copy; {year} {siteConfig.name} — {siteConfig.location}</span>
+        <span>Working with clients across the globe</span>
+      </div>
     </div>
-
-    <Placeholder
-      invert
-      label="[ footer 3d render — cropped, bleeds off bottom ]"
-      class="mt-16 h-[220px] max-[900px]:mt-12 max-[900px]:h-[150px]"
-    />
-
-    <div
-      class="mt-9 flex justify-between gap-5 text-[13px] text-foreground-muted max-[900px]:flex-col max-[900px]:gap-2"
-    >
-      <span>&copy; {year} {siteConfig.name} — {siteConfig.location}</span>
-      <span>Working with clients across the globe</span>
-    </div>
-  </div>
-</footer>
+  </footer>
+</div>
 
 <style>
+  /* --- the sheet ---------------------------------------------------------
+     The slab does not scroll in with the page; it rises up through the last
+     stretch of it, like a drawer closing, and settles as the page ends. A
+     view timeline on the stage drives the footer's translate, so it is
+     scroll-linked and costs one composited transform. The stage clips so the
+     translated slab never adds scrollable overflow (which would move the
+     end of the page while the animation is reading it). Without scroll
+     timelines the footer just sits in flow. */
+  .footer-stage {
+    view-timeline-name: --footer;
+    /* Tight clip, no clip margin: anything the translated slab could paint
+       past the stage would count as scrollable overflow, lengthen the page
+       while it animates, and leave a strip of ground under the footer once
+       it settled. */
+    overflow: clip;
+  }
+
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .footer-stage > footer {
+        animation: footer-rise linear both;
+        animation-timeline: --footer;
+        animation-range: entry 0% entry 100%;
+      }
+    }
+  }
+
+  @keyframes footer-rise {
+    from {
+      translate: 0 42%;
+    }
+    to {
+      translate: 0 0;
+    }
+  }
+
   .footer__link {
     display: inline-flex;
     align-items: center;

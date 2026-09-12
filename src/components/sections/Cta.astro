@@ -21,13 +21,20 @@ import PillButton from '@/components/site/PillButton.astro';
   </div>
 
   <div
-    class="relative flex flex-col items-center shell pt-[130px] pb-[130px] max-[800px]:pt-[100px] max-[800px]:pb-[100px]"
+    class="shell relative flex flex-col items-center pt-[130px] pb-[130px] max-[800px]:pt-[100px] max-[800px]:pb-[100px]"
   >
-    <h2 class="display-section m-0 text-center" data-reveal>
-      Don&rsquo;t be<br /><em>a stranger.</em>
+    <h2 class="display-section m-0 text-center">
+      <span class="rv-mask"><span data-reveal="rise">Don&rsquo;t be</span></span>
+      <span class="rv-mask"
+        ><span data-reveal="rise" data-reveal-delay="0.08"><em>a stranger.</em></span></span
+      >
     </h2>
 
-    <div class="mt-10 flex flex-wrap justify-center gap-[18px] max-[800px]:mt-8" data-reveal>
+    <div
+      class="mt-10 flex flex-wrap justify-center gap-[18px] max-[800px]:mt-8"
+      data-reveal
+      data-reveal-delay="0.32"
+    >
       <PillButton href={'mailto:' + siteConfig.email}>Chat with Southwell</PillButton>
       <PillButton href="/contact" variant="outline">Book a meeting</PillButton>
     </div>
@@ -47,11 +54,25 @@ import PillButton from '@/components/site/PillButton.astro';
     z-index: -1;
     opacity: 0.55;
     background-image:
-      radial-gradient(70% 90% at var(--service-white-light), var(--service-white-glow-a), transparent 62%),
-      radial-gradient(60% 80% at var(--service-white-light-b), var(--service-white-glow-b), transparent 68%);
+      radial-gradient(
+        70% 90% at var(--service-white-light),
+        var(--service-white-glow-a),
+        transparent 62%
+      ),
+      radial-gradient(
+        60% 80% at var(--service-white-light-b),
+        var(--service-white-glow-b),
+        transparent 68%
+      );
     /* No edges: the field grows out of the page ground and dissolves again
        before the footer, so it never reads as a band. */
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 42%, #000 78%, transparent 100%);
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 42%,
+      #000 78%,
+      transparent 100%
+    );
     mask-image: linear-gradient(to bottom, transparent 0%, #000 42%, #000 78%, transparent 100%);
   }
 

@@ -39,21 +39,75 @@
      "fix" the values above 1.
      ----------------------------------------------------------------------- */
   --ease-settle: linear(
-    0, 0.0006, 0.0049, 0.0165, 0.0391, 0.0763, 0.1319, 0.2094, 0.3125, 0.445,
-    0.5834, 0.6922, 0.7745, 0.8342, 0.8748, 0.9, 0.9135, 0.9189, 0.92, 1.0063,
-    1.0171, 0.9894, 1.0014, 1.0018, 0.9987, 1.0003, 1.0002, 0.9998, 1
+    0,
+    0.0006,
+    0.0049,
+    0.0165,
+    0.0391,
+    0.0763,
+    0.1319,
+    0.2094,
+    0.3125,
+    0.445,
+    0.5834,
+    0.6922,
+    0.7745,
+    0.8342,
+    0.8748,
+    0.9,
+    0.9135,
+    0.9189,
+    0.92,
+    1.0063,
+    1.0171,
+    0.9894,
+    1.0014,
+    1.0018,
+    0.9987,
+    1.0003,
+    1.0002,
+    0.9998,
+    1
   );
 
   /* easeOutQuart — fast departure, gentle landing. Entries and settles. */
   --ease-quart: linear(
-    0, 0.2565, 0.4602, 0.6189, 0.7397, 0.8292, 0.8934, 0.9375, 0.9663, 0.9837,
-    0.9933, 0.9979, 0.9996, 1, 1
+    0,
+    0.2565,
+    0.4602,
+    0.6189,
+    0.7397,
+    0.8292,
+    0.8934,
+    0.9375,
+    0.9663,
+    0.9837,
+    0.9933,
+    0.9979,
+    0.9996,
+    1,
+    1
   );
 
   /* easeOutBack — confident overshoot. Scale and position landings. */
   --ease-back: linear(
-    0, 0.2695, 0.4929, 0.6742, 0.8174, 0.9264, 1.0051, 1.0576, 1.0877, 1.0995,
-    1.0968, 1.0837, 1.0641, 1.042, 1.0213, 1.006, 1
+    0,
+    0.2695,
+    0.4929,
+    0.6742,
+    0.8174,
+    0.9264,
+    1.0051,
+    1.0576,
+    1.0877,
+    1.0995,
+    1.0968,
+    1.0837,
+    1.0641,
+    1.042,
+    1.0213,
+    1.006,
+    1
   );
 
   /* Shared viewing distance, so every depth effect on the page agrees. */
@@ -198,6 +252,18 @@
   html.js [data-reveal='rise']:not(.is-in) {
     opacity: 1;
     transform: translateY(112%);
+  }
+
+  /* The mask a rise climbs out of: one line of a headline, clipped. The
+     small negative inset keeps descenders and the display italics whole. */
+  .rv-mask {
+    display: block;
+    overflow: hidden;
+    clip-path: inset(-0.2em 0 -0.3em);
+  }
+
+  .rv-mask > [data-reveal='rise'] {
+    display: block;
   }
 }
 

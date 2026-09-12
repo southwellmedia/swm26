@@ -5,13 +5,31 @@
  * Four cards that pile up as you scroll: each sticks 20px lower than the one
  * before it, so the stack stays legible instead of the cards scrolling past
  * one another.
+ *
+ * Two motions on top of the stacking:
+ *
+ *   entrance  as a card arrives its number fades in, the two title lines
+ *             rise out of their masks, then the tags and the paragraph
+ *             follow — play-once, via Motion's [data-reveal] system.
+ *   recede    as the next card slides up to cover it, the card underneath
+ *             eases back and dims — scroll-linked, via a view timeline on
+ *             the *next* card. `timeline-scope` on the section lets card N
+ *             read card N+1's timeline. Browsers without it keep the static
+ *             depth from translateZ and nothing else.
  */
 import SectionHead from './SectionHead.astro';
 import { services } from '@/config/services.config';
+
+const last = services.length - 1;
+// One named timeline per covering card (every card but the first).
+const timelineScope = services
+  .slice(1)
+  .map((_, i) => `--svc-${i + 1}`)
+  .join(', ');
 ---
 
-<section class="pt-[130px] max-[800px]:pt-[90px]">
-  <div class="mb-14 shell">
+<section class="pt-[130px] max-[800px]:pt-[90px]" style={`timeline-scope: ${timelineScope}`}>
+  <div class="shell mb-14">
     <SectionHead
       title="Services"
       blurb="An unusual studio, focused on transforming your vision into a captivating digital experience."
@@ -23,25 +41,48 @@ import { services } from '@/config/services.config';
     services.map((service, i) => (
       <div
         class="services__slot shell"
-        style={'--sticky-top:' + (90 + i * 20) + 'px; --i:' + i}
+        style={
+          '--sticky-top:' +
+          (90 + i * 20) +
+          'px; --i:' +
+          i +
+          (i > 0 ? `; view-timeline-name: --svc-${i}` : '')
+        }
       >
-        <article class="service" data-theme={service.theme}>
+        <article
+          class:list={['service', i < last && 'service--covered']}
+          data-theme={service.theme}
+          style={i < last ? `animation-timeline: --svc-${i + 1}` : undefined}
+        >
           <div class="service__lead">
-            <span class="service__num label-mono">{service.num}</span>
+            <span class="service__num label-mono" data-reveal>
+              {service.num}
+            </span>
             <h3 class="service__title display-service m-0">
-              {service.title[0]}
-              <br />
-              {service.title[1]}
+              <span class="rv-mask">
+                <span data-reveal="rise" data-reveal-delay="0.08">
+                  {service.title[0]}
+                </span>
+              </span>
+              <span class="rv-mask">
+                <span data-reveal="rise" data-reveal-delay="0.16">
+                  {service.title[1]}
+                </span>
+              </span>
             </h3>
           </div>
 
           <div class="service__detail">
             <div class="service__tags">
-              {service.tags.map((tag) => (
-                <span class="service__tag">{tag}</span>
+              {service.tags.map((tag, j) => (
+                <span class="service__tag" data-reveal data-reveal-delay={0.38 + j * 0.06}>
+                  {tag}
+                </span>
               ))}
             </div>
-            <p class="service__desc">{service.desc}</p>
+            <p class="service__desc" data-reveal data-reveal-delay="0.54">
+              {service.desc}
+            </p>
           </div>
         </article>
       </div>
@@ -106,6 +147,40 @@ import { services } from '@/config/services.config';
   .service__detail {
     position: relative;
     z-index: 1;
+  }
+
+  /* --- recede ------------------------------------------------------------
+     A shadow that pools over the card as the next one covers it. Driven by
+     --svc-dim (registered in southwell.css) so the keyframes below can
+     animate the overlay and the transform together on one timeline. */
+  .service::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    background: var(--ink-950);
+    opacity: var(--svc-dim, 0);
+    pointer-events: none;
+  }
+
+  /* The timeline itself is set inline per card (animation-timeline:
+     --svc-N). The range is card N+1's travel from the bottom of the viewport
+     up to where it sticks. In lengths, not percentages: a sticky subject's
+     view range is stretched by its whole sticky travel, which is different
+     for every card, so a percentage would land somewhere else on each. */
+  @supports (timeline-scope: --a) {
+    .service--covered {
+      animation: svc-recede linear both;
+      animation-range: cover 40px cover calc(100vh - 130px);
+    }
+  }
+
+  @keyframes svc-recede {
+    to {
+      transform: translateZ(calc((var(--i, 0) - 3) * 26px)) translateY(-14px) scale(0.965);
+      --svc-dim: 0.14;
+    }
   }
 
   /* Colourways come from the component tier in themes/southwell.css, so all
@@ -213,10 +288,15 @@ import { services } from '@/config/services.config';
     .service {
       /* Nothing is stacking, so nothing should be receding. */
       transform: none;
+      animation: none;
       grid-template-columns: 1fr;
       gap: 32px;
       min-height: 0;
       padding: 36px 28px;
+    }
+
+    .service::after {
+      display: none;
     }
 
     .service__lead {
