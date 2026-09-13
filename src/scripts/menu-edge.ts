@@ -23,8 +23,9 @@
  */
 
 const MAX_DROPS = 8;
-/** Ambient drips, plus one that belongs to the hovered menu item. */
-const AMBIENT = 6;
+/** Ambient drips, plus one that belongs to the hovered menu item. Few and
+ *  slow: the edge should be calm, with one drip letting go now and then. */
+const AMBIENT = 4;
 const HOVER = AMBIENT; // slot index
 
 const VERT = `
@@ -242,14 +243,14 @@ export function createMenuEdge(options: MenuEdgeOptions): MenuEdge {
 
   const spawn = (d: Drop, immediate = false) => {
     d.x = rand(0.04, 0.96) * width;
-    d.rBase = rand(9, 15);
-    d.maxLen = rand(34, 64);
+    d.rBase = rand(8, 13);
+    d.maxLen = rand(30, 54);
     d.len = 0;
     d.r = d.rBase * 0.4;
     d.neck = 1;
     d.vy = 0;
     d.state = immediate ? 'hang' : 'wait';
-    d.timer = immediate ? 0 : rand(0.6, 4);
+    d.timer = immediate ? 0 : rand(1.5, 6);
   };
 
   const measure = () => {
@@ -301,12 +302,14 @@ export function createMenuEdge(options: MenuEdgeOptions): MenuEdge {
         continue;
       }
       if (d.state === 'hang') {
-        d.len = damp(d.len, d.maxLen * 1.04, 0.55, dt);
+        d.len = damp(d.len, d.maxLen * 1.04, 0.38, dt);
         const t = clamp(d.len / d.maxLen, 0, 1);
         d.r = d.rBase * (0.45 + 0.55 * t);
         d.neck = 1 - 0.7 * t * t;
         d.y = edgeY() + d.len * stretch;
-        if (t > 0.985 || (stretch > 1.6 && t > 0.5)) {
+        // Never let go while the sheet is lifting: a drip that fell then
+        // would be left over the page after the menu had gone.
+        if (t > 0.985 && lift > -60) {
           d.state = 'fall';
           d.vy = 40;
         }
