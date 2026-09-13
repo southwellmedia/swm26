@@ -96,7 +96,25 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   </div>
 </header>
 
-<div class="sw-menu invert-section" id="sw-menu" data-state="closed" inert>
+{
+  /* The strip of page left showing under the sheet. Dimmed a touch, and a
+    click on it closes the menu — it is a button, so it says so. */
+}
+<button
+  class="sw-menu__scrim"
+  id="sw-menu-scrim"
+  type="button"
+  tabindex="-1"
+  aria-label="Close menu"
+  inert></button>
+
+{
+  /* The menu is ink poured from the top: a sheet that settles at about
+    three quarters of the viewport, with a liquid underside drawn on the
+    canvas strip (src/scripts/menu-edge.ts). data-edge switches to the
+    stylesheet's still scalloped edge when the engine cannot run. */
+}
+<div class="sw-menu invert-section" id="sw-menu" data-state="closed" data-edge="live" inert>
   <div class="sw-menu__inner shell">
     <nav class="sw-menu__nav" aria-label="Main">
       <ul class="sw-menu__list">
@@ -140,6 +158,8 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       </div>
     </div>
   </div>
+
+  <canvas class="sw-menu__edge" id="sw-menu-edge" aria-hidden="true"></canvas>
 </div>
 
 <style>
@@ -387,28 +407,111 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
 
   /* --- overlay ---------------------------------------------------------- */
 
+  /* The sheet: three quarters of the viewport, poured in from above. No
+     fade — ink arrives, it does not appear. The strip below it is where the
+     drips hang; --edge-overlap is how far the canvas reaches back up over
+     the sheet so the join is under ink. */
   .sw-menu {
+    --edge-overlap: 44px;
+    --edge-height: 220px;
     position: fixed;
-    inset: 0;
+    inset: 0 0 auto;
+    height: 76vh;
+    height: 76svh;
     z-index: 55;
     display: flex;
     flex-direction: column;
-    padding-block: 140px 48px;
+    padding-block: 120px 40px;
     background: var(--color-background);
     color: var(--color-foreground);
-    opacity: 0;
     visibility: hidden;
-    transform: translateY(-2%);
+    transform: translateY(-104%);
     transition:
-      opacity 0.4s ease,
-      transform 0.5s var(--ease-sw),
-      visibility 0.4s;
+      transform 0.7s cubic-bezier(0.32, 0.72, 0.1, 1),
+      visibility 0s 0.7s;
   }
 
   .sw-menu[data-state='open'] {
-    opacity: 1;
     visibility: visible;
     transform: none;
+    transition:
+      transform 0.75s cubic-bezier(0.22, 0.9, 0.18, 1),
+      visibility 0s;
+  }
+
+  .sw-menu__edge {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% - var(--edge-overlap));
+    width: 100%;
+    height: var(--edge-height);
+    pointer-events: none;
+  }
+
+  /* Without the engine: a still, gently scalloped edge. */
+  .sw-menu[data-edge='static'] .sw-menu__edge {
+    display: none;
+  }
+
+  .sw-menu[data-edge='static']::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    height: 26px;
+    background: radial-gradient(circle at 50% 0, var(--color-background) 58%, transparent 60%) 0 0 /
+      64px 26px repeat-x;
+  }
+
+  .sw-menu__scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 54;
+    padding: 0;
+    border: 0;
+    background: rgb(12 16 22 / 0.28);
+    opacity: 0;
+    visibility: hidden;
+    cursor: pointer;
+    transition:
+      opacity 0.5s ease,
+      visibility 0s 0.5s;
+  }
+
+  .sw-menu__scrim[data-state='open'] {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity 0.6s ease 0.1s,
+      visibility 0s;
+  }
+
+  /* A wide screen: the foot sits beside the list rather than under it, which
+     is what lets four rows of display type fit in three quarters of a laptop
+     screen. */
+  @media (min-width: 900px) {
+    .sw-menu {
+      padding-top: clamp(96px, 13vh, 120px);
+    }
+
+    /* Qualified with the sheet: these sit above the base rules in the file,
+       and the base rules would otherwise win on order. */
+    .sw-menu .sw-menu__inner {
+      flex-direction: row;
+      align-items: flex-end;
+    }
+
+    .sw-menu .sw-menu__nav {
+      flex: 1;
+    }
+
+    .sw-menu .sw-menu__foot {
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 18px;
+    }
   }
 
   .sw-menu__inner {
@@ -442,7 +545,7 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     display: flex;
     align-items: baseline;
     gap: 24px;
-    padding: 18px 0;
+    padding: clamp(10px, 2vh, 18px) 0;
   }
 
   .sw-menu__index {
@@ -453,7 +556,9 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   .sw-menu__label {
     font-family: var(--font-display);
     font-weight: var(--display-weight);
-    font-size: min(9vw, 92px);
+    /* Sized to the viewport's height as well as its width: the sheet is
+       three quarters tall and four rows have to fit above the foot. */
+    font-size: min(8vw, 84px, 8.6vh);
     line-height: 1;
     letter-spacing: var(--display-tracking);
     text-transform: var(--display-case);
@@ -560,6 +665,8 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
 </style>
 
 <script>
+  import { createMenuEdge } from '@/scripts/menu-edge';
+
   function initNav() {
     const nav = document.getElementById('sw-nav');
     const toggle = document.getElementById('sw-nav-toggle');
@@ -568,8 +675,25 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     if (!nav || !toggle || !menu) return;
 
     const label = document.getElementById('sw-nav-toggle-label');
+    const scrim = document.getElementById('sw-menu-scrim');
+    const list = menu.querySelector<HTMLElement>('.sw-menu__list');
     let open = false;
     let scrolled = false;
+
+    // The liquid underside. Reduced motion or no WebGL gets the stylesheet's
+    // still edge instead.
+    const edgeCanvas = document.getElementById('sw-menu-edge');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const edge =
+      edgeCanvas instanceof HTMLCanvasElement && !reduced
+        ? createMenuEdge({
+            canvas: edgeCanvas,
+            sheet: menu,
+            overlap: parseFloat(getComputedStyle(menu).getPropertyValue('--edge-overlap')) || 44,
+          })
+        : null;
+    if (!edge?.supported) menu.dataset.edge = 'static';
+    let edgeStop = 0;
 
     /* The bar is fixed, so anything that wants to sit clear of it — the sticky
        band headings on a case study, for one — needs to know how tall it is,
@@ -612,6 +736,19 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       // accessibility tree — visibility: hidden alone would not.
       if (next) menu.removeAttribute('inert');
       else menu.setAttribute('inert', '');
+      if (scrim) {
+        scrim.dataset.state = next ? 'open' : 'closed';
+        if (next) scrim.removeAttribute('inert');
+        else scrim.setAttribute('inert', '');
+      }
+
+      // The edge runs while the sheet is down, and for as long as it takes
+      // the sheet to lift back out of view, so the drips stretch with it.
+      if (edge?.supported) {
+        window.clearTimeout(edgeStop);
+        if (next) edge.start();
+        else edgeStop = window.setTimeout(() => edge.stop(), 800);
+      }
 
       document.documentElement.style.overflow = next ? 'hidden' : '';
 
@@ -635,7 +772,33 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       }
     };
 
+    // The edge listens to the list (a drip forms under the hovered item) and
+    // to the cursor (the ink leans toward it near the edge).
+    const onListOver = (event: Event) => {
+      const link = (event.target as HTMLElement | null)?.closest('.sw-menu__link');
+      if (!(link instanceof HTMLElement)) return;
+      const r =
+        link.querySelector('.sw-menu__label')?.getBoundingClientRect() ??
+        link.getBoundingClientRect();
+      edge?.setHover(r.left + r.width / 2);
+    };
+    const onListOut = (event: Event) => {
+      const to = (event as MouseEvent).relatedTarget as Node | null;
+      if (list && to && list.contains(to)) return;
+      edge?.setHover(null);
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      if (open) edge?.setPointer(event.clientX, event.clientY);
+    };
+    const onPointerLeave = () => edge?.setPointer(null, null);
+    const onScrim = () => setOpen(false);
+
     toggle.addEventListener('click', () => setOpen(!open));
+    scrim?.addEventListener('click', onScrim);
+    list?.addEventListener('pointerover', onListOver);
+    list?.addEventListener('pointerout', onListOut);
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    document.addEventListener('mouseleave', onPointerLeave);
     window.addEventListener('scroll', onScroll, { passive: true });
     document.addEventListener('keydown', onKeydown);
     onScroll();
@@ -647,10 +810,14 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       () => {
         window.removeEventListener('scroll', onScroll);
         window.removeEventListener('resize', onResize);
+        window.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('mouseleave', onPointerLeave);
         nav.removeEventListener('transitionend', onTransitionEnd);
         cancelAnimationFrame(resizeRaf);
         document.removeEventListener('keydown', onKeydown);
         document.documentElement.style.overflow = '';
+        window.clearTimeout(edgeStop);
+        edge?.destroy();
       },
       { once: true }
     );
