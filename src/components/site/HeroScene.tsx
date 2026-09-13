@@ -1207,8 +1207,15 @@ export default function HeroScene() {
     // Render only while the panel can be seen: on screen, in a visible tab.
     // Below about half visible it also drops to the lowest tier — the panel is
     // sliding out under the headline and nobody is reading detail off it.
+    // … and not while the menu is open over it: the nav flags that on <html>
+    // and announces it, so the sculpture rests under the sheet.
     let onScreen = true;
-    const sync = () => engine.setActive(onScreen && document.visibilityState === 'visible');
+    const sync = () =>
+      engine.setActive(
+        onScreen &&
+          document.visibilityState === 'visible' &&
+          document.documentElement.dataset.menuOpen !== 'true'
+      );
     const io = new IntersectionObserver(
       ([entry]) => {
         onScreen = entry.isIntersecting && entry.intersectionRatio > 0.02;
@@ -1219,6 +1226,7 @@ export default function HeroScene() {
     );
     io.observe(wrap);
     document.addEventListener('visibilitychange', sync);
+    document.addEventListener('sw:menu', sync);
     sync();
 
     // Follow the theme toggle: only the class on <html> matters, and only when
@@ -1247,6 +1255,7 @@ export default function HeroScene() {
       window.clearTimeout(id);
       mq.removeEventListener('change', onMotion);
       document.removeEventListener('visibilitychange', sync);
+      document.removeEventListener('sw:menu', sync);
       observer.disconnect();
       io.disconnect();
       ro.disconnect();

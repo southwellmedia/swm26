@@ -35,9 +35,14 @@ interface Props {
    * must frost to ink rather than the page ground, in either colour scheme.
    */
   tone?: 'dark';
+  /**
+   * The menu's own colour. Ink pours a dark sheet over the page in either
+   * scheme; light lays a sheet of the page ground over a dimmed page.
+   */
+  menuTone?: 'ink' | 'light';
 }
 
-const { context, overMedia = false, tone } = Astro.props;
+const { context, overMedia = false, tone, menuTone = 'ink' } = Astro.props;
 
 const items = getNavItems();
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
@@ -48,6 +53,7 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   class="sw-nav"
   id="sw-nav"
   data-menu-open="false"
+  data-menu-tone={menuTone}
   data-over-media={overMedia ? '' : undefined}
   data-tone={tone}
 >
@@ -106,6 +112,7 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   type="button"
   tabindex="-1"
   aria-label="Close menu"
+  data-tone={menuTone}
   inert></button>
 
 {
@@ -114,7 +121,14 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     drawn on the canvas strip (src/scripts/menu-edge.ts). data-edge switches
     to the stylesheet's still scalloped edge when the engine cannot run. */
 }
-<div class="sw-menu invert-section" id="sw-menu" data-state="closed" data-edge="live" inert>
+<div
+  class:list={['sw-menu', menuTone === 'ink' && 'invert-section']}
+  id="sw-menu"
+  data-state="closed"
+  data-edge="live"
+  data-tone={menuTone}
+  inert
+>
   <div class="sw-menu__inner shell">
     <nav class="sw-menu__nav" aria-label="Main">
       <ul class="sw-menu__list">
@@ -216,11 +230,16 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     box-shadow: 0 1px 0 var(--color-border);
   }
 
-  /* Over the open overlay the bar goes transparent again and flips to ice. */
+  /* Over the open sheet the bar goes transparent again and takes the
+     sheet's colour: ice over ink, ink over a light sheet. */
   .sw-nav[data-menu-open='true'] {
     background: transparent;
     box-shadow: none;
     color: var(--on-invert);
+  }
+
+  .sw-nav[data-menu-open='true'][data-menu-tone='light'] {
+    color: var(--color-foreground);
   }
 
   /* --- wordmark --------------------------------------------------------- */
@@ -588,6 +607,11 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       visibility 0s 0.45s;
   }
 
+  /* A light sheet needs a darker page under it to stand off from. */
+  .sw-menu__scrim[data-tone='light'] {
+    background: rgb(12 16 22 / 0.5);
+  }
+
   .sw-menu__scrim[data-state='open'] {
     opacity: 1;
     visibility: visible;
@@ -720,6 +744,11 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
 
       document.documentElement.style.overflow = next ? 'hidden' : '';
 
+      // Anything drawing under the sheet — the hero, the reel — can rest
+      // while it is up. Flagged on <html> and announced.
+      document.documentElement.dataset.menuOpen = String(next);
+      document.dispatchEvent(new CustomEvent('sw:menu', { detail: { open: next } }));
+
       if (next) {
         const first = menu.querySelector('a');
         if (first instanceof HTMLElement) first.focus();
@@ -784,6 +813,7 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
         cancelAnimationFrame(resizeRaf);
         document.removeEventListener('keydown', onKeydown);
         document.documentElement.style.overflow = '';
+        delete document.documentElement.dataset.menuOpen;
         window.clearTimeout(edgeStop);
         edge?.destroy();
       },

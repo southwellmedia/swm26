@@ -269,14 +269,20 @@ export function createMenuEdge(options: MenuEdgeOptions): MenuEdge {
   const readColors = () => {
     const ink = parseColor(getComputedStyle(sheet).backgroundColor);
     gl.uniform3f(uInk, ink[0], ink[1], ink[2]);
-    // The gloss is the ink lifted toward the page ground it hangs over.
-    const page = parseColor(getComputedStyle(document.body).backgroundColor);
-    gl.uniform3f(
-      uGloss,
-      ink[0] * 0.55 + page[0] * 0.45,
-      ink[1] * 0.55 + page[1] * 0.45,
-      ink[2] * 0.55 + page[2] * 0.45
-    );
+    // The rim: a dark sheet catches the lighter page it hangs over; a light
+    // sheet shows a shaded underside instead.
+    const luma = 0.2126 * ink[0] + 0.7152 * ink[1] + 0.0722 * ink[2];
+    if (luma < 0.5) {
+      const page = parseColor(getComputedStyle(document.body).backgroundColor);
+      gl.uniform3f(
+        uGloss,
+        ink[0] * 0.55 + page[0] * 0.45,
+        ink[1] * 0.55 + page[1] * 0.45,
+        ink[2] * 0.55 + page[2] * 0.45
+      );
+    } else {
+      gl.uniform3f(uGloss, ink[0] * 0.78, ink[1] * 0.79, ink[2] * 0.81);
+    }
   };
 
   const edgeY = () => overlap + 6;

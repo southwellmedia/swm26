@@ -986,11 +986,17 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     },
     { rootMargin: '150% 0px' }
   );
+  // Nothing draws while the tab is hidden or the menu is open over the page
+  // (the nav flags that on <html> and announces it as `sw:menu`).
   const onVisibility = () => {
-    if (document.visibilityState === 'hidden') {
+    const covered =
+      document.visibilityState === 'hidden' || document.documentElement.dataset.menuOpen === 'true';
+    if (covered) {
       if (raf) cancelAnimationFrame(raf);
       raf = 0;
+      droplets.pause();
     } else {
+      lastTime = 0;
       kick();
     }
   };
@@ -1041,6 +1047,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       window.addEventListener('pointermove', onPointerMove, { passive: true });
       window.addEventListener('pointerdown', onPointerDown, { passive: true });
       document.addEventListener('visibilitychange', onVisibility);
+      document.addEventListener('sw:menu', onVisibility);
       themeObserver.observe(document.documentElement, {
         attributes: true,
         attributeFilter: ['class'],
@@ -1058,6 +1065,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('visibilitychange', onVisibility);
+      document.removeEventListener('sw:menu', onVisibility);
       window.__heroDropletRelease = 0;
       setOpen(false);
       setClear(false);
