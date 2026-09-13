@@ -1,32 +1,29 @@
 /**
- * Menu edge — the ink's liquid underside.
+ * Menu edge — the sheet's liquid underside.
  *
- * The menu is ink poured from the top: a sheet that drops down and settles
- * at about three quarters of the viewport. This draws its bottom edge, in a
+ * The menu is a sheet poured from the top. This draws its bottom edge, in a
  * strip of canvas that overlaps the sheet's last few pixels and hangs below
- * it. The edge is a 2D distance field: the ink fill, smooth-joined with a
- * handful of drips that hang, stretch, let go and fall into the strip of
- * page showing underneath, then form again somewhere else.
+ * it: a liquid surface, not a line. Three things shape it:
  *
- *   hover   the edge swells into a drip under the menu item under the
- *           cursor, and follows it along the list
- *   lean    bring the cursor near the edge and the ink reaches toward it
- *   lift    as the sheet closes, the drips stretch with its motion and snap
+ *   waves   slow, broad swells that never stop — the sheet is liquid at rest
+ *   mound   the surface rises toward the cursor when it comes near the edge,
+ *           and a stroke along the edge sends ripples out both ways
+ *   swell   a wide, gentle rise under the menu item under the cursor, so the
+ *           edge points at what you are about to choose
  *
- * Raw WebGL, one triangle, one fragment pass over a strip a couple of
- * hundred pixels tall — cheap enough to ignore, and it does not pull three
- * into pages that never load it. The sheet's colour is read off the sheet
- * itself, so the join is exact in either colour scheme.
+ * As the sheet lifts away the swells stretch with its motion.
+ *
+ * Raw WebGL, one triangle, one fragment pass over a strip a hundred and
+ * some pixels tall — cheap enough to ignore, and it pulls no library into
+ * pages that never load one. The sheet's colour is read off the sheet, so
+ * the join is exact in either scheme; a dark sheet catches the lighter page
+ * along its rim, a light sheet shows a shaded underside.
  *
  * The caller decides whether to run it (reduced motion, no WebGL) and shows
  * the stylesheet's still scalloped edge otherwise.
  */
 
-const MAX_DROPS = 8;
-/** Ambient drips, plus one that belongs to the hovered menu item. Few and
- *  slow: the edge should be calm, with one drip letting go now and then. */
-const AMBIENT = 4;
-const HOVER = AMBIENT; // slot index
+const MAX_RIPPLES = 6;
 
 const VERT = `
 attribute vec2 aPos;
@@ -39,84 +36,58 @@ uniform vec2  uRes;       // strip size, CSS px
 uniform float uDpr;
 uniform float uTime;
 uniform float uTop;       // the sheet's bottom, in strip px from the top
+uniform float uStretch;   // swells scale with the sheet's motion
 uniform vec3  uInk;
 uniform vec3  uGloss;
-uniform vec2  uPointer;   // strip px; x far negative = none
-uniform float uLean;
-uniform vec4  uDrops[${MAX_DROPS}];  // x, y (centre), r, neck 0…1
-uniform int   uCount;
-
-float smin(float a, float b, float k) {
-  float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
-  return mix(b, a, h) - k * h * (1.0 - h);
-}
-
-float sdSegment(vec2 p, vec2 a, vec2 b) {
-  vec2 pa = p - a, ba = b - a;
-  float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
-  return length(pa - ba * h);
-}
+uniform vec3  uMound;     // x, height px, width px
+uniform vec3  uSwell;     // x, height px, width px
+uniform vec3  uRipples[${MAX_RIPPLES}];  // x, age s, amplitude px
 
 float edgeAt(float x) {
-  float e = uTop + 6.0 + 3.0 * sin(x * 0.021 + uTime * 0.7) + 2.0 * sin(x * 0.053 - uTime * 0.45);
-  float dx = (x - uPointer.x) / 110.0;
-  return e + uLean * 16.0 * exp(-dx * dx);
-}
+  // Broad slow swells at three scales, none in step with another.
+  float e = uTop + 14.0;
+  e += 9.0 * sin(x * 0.0071 + uTime * 0.55);
+  e += 6.0 * sin(x * 0.0138 - uTime * 0.38 + 1.7);
+  e += 3.0 * sin(x * 0.031 + uTime * 0.9 + 0.6);
+  e = uTop + (e - uTop) * uStretch;
 
-// Negative inside the ink.
-float field(vec2 p) {
-  float edge = edgeAt(p.x);
-  float d = p.y - edge;
-  for (int i = 0; i < ${MAX_DROPS}; i++) {
-    if (i >= uCount) break;
-    vec4 dr = uDrops[i];
-    if (dr.z <= 0.0) continue;
-    float c = length(p - dr.xy) - dr.z;
-    if (dr.w > 0.01) {
-      // Hanging: a neck runs from the edge down to the drop, thinning as
-      // the drop gets ready to let go.
-      float neck = sdSegment(p, vec2(dr.x, edge - 4.0), dr.xy) - dr.z * 0.42 * dr.w;
-      d = smin(d, min(c, neck), 20.0);
-    } else {
-      d = smin(d, c, 5.0);
-    }
+  // The cursor's mound and the hovered item's swell: soft bells.
+  float dm = (x - uMound.x) / max(uMound.z, 1.0);
+  e += uMound.y * exp(-dm * dm);
+  float ds = (x - uSwell.x) / max(uSwell.z, 1.0);
+  e += uSwell.y * exp(-ds * ds);
+
+  // Ripples: a pair of crests running out from where the cursor stroked,
+  // fading as they go.
+  for (int i = 0; i < ${MAX_RIPPLES}; i++) {
+    vec3 r = uRipples[i];
+    if (r.z <= 0.0) continue;
+    float run = r.y * 260.0;
+    float d = abs(x - r.x) - run;
+    float crest = exp(-d * d / (55.0 * 55.0));
+    e += r.z * exp(-r.y * 1.9) * crest * cos(d * 0.045);
   }
-  return d;
+  return e;
 }
 
 void main() {
   vec2 p = gl_FragCoord.xy / uDpr;
   p.y = uRes.y - p.y;                 // y down, from the strip's top
-  float d = field(p);
+  float edge = edgeAt(p.x);
+  float d = p.y - edge;               // negative inside the ink
   float alpha = 1.0 - smoothstep(-0.8, 0.8, d);
   if (alpha <= 0.0) { gl_FragColor = vec4(0.0); return; }
 
-  // A wet rim: the underside catches the bright floor below, the crease
-  // where a neck meets the sheet sits a touch darker.
-  vec2 e = vec2(1.2, 0.0);
-  vec2 n = normalize(vec2(field(p + e.xy) - field(p - e.xy), field(p + e.yx) - field(p - e.yx)) + 1e-5);
-  float band = 1.0 - smoothstep(-9.0, 0.0, d);   // 1 deep inside … 0 at the edge
-  float rim = (1.0 - band) * smoothstep(0.15, 0.95, n.y);
-  float crease = (1.0 - band) * smoothstep(0.2, 0.9, -n.y) * step(uTop + 2.0, p.y);
-  vec3 col = uInk;
-  col = mix(col, uGloss, rim * 0.45);
-  col *= 1.0 - crease * 0.35;
+  // The surface's slope, for a rim that reads as a lit, wet curve rather
+  // than a flat cut-out: where the edge faces down it catches the light.
+  float slope = (edgeAt(p.x + 1.5) - edgeAt(p.x - 1.5)) / 3.0;
+  float facing = 1.0 / sqrt(1.0 + slope * slope);     // 1 flat, less on steep flanks
+  float band = 1.0 - smoothstep(-7.0, 0.0, d);       // 1 deep inside … 0 at the edge
+  float rim = (1.0 - band) * facing;
+  vec3 col = mix(uInk, uGloss, rim * 0.5);
   gl_FragColor = vec4(col * alpha, alpha);
 }
 `;
-
-type Drop = {
-  x: number;
-  y: number;
-  r: number;
-  rBase: number;
-  len: number;
-  maxLen: number;
-  neck: number;
-  vy: number;
-  state: 'wait' | 'hang' | 'fall';
-  timer: number;
-};
 
 export interface MenuEdgeOptions {
   canvas: HTMLCanvasElement;
@@ -140,7 +111,6 @@ export interface MenuEdge {
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 const damp = (a: number, b: number, lambda: number, dt: number) =>
   a + (b - a) * (1 - Math.exp(-lambda * dt));
-const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
 function parseColor(css: string): [number, number, number] {
   const m = css.match(/[\d.]+/g);
@@ -205,13 +175,13 @@ export function createMenuEdge(options: MenuEdgeOptions): MenuEdge {
   const uDpr = u('uDpr');
   const uTime = u('uTime');
   const uTop = u('uTop');
+  const uStretch = u('uStretch');
   const uInk = u('uInk');
   const uGloss = u('uGloss');
-  const uPointer = u('uPointer');
-  const uLean = u('uLean');
-  const uDrops = u('uDrops');
-  const uCount = u('uCount');
-  const dropData = new Float32Array(MAX_DROPS * 4);
+  const uMound = u('uMound');
+  const uSwell = u('uSwell');
+  const uRipples = u('uRipples');
+  const rippleData = new Float32Array(MAX_RIPPLES * 3);
 
   // --- state -----------------------------------------------------------------
   let width = 0;
@@ -223,35 +193,15 @@ export function createMenuEdge(options: MenuEdgeOptions): MenuEdge {
   let time = 0;
   let lastBottom = Number.NaN;
   let lift = 0; // px/s the sheet is moving, smoothed; negative = lifting
-  const pointer = { x: -1e5, y: -1e5, active: false };
+  const pointer = { x: 0, y: 0, active: false, lastX: 0, lastY: 0 };
   let hoverX: number | null = null;
-  let lean = 0;
-  let hoverSlotX = 0;
+  const mound = { x: 0, h: 0, w: 120 };
+  const swell = { x: 0, h: 0, w: 150 };
+  const ripples = Array.from({ length: MAX_RIPPLES }, () => ({ x: 0, age: 0, amp: 0 }));
+  let rippleNext = 0;
+  let strokeX = Number.NaN;
 
-  const drops: Drop[] = Array.from({ length: AMBIENT + 1 }, () => ({
-    x: 0,
-    y: 0,
-    r: 0,
-    rBase: 12,
-    len: 0,
-    maxLen: 50,
-    neck: 1,
-    vy: 0,
-    state: 'wait' as const,
-    timer: rand(0.2, 2.5),
-  }));
-
-  const spawn = (d: Drop, immediate = false) => {
-    d.x = rand(0.04, 0.96) * width;
-    d.rBase = rand(8, 13);
-    d.maxLen = rand(30, 54);
-    d.len = 0;
-    d.r = d.rBase * 0.4;
-    d.neck = 1;
-    d.vy = 0;
-    d.state = immediate ? 'hang' : 'wait';
-    d.timer = immediate ? 0 : rand(1.5, 6);
-  };
+  const edgeY = () => overlap + 14;
 
   const measure = () => {
     const rect = canvas.getBoundingClientRect();
@@ -263,7 +213,6 @@ export function createMenuEdge(options: MenuEdgeOptions): MenuEdge {
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.uniform2f(uRes, width, height);
     gl.uniform1f(uDpr, dpr);
-    for (const d of drops) if (d.x > width) d.x = rand(0.04, 0.96) * width;
   };
 
   const readColors = () => {
@@ -281,82 +230,74 @@ export function createMenuEdge(options: MenuEdgeOptions): MenuEdge {
         ink[2] * 0.55 + page[2] * 0.45
       );
     } else {
-      gl.uniform3f(uGloss, ink[0] * 0.78, ink[1] * 0.79, ink[2] * 0.81);
+      gl.uniform3f(uGloss, ink[0] * 0.8, ink[1] * 0.81, ink[2] * 0.83);
     }
   };
 
-  const edgeY = () => overlap + 6;
+  const ripple = (x: number, amp: number) => {
+    const r = ripples[rippleNext];
+    rippleNext = (rippleNext + 1) % MAX_RIPPLES;
+    r.x = x;
+    r.age = 0;
+    r.amp = amp;
+  };
 
   const step = (dt: number) => {
-    // The sheet's motion: lifting stretches every drip downward.
+    // The sheet's motion: lifting stretches the swells downward.
     const bottom = sheet.getBoundingClientRect().bottom;
     const v = Number.isNaN(lastBottom) ? 0 : (bottom - lastBottom) / Math.max(dt, 1e-3);
     lastBottom = bottom;
     lift = damp(lift, v, 14, dt);
-    const stretch = 1 + clamp(-lift / 1400, 0, 1.2);
+    const stretch = 1 + clamp(-lift / 1600, 0, 1);
 
-    // Cursor lean: only when the cursor is within reach of the edge.
-    const near = pointer.active ? 1 - clamp(Math.abs(pointer.y - edgeY()) / 140, 0, 1) : 0;
-    lean = damp(lean, near, 8, dt);
+    // The mound rises toward a cursor near the edge, up to 30 px, and
+    // follows it along.
+    const near = pointer.active ? 1 - clamp(Math.abs(pointer.y - edgeY()) / 170, 0, 1) : 0;
+    const target = near * near * 30;
+    mound.h = damp(mound.h, target, 9, dt);
+    mound.x = mound.h > 0.5 ? damp(mound.x, pointer.x, 12, dt) : pointer.x;
 
-    for (let i = 0; i < AMBIENT; i++) {
-      const d = drops[i];
-      if (d.state === 'wait') {
-        d.timer -= dt;
-        if (d.timer <= 0) spawn(d, true);
-        d.r = 0;
-        continue;
+    // A stroke along the edge — the cursor moving while near it — sends
+    // ripples out from where it passed, stronger the faster it moves.
+    if (pointer.active && near > 0.15) {
+      if (Number.isNaN(strokeX)) strokeX = pointer.x;
+      const moved = pointer.x - strokeX;
+      if (Math.abs(moved) > 48) {
+        ripple(pointer.x, clamp(Math.abs(moved) / 6, 5, 14) * near);
+        strokeX = pointer.x;
       }
-      if (d.state === 'hang') {
-        d.len = damp(d.len, d.maxLen * 1.04, 0.38, dt);
-        const t = clamp(d.len / d.maxLen, 0, 1);
-        d.r = d.rBase * (0.45 + 0.55 * t);
-        d.neck = 1 - 0.7 * t * t;
-        d.y = edgeY() + d.len * stretch;
-        // Never let go while the sheet is lifting: a drip that fell then
-        // would be left over the page after the menu had gone.
-        if (t > 0.985 && lift > -60) {
-          d.state = 'fall';
-          d.vy = 40;
-        }
-        continue;
-      }
-      // Falling.
-      d.neck = damp(d.neck, 0, 18, dt);
-      d.vy += 1500 * dt;
-      d.y += d.vy * dt;
-      d.r = damp(d.r, d.rBase * 0.85, 4, dt);
-      if (d.y - d.r > height) spawn(d);
-    }
-
-    // The hover drip: under the item, following the cursor along the list.
-    const h = drops[HOVER];
-    if (hoverX !== null) {
-      hoverSlotX = h.r > 0 ? damp(hoverSlotX, hoverX, 10, dt) : hoverX;
-      h.len = damp(h.len, 30, 6, dt);
     } else {
-      h.len = damp(h.len, 0, 7, dt);
+      strokeX = Number.NaN;
     }
-    h.x = hoverSlotX;
-    h.r = h.len > 0.5 ? 12 + 8 * clamp(h.len / 30, 0, 1) : 0;
-    h.neck = 1;
-    h.y = edgeY() + h.len * stretch;
+    for (const r of ripples) {
+      if (r.amp <= 0) continue;
+      r.age += dt;
+      if (r.age > 4) r.amp = 0;
+    }
+
+    // The swell under the hovered item.
+    if (hoverX !== null) {
+      swell.x = swell.h > 0.5 ? damp(swell.x, hoverX, 10, dt) : hoverX;
+      swell.h = damp(swell.h, 16, 7, dt);
+    } else {
+      swell.h = damp(swell.h, 0, 7, dt);
+    }
+
+    gl.uniform1f(uStretch, stretch);
   };
 
   const draw = () => {
-    for (let i = 0; i < drops.length; i++) {
-      const d = drops[i];
-      dropData[i * 4] = d.x;
-      dropData[i * 4 + 1] = d.y;
-      dropData[i * 4 + 2] = d.r;
-      dropData[i * 4 + 3] = d.neck;
+    for (let i = 0; i < MAX_RIPPLES; i++) {
+      const r = ripples[i];
+      rippleData[i * 3] = r.x;
+      rippleData[i * 3 + 1] = r.age;
+      rippleData[i * 3 + 2] = r.amp;
     }
-    gl.uniform4fv(uDrops, dropData);
-    gl.uniform1i(uCount, drops.length);
+    gl.uniform3fv(uRipples, rippleData);
     gl.uniform1f(uTime, time);
     gl.uniform1f(uTop, overlap);
-    gl.uniform2f(uPointer, pointer.active ? pointer.x : -1e5, pointer.active ? pointer.y : -1e5);
-    gl.uniform1f(uLean, lean);
+    gl.uniform3f(uMound, mound.x, mound.h, mound.w);
+    gl.uniform3f(uSwell, swell.x, swell.h, swell.w);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -393,7 +334,6 @@ export function createMenuEdge(options: MenuEdgeOptions): MenuEdge {
       measure();
       readColors();
       ro.observe(canvas);
-      for (const d of drops) if (d.state === 'wait' && d.timer > 2) d.timer = rand(0.1, 1.5);
       raf = requestAnimationFrame(frame);
     },
     stop() {
