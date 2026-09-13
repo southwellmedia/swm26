@@ -42,7 +42,7 @@ interface Props {
   menuTone?: 'ink' | 'light';
 }
 
-const { context, overMedia = false, tone, menuTone = 'ink' } = Astro.props;
+const { context, overMedia = false, tone, menuTone = 'light' } = Astro.props;
 
 const items = getNavItems();
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
