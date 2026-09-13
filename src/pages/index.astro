@@ -5,6 +5,7 @@
  */
 import SiteLayout from '@/layouts/SiteLayout.astro';
 import Hero from '@/components/sections/Hero.astro';
+import Reel from '@/components/sections/Reel.astro';
 import WorkGrid from '@/components/sections/WorkGrid.astro';
 import Services from '@/components/sections/Services.astro';
 import Founder from '@/components/sections/Founder.astro';
@@ -18,6 +19,11 @@ import siteConfig from '@/config/site.config';
   includeOrgSchema
 >
   <Hero />
+  {
+    /* No teaser cut yet: a 16:9 still stands in. Swap in /reel/teaser.mp4 and
+      a poster when the loop exists; Reel takes either without other changes. */
+  }
+  <Reel src="/reel/teaser-still.webp" poster="/reel/teaser-still.webp" />
   {
     /* Six lands on a row boundary: the full-width lead over two rows, then the
       first five of the pattern over three. Any of 1, 6 or 11 tiles cleanly. */

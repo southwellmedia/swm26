@@ -15,6 +15,12 @@
  * Every transform here is owned by Motion: x, y and scale are motion values
  * bound to the elements with styleEffect, so the arrival zoom and the hover
  * zoom animate the same value and can never fight over one property.
+ *
+ * That now includes the card's own box. Its arrival (opacity, y) used to go
+ * through animate(card, …), which writes style.transform from a separate
+ * VisualElement and would clobber anything else on the element. It is a
+ * styleEffect now too, so flow.ts can compose skewY/scaleY onto the same
+ * transform — styleEffect calls on one element share one state.
  */
 import {
   animate,
@@ -45,14 +51,19 @@ export function initWork(reduced: boolean): VoidFunction {
 
     // Owned values. Position springs chase the pointer; scale is animated
     // directly so arrival and hover both drive it with their own curves.
+    // cardY / cardOpacity are the card's arrival, bound below so the card's
+    // transform has exactly one writer.
     const px = motionValue(0);
     const py = motionValue(0);
     const scale = motionValue(1);
+    const cardY = motionValue(reduced ? 0 : 64);
+    const cardOpacity = motionValue(reduced ? 1 : 0);
     const sx = springValue(px, { stiffness: 180, damping: 24, mass: 0.9 });
     const sy = springValue(py, { stiffness: 180, damping: 24, mass: 0.9 });
     const cx = transformValue(() => -sx.get() * (CAPTION_DRIFT / MEDIA_DRIFT));
     const cy = transformValue(() => -sy.get() * (CAPTION_DRIFT / MEDIA_DRIFT));
 
+    stops.push(styleEffect(card, { y: cardY, opacity: cardOpacity }));
     stops.push(styleEffect(media, { x: sx, y: sy, scale }));
     if (caption) stops.push(styleEffect(caption, { x: cx, y: cy }));
 
@@ -74,13 +85,12 @@ export function initWork(reduced: boolean): VoidFunction {
             card.classList.add('is-in');
             warm();
             const at = columnOf(card, grid) * 0.09;
-            const sequence: AnimationSequence = [
-              [
-                card,
-                { opacity: [0, 1], y: [64, 0] },
-                { type: 'spring', visualDuration: 1.0, bounce: 0.08, at },
-              ],
-            ];
+            // The card itself: its values, not the element, so the write goes
+            // through the styleEffect above rather than a second transform owner.
+            const lift = { type: 'spring', visualDuration: 1.0, bounce: 0.08, delay: at } as const;
+            animate(cardY, 0, lift);
+            animate(cardOpacity, 1, lift);
+            const sequence: AnimationSequence = [];
             if (caption) {
               sequence.push([
                 caption,
@@ -95,7 +105,7 @@ export function initWork(reduced: boolean): VoidFunction {
                 { duration: 0.5, at: at + 0.35 },
               ]);
             }
-            animate(sequence);
+            if (sequence.length) animate(sequence);
             animate(scale, [1.18, 1], {
               type: 'spring',
               visualDuration: 1.5,

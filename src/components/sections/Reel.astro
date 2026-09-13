@@ -1,0 +1,333 @@
+---
+/**
+ * Reel
+ *
+ * The beat between the hero and the work: a statement headline, a short
+ * blurb, and a small picture that follows you down the page. As the section
+ * pins, the copy scrolls away at native speed while the picture peels out of
+ * its slot, tilts, and opens up to the full width of the shell — then holds
+ * there as the reel before releasing into the grid below.
+ *
+ * Structure, top to bottom:
+ *
+ *   .reel__runway   tall wrapper: 100vh stage + var(--reel-hold) of pinned
+ *                   scroll. The hold is the whole scroll budget of the effect.
+ *   .reel__stage    position: sticky; the 100vh frame everything sits in.
+ *   .reel__copy     headline, blurb and the EMPTY thumbnail slot. Translated
+ *                   up by the engine while pinned so it reads as scrolling.
+ *   .reel__full     the EMPTY full-width slot, centred in the stage.
+ *   <video>         the source (an <img> when `src` is a still). Sampled as
+ *                   a WebGL texture when the engine is live; shown in the
+ *                   full slot as the fallback otherwise.
+ *   <canvas>        covers the stage; the picture is drawn here.
+ *
+ * The two slots are plain boxes: the WebGL quad is measured to them, so the
+ * layout stays CSS and the effect follows whatever the grid decides. Engine
+ * in src/scripts/reel/morph.ts.
+ *
+ * Fallbacks, in order: no JS — the video sits in the full slot, the thumbnail
+ * slot collapses. Reduced motion or no WebGL — same, decided in the script.
+ */
+interface Props {
+  /** mp4/webm the reel plays. Muted, looped, inline. A still image (jpg,
+   *  png, webp, avif) works too, until a cut exists: the engine samples it
+   *  once and everything else is identical. */
+  src: string;
+  /** Poster for the fallback and the first frame. Unused for a still. */
+  poster: string;
+  title?: string;
+  blurb?: string;
+  /** Extra pinned scroll, as a CSS length. Bigger = slower, longer morph. */
+  hold?: string;
+  class?: string;
+}
+
+const {
+  src,
+  poster,
+  title = 'Bold ideas, built to ship.',
+  blurb = 'Design, motion and engineering under one roof — from the first sketch to the last deploy.',
+  hold = '160vh',
+  class: className,
+} = Astro.props;
+
+const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
+---
+
+<section class:list={['reel', className]} data-reel style={`--reel-hold-set: ${hold}`}>
+  <div class="reel__runway" data-reel-runway>
+    <div class="reel__stage shell" data-reel-stage>
+      <div class="reel__copy" data-reel-copy>
+        <header class="reel__head" data-reveal>
+          <h2 class="display-section m-0">{title}</h2>
+          <p
+            class="text-foreground-secondary m-0 max-w-[380px] text-[18px] leading-[1.55] max-[800px]:text-base"
+          >
+            {blurb}
+          </p>
+        </header>
+        <div class="reel__thumb" data-reel-thumb aria-hidden="true"></div>
+      </div>
+
+      <div class="reel__fullwrap" aria-hidden="true">
+        <div class="reel__full" data-reel-full>
+          {
+            isStill ? (
+              <img class="reel__video" data-reel-source src={src} alt="" decoding="async" />
+            ) : (
+              <video
+                class="reel__video"
+                data-reel-source
+                muted
+                loop
+                playsinline
+                autoplay
+                preload="metadata"
+                poster={poster}
+                crossorigin="anonymous"
+              >
+                <source src={src} />
+              </video>
+            )
+          }
+        </div>
+      </div>
+
+      <canvas class="reel__canvas" data-reel-canvas aria-hidden="true"></canvas>
+    </div>
+  </div>
+</section>
+
+<style>
+  .reel {
+    position: relative;
+    /* The prop arrives as an inline --reel-hold-set. Resolving it here, in
+       the stylesheet, is what lets the static mode below zero it: an inline
+       --reel-hold would beat any rule. */
+    --reel-hold: var(--reel-hold-set, 160vh);
+  }
+
+  .reel__runway {
+    /* The stage plus the pinned budget. */
+    height: calc(100vh + var(--reel-hold, 160vh));
+    height: calc(100svh + var(--reel-hold, 160vh));
+  }
+
+  .reel__stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    /* Clip the copy as it leaves the top, exactly as the viewport would. */
+    overflow: hidden;
+  }
+
+  .reel__copy {
+    position: relative;
+    z-index: 1;
+    padding-top: 130px;
+    /* Written by the engine while pinned; never animated by CSS, so the
+       translate tracks the scroll 1:1 with no easing of its own. */
+    will-change: transform;
+  }
+
+  .reel__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 40px;
+  }
+
+  /* The empty slot the picture starts in. 5/12 of the shell, like the lead
+     column of the grid below. It only defines a rectangle. */
+  .reel__thumb {
+    width: calc(5 / 12 * 100% - 10px);
+    aspect-ratio: 16 / 9;
+    margin-top: 56px;
+    border-radius: var(--radius-lg);
+  }
+
+  .reel__fullwrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-inline: var(--gutter);
+    pointer-events: none;
+  }
+
+  /* The slot the picture ends in: the width of the shell, capped so a very
+     wide viewport still shows the whole frame with air above and below. */
+  .reel__full {
+    position: relative;
+    width: min(100%, calc(78vh * 16 / 9));
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--work-media-bg, var(--color-background-secondary));
+  }
+
+  .reel__video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .reel__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* --- modes ------------------------------------------------------------- */
+  /* Live: the DOM video is only a texture source. Kept in layout so it keeps
+     decoding; invisible so it never double-draws. The full slot is only a
+     measuring box here too — its backdrop is for the fallback, and would
+     otherwise sit behind the copy as a plain grey frame the whole time. */
+  .reel[data-reel-mode='live'] .reel__video {
+    opacity: 0;
+  }
+
+  .reel[data-reel-mode='live'] .reel__full {
+    background: transparent;
+  }
+
+  /* Static (no JS, reduced motion, no WebGL): no canvas, no travelling slot,
+     the video simply sits in the full frame and the pinned budget goes. */
+  :global(html:not(.js)) .reel,
+  .reel[data-reel-mode='static'] {
+    --reel-hold: 0px;
+  }
+
+  :global(html:not(.js)) .reel__canvas,
+  .reel[data-reel-mode='static'] .reel__canvas,
+  :global(html:not(.js)) .reel__thumb,
+  .reel[data-reel-mode='static'] .reel__thumb {
+    display: none;
+  }
+
+  :global(html:not(.js)) .reel__runway,
+  .reel[data-reel-mode='static'] .reel__runway,
+  :global(html:not(.js)) .reel__stage,
+  .reel[data-reel-mode='static'] .reel__stage {
+    position: relative;
+    height: auto;
+    overflow: visible;
+  }
+
+  :global(html:not(.js)) .reel__fullwrap,
+  .reel[data-reel-mode='static'] .reel__fullwrap {
+    position: relative;
+    inset: auto;
+    padding: 56px 0 0;
+  }
+
+  @media (max-width: 800px) {
+    .reel__copy {
+      padding-top: 90px;
+    }
+
+    .reel__head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    .reel__thumb {
+      width: 62%;
+      margin-top: 36px;
+    }
+  }
+</style>
+
+<script>
+  /* Boots the morph engine for the reel on this page.
+
+     Lazy on two counts: the engine (and three) is only imported once the
+     section is within a viewport of the fold, and it only renders while the
+     stage is on screen. Reduced motion and no-WebGL fall back to the static
+     mode, which the stylesheet handles.
+
+     One engine per document: built on astro:page-load, torn down before the
+     swap so its observers and GL context never outlive their DOM. */
+  import type { ReelMorph } from '@/scripts/reel/morph';
+
+  let engine: ReelMorph | null = null;
+  let observer: IntersectionObserver | null = null;
+
+  const hasWebGL = (canvas: HTMLCanvasElement) => {
+    try {
+      return Boolean(canvas.getContext('webgl2') || canvas.getContext('webgl'));
+    } catch {
+      return false;
+    }
+  };
+
+  function setup() {
+    const root = document.querySelector<HTMLElement>('[data-reel]');
+    if (!root) return;
+
+    const canvas = root.querySelector<HTMLCanvasElement>('[data-reel-canvas]');
+    const stage = root.querySelector<HTMLElement>('[data-reel-stage]');
+    const runway = root.querySelector<HTMLElement>('[data-reel-runway]');
+    const thumb = root.querySelector<HTMLElement>('[data-reel-thumb]');
+    const full = root.querySelector<HTMLElement>('[data-reel-full]');
+    const copy = root.querySelector<HTMLElement>('[data-reel-copy]');
+    const source = root.querySelector<HTMLVideoElement | HTMLImageElement>('[data-reel-source]');
+    if (!canvas || !stage || !runway || !thumb || !full || !source) return;
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced || !hasWebGL(document.createElement('canvas'))) {
+      root.dataset.reelMode = 'static';
+      return;
+    }
+
+    root.dataset.reelMode = 'live';
+
+    observer = new IntersectionObserver(
+      async ([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer?.disconnect();
+        observer = null;
+        const { createReelMorph } = await import('@/scripts/reel/morph');
+        // A still is uploaded to the GPU once, when the engine is built, so
+        // it has to be decoded by then. (A video is sampled every frame.)
+        if (source instanceof HTMLImageElement) await source.decode().catch(() => {});
+        // The page may have swapped while three was loading.
+        if (!root.isConnected) return;
+        const lenis = window.__lenis;
+        engine = createReelMorph({
+          canvas,
+          stage,
+          runway,
+          thumb,
+          full,
+          copy: copy ?? undefined,
+          source,
+          radius: parseFloat(getComputedStyle(full).borderRadius) || 16,
+          // Lenis's velocity is the value the page is drawn at, so the bend
+          // can never disagree with the scroll. Falls back to a scroll delta.
+          velocity: lenis ? () => Math.max(-1, Math.min(1, lenis.velocity / 42)) : undefined,
+        });
+        engine.start();
+      },
+      { rootMargin: '100% 0px' }
+    );
+    observer.observe(root);
+  }
+
+  function teardown() {
+    observer?.disconnect();
+    observer = null;
+    engine?.destroy();
+    engine = null;
+  }
+
+  document.addEventListener('astro:page-load', setup);
+  document.addEventListener('astro:before-swap', teardown);
+</script>

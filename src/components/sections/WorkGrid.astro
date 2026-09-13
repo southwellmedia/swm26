@@ -221,6 +221,16 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
     opacity: 0;
   }
 
+  /* On fine pointers the scroll flow (src/scripts/motion/flow.ts) writes a
+     transform to the card every frame the page moves. A layer of its own
+     from the start, so those writes never re-raster the card's rounded
+     clip and shadow, only re-composite them. */
+  @media (hover: hover) and (pointer: fine) {
+    .card {
+      will-change: transform;
+    }
+  }
+
   /* The lead project takes the full width of the grid. */
   .card[data-span='hero'] {
     grid-column: 1 / -1;
