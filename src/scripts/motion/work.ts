@@ -63,7 +63,11 @@ export function initWork(reduced: boolean): VoidFunction {
     const cx = transformValue(() => -sx.get() * (CAPTION_DRIFT / MEDIA_DRIFT));
     const cy = transformValue(() => -sy.get() * (CAPTION_DRIFT / MEDIA_DRIFT));
 
-    stops.push(styleEffect(card, { y: cardY, opacity: cardOpacity }));
+    // A delivered card (data-deliver) leaves opacity to the stylesheet: the
+    // reel engine shows it by adding `is-in`, and an inline opacity would
+    // beat the `:not(.is-in)` rule that hides it until then.
+    const delivered = card.dataset.deliver !== undefined;
+    stops.push(styleEffect(card, delivered ? { y: cardY } : { y: cardY, opacity: cardOpacity }));
     stops.push(styleEffect(media, { x: sx, y: sy, scale }));
     if (caption) stops.push(styleEffect(caption, { x: cx, y: cy }));
 
@@ -74,7 +78,17 @@ export function initWork(reduced: boolean): VoidFunction {
     };
 
     // --- arrival ---------------------------------------------------------
-    if (reduced) {
+    // A delivered card (data-deliver) has no arrival of its own: the reel's
+    // droplet drops down the page and becomes it, and the reel engine adds
+    // `is-in` at that moment. Without a live reel to do that — reduced
+    // motion, or no reel on the page — it simply shows. The bound values sit
+    // at rest so the stylesheet's `:not(.is-in)` is the only thing hiding it.
+    if (delivered) {
+      cardY.set(0);
+      cardOpacity.set(1);
+      if (reduced || !document.querySelector('[data-reel]')) card.classList.add('is-in');
+      warm();
+    } else if (reduced) {
       card.classList.add('is-in');
       warm();
     } else {

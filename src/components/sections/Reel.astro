@@ -30,6 +30,9 @@
  * Fallbacks, in order: no JS — the video sits in the full slot, the thumbnail
  * slot collapses. Reduced motion or no WebGL — same, decided in the script.
  */
+import { Icon } from 'astro-icon/components';
+import PillButton from '@/components/site/PillButton.astro';
+
 interface Props {
   /** mp4/webm, or a still (jpg, png, webp, avif), for the fallback frame
    *  when the WebGL scene cannot run. */
@@ -53,6 +56,15 @@ const {
 } = Astro.props;
 
 const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
+
+// The disciplines, one per droplet in the scene, in the order the scene
+// numbers them. Short, because they ride on the droplets.
+const LABELS = [
+  { text: 'Development', href: '/#services' },
+  { text: 'Prototypes', href: '/#services' },
+  { text: 'Brand & design', href: '/#services' },
+  { text: 'Advisory', href: '/#services' },
+];
 ---
 
 <section class:list={['reel', className]} data-reel style={`--reel-hold-set: ${hold}`}>
@@ -102,6 +114,32 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
       overflow-hidden stage so nothing clips or re-parents it. */
   }
   <canvas class="reel__canvas" data-reel-canvas aria-hidden="true"></canvas>
+
+  {
+    /* Above the canvas, on the open frame's rectangle (the engine sizes it):
+      the discipline labels that ride on the droplets, the line that follows
+      the scene's state, and the call to action. Hidden until the frame is
+      open, so nothing here is reachable before it can be seen. */
+  }
+  <div class="reel__overlay" data-reel-overlay>
+    {
+      LABELS.map((label, i) => (
+        <a class="reel__label label-mono" href={label.href} data-reel-label={i} tabindex="-1">
+          {label.text}
+        </a>
+      ))
+    }
+    <div class="reel__caption">
+      <p class="reel__line reel__line--chaos m-0" aria-hidden="true">
+        Every project starts as pieces.
+      </p>
+      <p class="reel__line reel__line--clear m-0">One team ships the clear version.</p>
+      <PillButton href="/contact" class="reel__cta px-7 py-3.5">
+        Start a project
+        <Icon name="lucide:arrow-up-right" aria-hidden="true" />
+      </PillButton>
+    </div>
+  </div>
 </section>
 
 <style>
@@ -190,6 +228,106 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
     height: 100%;
     z-index: 40;
     pointer-events: none;
+  }
+
+  /* --- the words on the open frame ------------------------------------ */
+  .reel__overlay {
+    position: fixed;
+    z-index: 41;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.45s var(--ease-sw),
+      visibility 0s 0.45s;
+  }
+
+  .reel[data-reel-open] .reel__overlay {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity 0.6s var(--ease-sw) 0.1s,
+      visibility 0s;
+  }
+
+  /* Each label is placed by the engine on its droplet; it only fades here. */
+  .reel__label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    background: rgb(12 16 22 / 0.72);
+    color: rgb(255 255 255 / 0.9);
+    text-decoration: none;
+    white-space: nowrap;
+    pointer-events: auto;
+    will-change: transform, opacity;
+    transition: background-color 0.3s ease;
+  }
+
+  .reel__label:hover {
+    background: rgb(12 16 22 / 0.92);
+  }
+
+  .reel__caption {
+    position: absolute;
+    left: 36px;
+    bottom: 32px;
+    display: grid;
+    gap: 18px;
+    max-width: 420px;
+  }
+
+  /* Two lines in one slot; the scene's state picks which shows. */
+  .reel__line {
+    grid-area: 1 / 1;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 2.2vw, 2rem);
+    font-weight: var(--display-weight);
+    line-height: 1.1;
+    letter-spacing: var(--display-tracking);
+    color: var(--ink-950);
+    transition:
+      opacity 0.5s var(--ease-sw),
+      transform 0.5s var(--ease-sw);
+  }
+
+  .reel__line--clear,
+  .reel[data-reel-clear] .reel__line--chaos {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .reel[data-reel-clear] .reel__line--clear {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* The pill is rendered by a child component, so its class carries no
+     scope attribute: reach it through the caption. */
+  .reel__caption :global(.reel__cta) {
+    grid-area: 2 / 1;
+    justify-self: start;
+    pointer-events: auto;
+  }
+
+  .reel__caption :global(.reel__cta svg) {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+  }
+
+  @media (max-width: 800px) {
+    .reel__caption {
+      left: 20px;
+      bottom: 20px;
+      gap: 12px;
+    }
+
+    .reel__label {
+      padding: 4px 9px;
+    }
   }
 
   /* --- modes ------------------------------------------------------------- */
@@ -288,13 +426,19 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
     const copy = root.querySelector<HTMLElement>('[data-reel-copy]');
     if (!canvas || !stage || !runway || !thumb || !full) return;
 
+    // The work grid's lead card waits to be delivered by the droplet. With
+    // no engine to do that, or when the page opens already past the reel,
+    // it simply shows; the engine keeps that in step once it runs.
+    const lead = document.querySelector<HTMLElement>('[data-work-grid] .card[data-deliver]');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced || !hasWebGL(document.createElement('canvas'))) {
       root.dataset.reelMode = 'static';
+      lead?.classList.add('is-in');
       return;
     }
 
     root.dataset.reelMode = 'live';
+    if (lead && runway.getBoundingClientRect().bottom < 0) lead.classList.add('is-in');
 
     observer = new IntersectionObserver(
       async ([entry]) => {
@@ -307,15 +451,24 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
         const lenis = window.__lenis;
         engine = createReelMorph({
           canvas,
+          root,
           stage,
           runway,
           thumb,
           full,
           copy: copy ?? undefined,
-          // Where the droplet comes from when the hero scene isn't running,
-          // and where the --hero-* palette hooks live.
+          // The hero: where the droplet emerges, what it lands on, and where
+          // the --hero-* palette hooks live.
           heroPanel: document.querySelector<HTMLElement>('.hero__render'),
+          heroFloor: document.querySelector<HTMLElement>('.hero__foot'),
           paletteScope: document.querySelector<HTMLElement>('.hero'),
+          // The words on the open frame.
+          overlay: root.querySelector<HTMLElement>('[data-reel-overlay]'),
+          labels: Array.from(root.querySelectorAll<HTMLElement>('[data-reel-label]')),
+          // Where the ball ends up: bouncing on the Work heading into the
+          // card the grid marked for delivery.
+          workHead: document.querySelector<HTMLElement>('#work'),
+          leadCard: document.querySelector<HTMLElement>('[data-work-grid] .card[data-deliver]'),
           radius: parseFloat(getComputedStyle(full).borderRadius) || 16,
           // Lenis's velocity is the value the page is drawn at, so the bend
           // can never disagree with the scroll. Falls back to a scroll delta.

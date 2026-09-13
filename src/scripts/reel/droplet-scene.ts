@@ -37,7 +37,10 @@ import {
 } from 'three';
 
 export const NBLOB = 7;
+/** The first LABELLED droplets are the disciplines; the rest are small strays. */
+export const LABELLED = 4;
 const FLOOR_Y = -0.9;
+const FOCAL = 1.9;
 
 export interface ScenePalette {
   ink: Color;
@@ -285,7 +288,7 @@ export class DropletScene {
   private mouseTarget = new Vector2();
   private pointerActive = false;
   private pointerLast = -Infinity;
-  private clarity = 0.15;
+  private _clarity = 0.15;
   private time = 0;
   private up = new Vector3(0, 1, 0);
   private tmp = new Vector3();
@@ -334,6 +337,36 @@ export class DropletScene {
     this.material.uniforms.uRes.value.set(w, h);
   }
 
+  /** How resolved the sculpture is right now, 0 chaos … 1 one slab. */
+  get clarity() {
+    return this._clarity;
+  }
+
+  /**
+   * Where droplet `i` sits on the rendered texture: x and y in 0…1 (y up),
+   * its on-screen radius in the same units of height, and whether it is in
+   * front of the camera. The same projection the shaders use, so a label
+   * placed here lands on the droplet.
+   */
+  project(i: number, out: { x: number; y: number; r: number; visible: boolean }) {
+    const b = this.blobs[i];
+    const c = this.cam;
+    const v = this.tmp.set(b.x, b.y, b.z).sub(c.uRo.value);
+    const z = v.dot(c.uFw.value);
+    if (z <= 0.1) {
+      out.visible = false;
+      return out;
+    }
+    const res = this.material.uniforms.uRes.value as Vector2;
+    const u = (v.dot(c.uRt.value) / z) * FOCAL;
+    const w = (v.dot(c.uUp.value) / z) * FOCAL;
+    out.x = 0.5 + u * (res.y / Math.max(1, res.x));
+    out.y = 0.5 + w;
+    out.r = (b.w / z) * FOCAL;
+    out.visible = true;
+    return out;
+  }
+
   /** Pointer in scene space, -1…1 across, -1…1 up. */
   setPointer(x: number, y: number, active: boolean, now: number) {
     this.pointerActive = active;
@@ -354,7 +387,7 @@ export class DropletScene {
       const power = 2.4 + 1.2 * (1 - clamp(len / 1.6, 0, 1));
       this.kick[i].addScaledVector(dir, power).y += 0.8;
     }
-    this.clarity = Math.min(this.clarity, 0.05);
+    this._clarity = Math.min(this._clarity, 0.05);
   }
 
   update(dt: number, now: number) {
@@ -372,7 +405,7 @@ export class DropletScene {
       clarityTarget = 1 - smoothstep(0.1, 0.8, dist);
     }
     this.mouse.lerp(this.mouseTarget, 1 - Math.exp(-(idle ? 1.2 : 5) * dt));
-    this.clarity = damp(this.clarity, clarityTarget, idle ? 1.4 : 3.2, dt);
+    this._clarity = damp(this._clarity, clarityTarget, idle ? 1.4 : 3.2, dt);
 
     // Camera: a low three-quarter that turns a little with the cursor.
     const yaw = this.mouse.x * 0.14 + 0.3;
@@ -392,7 +425,7 @@ export class DropletScene {
     const ax = this.mouse.x * 1.7;
     const ay = this.mouse.y * 1.0;
     const az = 0.3;
-    const cl = this.clarity;
+    const cl = this._clarity;
     const ce = cl * cl * (3 - 2 * cl);
     const spin = t * 0.09 + 0.4;
     const cs = Math.cos(spin);
@@ -412,7 +445,8 @@ export class DropletScene {
       const ox0 = -1.05 + (2.1 * i) / (NBLOB - 1);
       const oz0 = 0.16 * Math.sin(i * 2.4);
       const oy = -0.45 + 0.03 * Math.sin(i * 1.3);
-      const rc = 0.28 + 0.14 * Math.sin(i * 2 + t * 0.55);
+      // The disciplines are the body; the strays stay small.
+      const rc = (i < LABELLED ? 1 : 0.55) * (0.28 + 0.14 * Math.sin(i * 2 + t * 0.55));
 
       const k = this.kick[i];
       k.multiplyScalar(decay);

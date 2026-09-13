@@ -28,10 +28,20 @@ interface Props {
   showHead?: boolean;
   /** The "See all work" button under the grid. */
   showMore?: boolean;
+  /** Homepage only: the lead card is delivered by the reel's droplet, which
+   *  drops down the page and becomes it, instead of arriving on its own.
+   *  See src/scripts/reel/morph.ts and the arrival in motion/work.ts. */
+  deliverLead?: boolean;
   class?: string;
 }
 
-const { count, showHead = true, showMore = true, class: className } = Astro.props;
+const {
+  count,
+  showHead = true,
+  showMore = true,
+  deliverLead = false,
+  class: className,
+} = Astro.props;
 
 // Projects told inside a story page (`parent`) are left to that page.
 const projects = (await getCollection('work', ({ data }) => !data.draft && !data.parent)).sort(
@@ -107,7 +117,13 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
         const rest = project.data.feature ?? project.data.cover;
         const reveal = project.data.cover ?? project.data.feature;
         return (
-          <a class="card" href={'/work/' + project.id} data-span={span} data-card>
+          <a
+            class="card"
+            href={'/work/' + project.id}
+            data-span={span}
+            data-card
+            data-deliver={deliverLead && i === 0 ? '' : undefined}
+          >
             <div class="card__media">
               {/* Two layers: the rest picture, desaturated in the stylesheet,
                 and the colour picture that dissolves over it on hover. With a
@@ -219,6 +235,12 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
      src/scripts/motion/work.ts. */
   :global(html.js) .card:not(.is-in) {
     opacity: 0;
+  }
+
+  /* The delivered card appears the moment the reel's droplet has become it;
+     a short fade lets the canvas and the card cross without a cut. */
+  .card[data-deliver] {
+    transition: opacity 0.25s ease;
   }
 
   /* On fine pointers the scroll flow (src/scripts/motion/flow.ts) writes a

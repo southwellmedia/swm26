@@ -1105,16 +1105,31 @@ class HeroEngine {
       this.tints[8 + i] = 0.95;
     }
 
-    // --- Handoff: the last stray droplet can leave with the reel ---------------
-    // Published at its true radius, then shrunk out of the sculpture (a
-    // negative radius is nothing, not a point) by however much the reel has
-    // taken it. Positions are recomputed every frame, so this never compounds.
-    this.publishDroplet(this.blobs[NBLOB - 1], now);
+    // --- Handoff: the last stray droplet leaves with the reel -------------------
+    // As the reel releases it, it rolls off toward the camera and out of the
+    // bottom of the frame — near things cross a frame fast, and the panel's
+    // lower edge is a fade — so the reel's own droplet can take over below
+    // the panel, out of sight. Published after the move so the reel always
+    // knows where it is; gone (a negative radius is nothing, not a point)
+    // only once it is well out of frame. Positions are recomputed every
+    // frame, so none of this compounds.
     const release = window.__heroDropletRelease ?? 0;
+    const stray = this.blobs[NBLOB - 1];
     if (release > 0) {
-      const stray = this.blobs[NBLOB - 1];
-      stray.w = lerp(stray.w, -0.08, release);
+      const e = Math.pow(release, 1.6); // accelerating: a fall, not a drift
+      // Three units out, just under the frame's lower edge: close enough to
+      // grow as it comes, far enough that it stays a droplet, not a planet.
+      const exit = this.tmpView
+        .copy(cam.uRo.value)
+        .addScaledVector(cam.uFw.value, 3.0)
+        .addScaledVector(cam.uRt.value, -0.3)
+        .addScaledVector(cam.uUp.value, -0.9);
+      stray.x = lerp(stray.x, exit.x, e);
+      stray.y = lerp(stray.y, exit.y, e);
+      stray.z = lerp(stray.z, exit.z, e);
     }
+    this.publishDroplet(stray, now);
+    if (release > 0.97) stray.w = -0.08;
 
     // --- Passes ----------------------------------------------------------------
     const gl = this.renderer;
