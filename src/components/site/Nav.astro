@@ -496,24 +496,27 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     color: inherit;
   }
 
-  /* The arrow sits where an index would, turned to point up and out; quiet
-     until the row is hovered, then it takes the word's colour and moves a
-     step along its own direction. */
+  /* The arrow is the reward for hovering: it is not there until the row is
+     hovered, then it arrives from the left, turned to point up and out, as
+     the word steps right to make room. */
   .sw-menu__arrow {
     width: 20px;
     height: 20px;
-    color: var(--color-foreground-muted);
-    transform: rotate(-45deg);
+    color: var(--color-foreground);
+    opacity: 0;
+    transform: translateX(-10px) rotate(-45deg);
     transition:
-      color 0.3s ease,
-      transform 0.4s var(--ease-sw);
+      opacity 0.25s ease,
+      transform 0.45s var(--ease-sw);
   }
 
   .sw-menu__link:hover .sw-menu__arrow,
-  .sw-menu__link:focus-visible .sw-menu__arrow,
-  .sw-menu__link[aria-current='page'] .sw-menu__arrow {
-    color: var(--color-foreground);
-    transform: rotate(-45deg) translateX(4px);
+  .sw-menu__link:focus-visible .sw-menu__arrow {
+    opacity: 1;
+    transform: translateX(0) rotate(-45deg);
+    transition:
+      opacity 0.3s ease 0.05s,
+      transform 0.5s var(--ease-sw);
   }
 
   .sw-menu__label {
@@ -526,10 +529,16 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     letter-spacing: var(--display-tracking);
     text-transform: var(--display-case);
     transition:
+      transform 0.5s var(--ease-sw),
       font-weight 0.35s var(--ease-sw),
       font-stretch 0.35s var(--ease-sw),
       letter-spacing 0.35s var(--ease-sw),
       color 0.3s ease;
+  }
+
+  .sw-menu__link:hover .sw-menu__label,
+  .sw-menu__link:focus-visible .sw-menu__label {
+    transform: translateX(12px);
   }
 
   /* Hover and the current page narrow and lighten the word — the emphasis
