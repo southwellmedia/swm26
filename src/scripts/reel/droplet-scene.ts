@@ -398,7 +398,8 @@ export class DropletScene {
     let clarityTarget: number;
     if (idle) {
       this.mouseTarget.set(Math.sin(t * 0.21) * 0.45, Math.cos(t * 0.17) * 0.25);
-      clarityTarget = 0.1 + 0.3 * (0.5 + 0.5 * Math.sin(t * 0.28));
+      // Breathing at rest stays well short of fusing: four pieces, not a lump.
+      clarityTarget = 0.04 + 0.18 * (0.5 + 0.5 * Math.sin(t * 0.28));
     } else {
       const m = this.mouseTarget;
       const dist = Math.hypot(m.x, m.y + 0.05);
@@ -427,36 +428,58 @@ export class DropletScene {
 
     // Droplets: chaos orbits that lean to the cursor, gathering into a slab
     // as clarity rises; a burst impulse decays on top of either.
-    const ax = this.mouse.x * 1.7;
-    const ay = this.mouse.y * 1.0;
+    // On a wide frame the words sit bottom-left, so the sculpture lives to
+    // the right of centre; on a portrait one it stays in the middle. With
+    // this camera, screen-right is negative world x.
+    const shift = aspect > 1.2 ? -0.75 : 0;
+    const ax = this.mouse.x * 1.4 + shift;
+    const ay = this.mouse.y * 0.8;
     const az = 0.3;
     const cl = this._clarity;
     const ce = cl * cl * (3 - 2 * cl);
     const spin = t * 0.09 + 0.4;
     const cs = Math.cos(spin);
     const sn = Math.sin(spin);
-    this.material.uniforms.uK.value = lerp(0.5, 0.75, ce);
+    // Chaos is FOUR PIECES: the union radius stays small until clarity fuses
+    // them, so they can pass close without melting into one another.
+    this.material.uniforms.uK.value = lerp(0.14, 0.75, ce);
 
     const decay = Math.exp(-2.6 * dt);
     for (let i = 0; i < NBLOB; i++) {
-      const lean = 0.2 + 0.25 * (0.5 + 0.5 * Math.sin(i * 2.9));
-      let cx = Math.sin(t * 0.42 + i * 1.7) * 1.0;
-      let cy = Math.cos(t * 0.35 + i * 2.3) * 0.4 - 0.05;
-      let cz = Math.sin(t * 0.3 + i * 3.1) * 0.55;
-      cx += (ax - cx) * lean;
-      cy += (ay - cy) * lean;
-      cz += (az - cz) * lean;
+      let cx: number;
+      let cy: number;
+      let cz: number;
+      if (i < LABELLED) {
+        // Each discipline keeps its own station — a slow ring, one per
+        // quadrant — with a little drift, and a light lean to the cursor.
+        const a = t * 0.16 + (i * Math.PI) / 2;
+        cx = Math.cos(a) * 1.25 + Math.sin(t * 0.5 + i * 1.7) * 0.12;
+        cy = 0.05 + Math.sin(t * 0.45 + i * 2.3) * 0.22 + (i % 2) * 0.25;
+        cz = Math.sin(a) * 0.7 + Math.cos(t * 0.4 + i * 3.1) * 0.1;
+        const lean = 0.12;
+        cx += (ax - cx) * lean;
+        cy += (ay - cy) * lean;
+        cz += (az - cz) * lean;
+      } else {
+        // Strays: small, quick, out on the edge.
+        const a = t * (0.3 + 0.07 * i) + i * 2.1;
+        cx = Math.cos(a) * 1.9 + shift * 0.6;
+        cy = -0.1 + Math.sin(a * 1.6 + i) * 0.45;
+        cz = Math.sin(a) * 1.1;
+      }
 
       const ox0 = -1.05 + (2.1 * i) / (NBLOB - 1);
       const oz0 = 0.16 * Math.sin(i * 2.4);
       const oy = -0.45 + 0.03 * Math.sin(i * 1.3);
       // The disciplines are the body; the strays stay small.
-      const rc = (i < LABELLED ? 1 : 0.55) * (0.28 + 0.14 * Math.sin(i * 2 + t * 0.55));
+      const rc = i < LABELLED ? 0.27 + 0.03 * Math.sin(i * 2 + t * 0.55) : 0.1;
 
       const k = this.kick[i];
       k.multiplyScalar(decay);
       this.blobs[i].set(
-        lerp(cx, ox0 * cs - oz0 * sn, ce) + k.x * 0.35,
+        // The slab is wide: it needs more shift than the pieces to clear
+        // the caption, but not so much it leaves the frame.
+        lerp(cx, ox0 * cs - oz0 * sn + shift * 1.4, ce) + k.x * 0.35,
         Math.max(FLOOR_Y + 0.25, lerp(cy, oy, ce) + k.y * 0.35),
         lerp(cz, -ox0 * sn + oz0 * cs, ce) + k.z * 0.35,
         lerp(rc, 0.4, ce)
