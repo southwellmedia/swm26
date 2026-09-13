@@ -57,8 +57,8 @@ const {
 
 const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
 
-// The disciplines, one per droplet in the scene, in the order the scene
-// numbers them. Short, because they ride on the droplets.
+// The four disciplines the scene's droplets stand for, listed on the open
+// frame. The services have no pages of their own, so they link to the section.
 const LABELS = [
   { text: 'Development', href: '/#services' },
   { text: 'Prototypes', href: '/#services' },
@@ -117,23 +117,27 @@ const LABELS = [
 
   {
     /* Above the canvas, on the open frame's rectangle (the engine sizes it):
-      the discipline labels that ride on the droplets, the line that follows
-      the scene's state, and the call to action. Hidden until the frame is
-      open, so nothing here is reachable before it can be seen. */
+      the line that follows the scene's state, the four disciplines, a hint
+      for pointers, and the call to action. Hidden until the frame is open,
+      so nothing here is reachable before it can be seen. */
   }
   <div class="reel__overlay" data-reel-overlay>
-    {
-      LABELS.map((label, i) => (
-        <a class="reel__label label-mono" href={label.href} data-reel-label={i} tabindex="-1">
-          {label.text}
-        </a>
-      ))
-    }
     <div class="reel__caption">
       <p class="reel__line reel__line--chaos m-0" aria-hidden="true">
-        Every project starts as pieces.
+        Four disciplines. Every project starts as pieces.
       </p>
-      <p class="reel__line reel__line--clear m-0">One team ships the clear version.</p>
+      <p class="reel__line reel__line--clear m-0">One team. We ship the clear version.</p>
+      <p class="reel__disciplines label-mono m-0">
+        {
+          LABELS.map((label, i) => (
+            <>
+              {i > 0 && <span class="reel__sep" aria-hidden="true" />}
+              <a href={label.href}>{label.text}</a>
+            </>
+          ))
+        }
+      </p>
+      <p class="reel__hint label-mono m-0" aria-hidden="true">Bring the cursor to the centre</p>
       <PillButton href="/contact" class="reel__cta px-7 py-3.5">
         Start a project
         <Icon name="lucide:arrow-up-right" aria-hidden="true" />
@@ -250,33 +254,60 @@ const LABELS = [
       visibility 0s;
   }
 
-  /* Each label is placed by the engine on its droplet; it only fades here. */
-  .reel__label {
-    position: absolute;
-    top: 0;
-    left: 0;
-    padding: 6px 12px;
-    border-radius: var(--radius-full);
-    background: rgb(12 16 22 / 0.72);
-    color: rgb(255 255 255 / 0.9);
-    text-decoration: none;
-    white-space: nowrap;
-    pointer-events: auto;
-    will-change: transform, opacity;
-    transition: background-color 0.3s ease;
-  }
-
-  .reel__label:hover {
-    background: rgb(12 16 22 / 0.92);
-  }
-
   .reel__caption {
     position: absolute;
     left: 36px;
     bottom: 32px;
     display: grid;
-    gap: 18px;
-    max-width: 420px;
+    gap: 16px;
+    max-width: 440px;
+  }
+
+  /* The four disciplines, as a plain row of links: what the pieces are. */
+  .reel__disciplines {
+    grid-area: 2 / 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink-950);
+    pointer-events: auto;
+  }
+
+  .reel__disciplines a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid rgb(12 16 22 / 0.25);
+    transition: border-color 0.3s ease;
+  }
+
+  .reel__disciplines a:hover {
+    border-color: currentColor;
+  }
+
+  .reel__sep {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.4;
+  }
+
+  /* How to play, for pointers; gone once the scene has resolved. */
+  .reel__hint {
+    grid-area: 3 / 1;
+    color: rgb(12 16 22 / 0.55);
+    transition: opacity 0.5s var(--ease-sw);
+  }
+
+  .reel[data-reel-clear] .reel__hint {
+    opacity: 0;
+  }
+
+  @media (hover: none) {
+    .reel__hint {
+      display: none;
+    }
   }
 
   /* Two lines in one slot; the scene's state picks which shows. */
@@ -307,7 +338,8 @@ const LABELS = [
   /* The pill is rendered by a child component, so its class carries no
      scope attribute: reach it through the caption. */
   .reel__caption :global(.reel__cta) {
-    grid-area: 2 / 1;
+    grid-area: 4 / 1;
+    margin-top: 6px;
     justify-self: start;
     pointer-events: auto;
   }
@@ -323,10 +355,6 @@ const LABELS = [
       left: 20px;
       bottom: 20px;
       gap: 12px;
-    }
-
-    .reel__label {
-      padding: 4px 9px;
     }
   }
 
@@ -387,6 +415,15 @@ const LABELS = [
     .reel__thumb {
       width: 62%;
       margin-top: 36px;
+    }
+
+    /* Portrait on a narrow screen: a 16:9 frame this wide is too short to
+       hold the scene and the words beneath it. The scene pulls its camera
+       back to fit the taller aspect. */
+    .reel__full {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      max-height: 78svh;
     }
   }
 </style>
@@ -464,7 +501,6 @@ const LABELS = [
           paletteScope: document.querySelector<HTMLElement>('.hero'),
           // The words on the open frame.
           overlay: root.querySelector<HTMLElement>('[data-reel-overlay]'),
-          labels: Array.from(root.querySelectorAll<HTMLElement>('[data-reel-label]')),
           // Where the ball ends up: bouncing on the Work heading into the
           // card the grid marked for delivery.
           workHead: document.querySelector<HTMLElement>('#work'),

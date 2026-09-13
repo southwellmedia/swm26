@@ -407,14 +407,19 @@ export class DropletScene {
     this.mouse.lerp(this.mouseTarget, 1 - Math.exp(-(idle ? 1.2 : 5) * dt));
     this._clarity = damp(this._clarity, clarityTarget, idle ? 1.4 : 3.2, dt);
 
-    // Camera: a low three-quarter that turns a little with the cursor.
+    // Camera: a low three-quarter that turns a little with the cursor. The
+    // frame is normalised by its height, so a portrait frame shows less
+    // width: pull back until the sculpture's spread still fits across it.
+    const res = this.material.uniforms.uRes.value as Vector2;
+    const aspect = res.x / Math.max(1, res.y);
+    const distance = Math.max(5.2, 5.9 / aspect);
     const yaw = this.mouse.x * 0.14 + 0.3;
     const pitch = this.mouse.y * 0.08 + 0.2;
     const target = this.tmp.set(0, -0.2, 0);
     const c = this.cam;
     c.uRo.value
       .set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch))
-      .multiplyScalar(5.2)
+      .multiplyScalar(distance)
       .add(target);
     c.uFw.value.subVectors(target, c.uRo.value).normalize();
     c.uRt.value.crossVectors(this.up, c.uFw.value).normalize();

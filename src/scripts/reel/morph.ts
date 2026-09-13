@@ -20,8 +20,8 @@
  *             out of its slot per vertex, tilts, and opens to the full
  *             width. Inside, the chrome dissolves into the playable droplet
  *             scene (droplet-scene.ts), rendered to a texture the frame
- *             samples. Labels for the disciplines track the droplets, and
- *             the copy and call to action follow the scene's clarity.
+ *             samples. The copy on the frame follows the scene's clarity;
+ *             the disciplines and the call to action sit with it.
  *   close     late in the hold the frame folds back into a ball at its
  *             centre, and the ball drops out of it as the stage releases.
  *   deliver   it falls through the gap, bounces on the "Work" heading, rolls
@@ -59,7 +59,7 @@ import {
   Vector4,
   WebGLRenderer,
 } from 'three';
-import { DropletScene, LABELLED, STUDIO_GLSL, type ScenePalette } from './droplet-scene';
+import { DropletScene, STUDIO_GLSL, type ScenePalette } from './droplet-scene';
 
 declare global {
   interface Window {
@@ -91,10 +91,8 @@ export interface ReelMorphOptions {
   heroFloor?: HTMLElement | null;
   /** Element to read the --hero-* palette hooks from. */
   paletteScope?: HTMLElement | null;
-  /** The fixed layer holding the discipline labels, copy and call to action. */
+  /** The fixed layer holding the copy and call to action on the open frame. */
   overlay?: HTMLElement | null;
-  /** The discipline labels, in droplet order. */
-  labels?: HTMLElement[];
   /** The "Work" heading the ball bounces on, and the card it becomes. */
   workHead?: HTMLElement | null;
   leadCard?: HTMLElement | null;
@@ -374,7 +372,6 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     heroFloor,
     paletteScope,
     overlay,
-    labels = [],
     workHead,
     leadCard,
     radius = 16,
@@ -573,7 +570,6 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
   const pointer = { x: 0, y: 0, dirty: false, inside: false, down: false };
   let pointerLast = -Infinity;
   let frameIndex = 0;
-  const proj = { x: 0, y: 0, r: 0, visible: false };
 
   const scrollVelocity = () => {
     const top = runway.getBoundingClientRect().top;
@@ -613,30 +609,6 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     clearState = next;
     if (next) root.dataset.reelClear = '';
     else delete root.dataset.reelClear;
-  };
-
-  /** Place the discipline labels on their droplets, in the open frame. */
-  const placeLabels = (rect: Vector4) => {
-    const clarity = droplets.clarity;
-    const aspect = rect.z / rect.w;
-    const tex = uniforms.uTexAspect.value;
-    const sx = aspect > tex ? 1 : aspect / tex;
-    const sy = aspect > tex ? tex / aspect : 1;
-    for (let i = 0; i < labels.length && i < LABELLED; i++) {
-      const el = labels[i];
-      droplets.project(i, proj);
-      if (!proj.visible) {
-        el.style.opacity = '0';
-        continue;
-      }
-      // Overlay-local: the overlay already sits on the frame's rectangle.
-      const u = (proj.x - 0.5) / sx + 0.5;
-      const v = (proj.y - 0.5) / sy + 0.5;
-      const x = u * rect.z;
-      const y = (1 - v) * rect.w - (proj.r / sy) * rect.w - 14;
-      el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -100%)`;
-      el.style.opacity = ((1 - clarity) ** 1.5).toFixed(3);
-    }
   };
 
   const frame = (now: number) => {
@@ -865,10 +837,11 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       u.uProgress.value = 0;
       u.uBend.value = 0;
     } else {
-      // A square around the ball, with room below for its shadow and for the
-      // squash to widen it.
-      const side = rad * 3.8;
-      u.uStart.value.set(pos.x - side / 2, pos.y - side / 2 + rad * 0.4, side, side);
+      // A square around the ball, with room for its shadow (which reaches
+      // about 2.1 radii to each side once the squash widens it) and for the
+      // squash itself. Too tight and the shadow shows a straight edge.
+      const side = rad * 5.4;
+      u.uStart.value.set(pos.x - side / 2, pos.y - side / 2 + rad * 0.5, side, side);
       u.uEnd.value.copy(u.uStart.value);
       u.uProgress.value = 0;
       u.uBend.value = 10;
@@ -920,7 +893,6 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       const open = progress > 0.9 && close < 0.02;
       setOpen(open);
       setClear(droplets.clarity > 0.55);
-      if (open) placeLabels(fullV);
     } else {
       pointer.down = false;
       setOpen(false);
