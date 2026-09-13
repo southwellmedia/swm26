@@ -51,6 +51,21 @@ import * as THREE from 'three';
 
 const NBLOB = 11;
 const FLOOR_Y = -1.0;
+/** Camera focal length, as the shaders define it. */
+const FOCAL = 1.9;
+
+/**
+ * Handoff to the reel (src/scripts/reel/morph.ts). Each rendered frame the
+ * last stray chrome droplet is projected to the screen and published, so the
+ * reel can draw its own droplet on exactly those pixels; the reel answers
+ * with a release amount and the sculpture lets its copy go.
+ */
+declare global {
+  interface Window {
+    __heroDroplet?: { x: number; y: number; r: number; at: number };
+    __heroDropletRelease?: number;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Shaders
@@ -508,10 +523,50 @@ type Tier = {
 };
 
 const TIERS: readonly Tier[] = [
-  { dpr: 1.25, march: 0.8, mirror: 0.55, steps: 64, shadow: 10, ao: 4, room: 44, roomShadow: 12, roomAo: 4 },
-  { dpr: 1.0, march: 0.72, mirror: 0.5, steps: 56, shadow: 8, ao: 3, room: 40, roomShadow: 10, roomAo: 4 },
-  { dpr: 1.0, march: 0.6, mirror: 0.45, steps: 48, shadow: 6, ao: 3, room: 32, roomShadow: 8, roomAo: 3 },
-  { dpr: 1.0, march: 0.5, mirror: 0.4, steps: 40, shadow: 5, ao: 2, room: 28, roomShadow: 6, roomAo: 3 },
+  {
+    dpr: 1.25,
+    march: 0.8,
+    mirror: 0.55,
+    steps: 64,
+    shadow: 10,
+    ao: 4,
+    room: 44,
+    roomShadow: 12,
+    roomAo: 4,
+  },
+  {
+    dpr: 1.0,
+    march: 0.72,
+    mirror: 0.5,
+    steps: 56,
+    shadow: 8,
+    ao: 3,
+    room: 40,
+    roomShadow: 10,
+    roomAo: 4,
+  },
+  {
+    dpr: 1.0,
+    march: 0.6,
+    mirror: 0.45,
+    steps: 48,
+    shadow: 6,
+    ao: 3,
+    room: 32,
+    roomShadow: 8,
+    roomAo: 3,
+  },
+  {
+    dpr: 1.0,
+    march: 0.5,
+    mirror: 0.4,
+    steps: 40,
+    shadow: 5,
+    ao: 2,
+    room: 28,
+    roomShadow: 6,
+    roomAo: 3,
+  },
 ];
 
 /**
@@ -594,7 +649,9 @@ class HeroEngine {
   private width = 0;
   private height = 0;
   private tmpTarget = new THREE.Vector3();
+  private tmpView = new THREE.Vector3();
   private up = new THREE.Vector3(0, 1, 0);
+  private handoff = { x: 0, y: 0, r: 0, at: 0 };
 
   // Governor state.
   private tier = 1;
@@ -751,13 +808,19 @@ class HeroEngine {
     const dpr = this.renderer.getPixelRatio();
     const w = Math.round(this.width * dpr);
     const h = Math.round(this.height * dpr);
-    this.rtScene.setSize(Math.max(2, Math.round(w * q.march)), Math.max(2, Math.round(h * q.march)));
+    this.rtScene.setSize(
+      Math.max(2, Math.round(w * q.march)),
+      Math.max(2, Math.round(h * q.march))
+    );
     this.rtMirror.setSize(
       Math.max(2, Math.round(w * q.march * q.mirror)),
       Math.max(2, Math.round(h * q.march * q.mirror))
     );
     this.composite.uniforms.uRes.value.set(w, h);
-    this.composite.uniforms.uMirrorTexel.value.set(1 / this.rtMirror.width, 1 / this.rtMirror.height);
+    this.composite.uniforms.uMirrorTexel.value.set(
+      1 / this.rtMirror.width,
+      1 / this.rtMirror.height
+    );
 
     const mu = this.march.uniforms;
     mu.uSteps.value = q.steps;
@@ -840,6 +903,28 @@ class HeroEngine {
     this.pointer.last = now;
   }
 
+  /** Project a droplet through the camera to viewport pixels and publish it.
+   *  One layout read (the canvas rect) per rendered frame, inside the frame. */
+  private publishDroplet(b: THREE.Vector4, now: number) {
+    const cam = this.camera;
+    const v = this.tmpView.set(b.x, b.y, b.z).sub(cam.uRo.value);
+    const z = v.dot(cam.uFw.value);
+    if (z <= 0.1) return;
+    const rect = this.canvas.getBoundingClientRect();
+    if (rect.width < 1 || rect.height < 1) return;
+    // The shaders map uv = (px - res/2) / res.y and rd = fw·FOCAL + rt·u + up·v,
+    // so a view-space point lands at u = x/z·FOCAL, v = y/z·FOCAL, in units
+    // of the panel's height.
+    const u = (v.dot(cam.uRt.value) / z) * FOCAL;
+    const w = (v.dot(cam.uUp.value) / z) * FOCAL;
+    const h = this.handoff;
+    h.x = rect.left + rect.width * 0.5 + u * rect.height;
+    h.y = rect.top + rect.height * 0.5 - w * rect.height;
+    h.r = (b.w / z) * FOCAL * rect.height;
+    h.at = now;
+    window.__heroDroplet = h;
+  }
+
   // --- Governor ---------------------------------------------------------------
 
   private resetWindow(now: number) {
@@ -908,7 +993,8 @@ class HeroEngine {
     const scrollY = window.scrollY;
     const still = this.lastScrollY >= 0 && Math.abs(scrollY - this.lastScrollY) < 1;
     this.lastScrollY = scrollY;
-    const idle = !this.pendingPointer.dirty && (!this.pointer.active || now - this.pointer.last > 3000);
+    const idle =
+      !this.pendingPointer.dirty && (!this.pointer.active || now - this.pointer.last > 3000);
     this.throttled = idle && still;
 
     // Fixed cadence, whatever the display's refresh rate. The 1.5 ms of slack
@@ -1017,6 +1103,17 @@ class HeroEngine {
         0.11 + 0.05 * Math.sin(t * 0.8 + i * 4)
       );
       this.tints[8 + i] = 0.95;
+    }
+
+    // --- Handoff: the last stray droplet can leave with the reel ---------------
+    // Published at its true radius, then shrunk out of the sculpture (a
+    // negative radius is nothing, not a point) by however much the reel has
+    // taken it. Positions are recomputed every frame, so this never compounds.
+    this.publishDroplet(this.blobs[NBLOB - 1], now);
+    const release = window.__heroDropletRelease ?? 0;
+    if (release > 0) {
+      const stray = this.blobs[NBLOB - 1];
+      stray.w = lerp(stray.w, -0.08, release);
     }
 
     // --- Passes ----------------------------------------------------------------

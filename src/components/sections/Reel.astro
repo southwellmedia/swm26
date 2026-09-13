@@ -3,10 +3,11 @@
  * Reel
  *
  * The beat between the hero and the work: a statement headline, a short
- * blurb, and a small picture that follows you down the page. As the section
- * pins, the copy scrolls away at native speed while the picture peels out of
- * its slot, tilts, and opens up to the full width of the shell — then holds
- * there as the reel before releasing into the grid below.
+ * blurb, and the droplet that left the hero with you. It lands in the empty
+ * slot beside the copy; as the section pins, the copy scrolls away at native
+ * speed while the droplet blooms into a frame, peels out of its slot, tilts,
+ * and opens up to the full width of the shell — a playable droplet scene —
+ * then holds there before releasing into the grid below.
  *
  * Structure, top to bottom:
  *
@@ -16,24 +17,24 @@
  *   .reel__copy     headline, blurb and the EMPTY thumbnail slot. Translated
  *                   up by the engine while pinned so it reads as scrolling.
  *   .reel__full     the EMPTY full-width slot, centred in the stage.
- *   <video>         the source (an <img> when `src` is a still). Sampled as
- *                   a WebGL texture when the engine is live; shown in the
- *                   full slot as the fallback otherwise.
- *   <canvas>        covers the stage; the picture is drawn here.
+ *   <video>/<img>   the fallback only: shown in the full slot when the
+ *                   engine cannot run. Live, the frame draws its own scene.
+ *   <canvas>        fixed to the viewport; the droplet and frame are drawn
+ *                   here, over the hero, the gap and the stage alike.
  *
  * The two slots are plain boxes: the WebGL quad is measured to them, so the
  * layout stays CSS and the effect follows whatever the grid decides. Engine
- * in src/scripts/reel/morph.ts.
+ * in src/scripts/reel/morph.ts; the hero publishes its droplet for it, see
+ * HeroScene.tsx.
  *
  * Fallbacks, in order: no JS — the video sits in the full slot, the thumbnail
  * slot collapses. Reduced motion or no WebGL — same, decided in the script.
  */
 interface Props {
-  /** mp4/webm the reel plays. Muted, looped, inline. A still image (jpg,
-   *  png, webp, avif) works too, until a cut exists: the engine samples it
-   *  once and everything else is identical. */
+  /** mp4/webm, or a still (jpg, png, webp, avif), for the fallback frame
+   *  when the WebGL scene cannot run. */
   src: string;
-  /** Poster for the fallback and the first frame. Unused for a still. */
+  /** Poster for a video fallback. Unused for a still. */
   poster: string;
   title?: string;
   blurb?: string;
@@ -92,10 +93,15 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
           }
         </div>
       </div>
-
-      <canvas class="reel__canvas" data-reel-canvas aria-hidden="true"></canvas>
     </div>
   </div>
+
+  {
+    /* Fixed to the viewport, not inside the stage: the droplet is drawn over
+      the hero and the gap before the stage ever pins. Outside the sticky,
+      overflow-hidden stage so nothing clips or re-parents it. */
+  }
+  <canvas class="reel__canvas" data-reel-canvas aria-hidden="true"></canvas>
 </section>
 
 <style>
@@ -175,12 +181,14 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
     object-fit: cover;
   }
 
+  /* Above the page, below the nav (55/60). Pointer events pass through: the
+     engine listens on the window and works out for itself what was hit. */
   .reel__canvas {
-    position: absolute;
+    position: fixed;
     inset: 0;
     width: 100%;
     height: 100%;
-    z-index: 2;
+    z-index: 40;
     pointer-events: none;
   }
 
@@ -278,8 +286,7 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
     const thumb = root.querySelector<HTMLElement>('[data-reel-thumb]');
     const full = root.querySelector<HTMLElement>('[data-reel-full]');
     const copy = root.querySelector<HTMLElement>('[data-reel-copy]');
-    const source = root.querySelector<HTMLVideoElement | HTMLImageElement>('[data-reel-source]');
-    if (!canvas || !stage || !runway || !thumb || !full || !source) return;
+    if (!canvas || !stage || !runway || !thumb || !full) return;
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced || !hasWebGL(document.createElement('canvas'))) {
@@ -295,9 +302,6 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
         observer?.disconnect();
         observer = null;
         const { createReelMorph } = await import('@/scripts/reel/morph');
-        // A still is uploaded to the GPU once, when the engine is built, so
-        // it has to be decoded by then. (A video is sampled every frame.)
-        if (source instanceof HTMLImageElement) await source.decode().catch(() => {});
         // The page may have swapped while three was loading.
         if (!root.isConnected) return;
         const lenis = window.__lenis;
@@ -308,7 +312,10 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
           thumb,
           full,
           copy: copy ?? undefined,
-          source,
+          // Where the droplet comes from when the hero scene isn't running,
+          // and where the --hero-* palette hooks live.
+          heroPanel: document.querySelector<HTMLElement>('.hero__render'),
+          paletteScope: document.querySelector<HTMLElement>('.hero'),
           radius: parseFloat(getComputedStyle(full).borderRadius) || 16,
           // Lenis's velocity is the value the page is drawn at, so the bend
           // can never disagree with the scroll. Falls back to a scroll delta.
