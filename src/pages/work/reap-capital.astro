@@ -18,7 +18,6 @@
 import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import SiteLayout from '@/layouts/SiteLayout.astro';
-import Placeholder from '@/components/site/Placeholder.astro';
 import FilmPlayer from '@/components/site/FilmPlayer.astro';
 import Cta from '@/components/sections/Cta.astro';
 import {
@@ -28,7 +27,6 @@ import {
   chapters,
   properties,
   films,
-  lucidos,
   posts,
   stack,
 } from '@/data/reap-capital';
@@ -135,7 +133,19 @@ const nextImage = next.data.feature ?? next.data.cover;
       </div>
 
       <div class="flagship__shots" data-reveal>
-        {flagship.shots.map((label) => <Placeholder invert label={label} class="flagship__shot" />)}
+        {
+          flagship.shots.map((shot) => (
+            <figure class="flagship__shot m-0">
+              <Image
+                src={shot.image}
+                alt={shot.alt}
+                layout="none"
+                widths={[480, 800, 1200, 1600]}
+                sizes="(max-width: 900px) 100vw, 30vw"
+              />
+            </figure>
+          ))
+        }
       </div>
 
       <div class="notes" data-reveal>
@@ -304,33 +314,9 @@ const nextImage = next.data.feature ?? next.data.cover;
           }
         </article>
 
-        {/* 05 lucidos — a light island in the dark page */}
-        <article class="ws os" id="ws-05" data-reveal>
-          <p class="eyebrow label-mono">05 · THE OPERATING SYSTEM</p>
-          <h3 class="ws__title">lucidos, <em>tuned for reap.</em></h3>
-          <p class="ws__intro">
-            Our property platform already ran sites, tours and offers. For Reap we added AppFolio
-            sync for hourly availability, a portfolio dashboard across communities, Spanish mirrors,
-            and an offer engine that publishes one special to site, popup and inbox.
-          </p>
-
-          <Placeholder label="screenshot — LucidOS portfolio dashboard" class="os__shot" />
-
-          <div class="os__grid">
-            {
-              lucidos.map((cap) => (
-                <div class="os__cap">
-                  <strong>{cap.title}</strong>
-                  {cap.desc}
-                </div>
-              ))
-            }
-          </div>
-        </article>
-
-        {/* 06 social */}
-        <article class="ws" id="ws-06" data-reveal>
-          <p class="eyebrow label-mono">06 · SOCIAL</p>
+        {/* 05 social */}
+        <article class="ws" id="ws-05" data-reveal>
+          <p class="eyebrow label-mono">05 · SOCIAL</p>
           <h3 class="ws__title">the feed, <em>managed.</em></h3>
           <p class="ws__intro">
             Three accounts, a monthly calendar, one rule: every post comes from a real property, a
@@ -348,9 +334,9 @@ const nextImage = next.data.feature ?? next.data.cover;
           </div>
         </article>
 
-        {/* 07 email */}
-        <article class="ws" id="ws-07" data-reveal>
-          <p class="eyebrow label-mono">07 · EMAIL</p>
+        {/* 06 email */}
+        <article class="ws" id="ws-06" data-reveal>
+          <p class="eyebrow label-mono">06 · EMAIL</p>
           <h3 class="ws__title">two audiences, <em>one voice.</em></h3>
 
           <div class="email">
@@ -656,11 +642,19 @@ const nextImage = next.data.feature ?? next.data.cover;
     margin-top: 20px;
   }
 
-  .flagship__shots :global(.flagship__shot) {
+  .flagship__shot {
     aspect-ratio: 4 / 3;
+    overflow: hidden;
     border-radius: var(--radius-lg);
     background-color: var(--reap-card);
     border: 1px solid var(--reap-line);
+  }
+
+  .flagship__shot :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .notes {
@@ -998,75 +992,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     font-size: 13px;
   }
 
-  /* 05 lucidos — a white island on the tinted paper. It re-declares the
-     site's light tokens on itself, in both colour schemes, the way service
-     card 03 breaks from the pile — so everything inside reads as the site's
-     own light mode, untinted, without a single one-off colour. */
-
-  .os {
-    --color-background: var(--ice-50);
-    --color-background-secondary: var(--ice-200);
-    --color-foreground: var(--ink-950);
-    --color-foreground-muted: var(--ink-600);
-    --color-border: rgb(12 16 22 / 0.12);
-    --dim: var(--ink-600);
-    padding: 40px;
-    margin: 0 -40px;
-    border: 1px solid var(--reap-line);
-    border-radius: var(--radius-xl);
-    background: var(--color-background);
-    color: var(--color-foreground);
-  }
-
-  .os .ws__intro {
-    color: var(--ink-700);
-  }
-
-  /* Pinned to the light stripes whatever the page's colour scheme is. */
-  .os :global(.placeholder) {
-    background-color: var(--ice-200);
-    background-image: repeating-linear-gradient(
-      -45deg,
-      rgb(12 16 22 / 0.06) 0,
-      rgb(12 16 22 / 0.06) 9px,
-      transparent 9px,
-      transparent 18px
-    );
-  }
-
-  .os :global(.placeholder__label) {
-    color: rgb(12 16 22 / 0.45);
-    background: rgb(255 255 255 / 0.75);
-  }
-
-  .os :global(.os__shot) {
-    margin-top: 32px;
-    aspect-ratio: 16 / 8;
-    border-radius: var(--radius-md);
-  }
-
-  .os__grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin-top: 28px;
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--ink-700);
-  }
-
-  .os__cap {
-    padding-top: 12px;
-    border-top: 1px solid var(--color-border);
-  }
-
-  .os__cap strong {
-    display: block;
-    font-weight: 600;
-    color: var(--ink-950);
-  }
-
-  /* 06 social, 07 email */
+  /* 05 social, 06 email */
 
   .posts {
     display: grid;
@@ -1219,15 +1145,6 @@ const nextImage = next.data.feature ?? next.data.cover;
 
     .ledger__body {
       gap: 72px;
-    }
-
-    .os {
-      margin: 0;
-      padding: 28px;
-    }
-
-    .os__grid {
-      grid-template-columns: 1fr 1fr;
     }
 
     .brand {

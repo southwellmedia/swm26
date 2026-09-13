@@ -12,7 +12,7 @@
  *             rise out of their masks, then the tags and the paragraph
  *             follow — play-once, via Motion's [data-reveal] system.
  *   recede    as the next card slides up to cover it, the card underneath
- *             eases back and dims — scroll-linked, via a view timeline on
+ *             eases back — scroll-linked, via a view timeline on
  *             the *next* card. `timeline-scope` on the section lets card N
  *             read card N+1's timeline. Browsers without it keep the static
  *             depth from translateZ and nothing else.
@@ -150,20 +150,8 @@ const timelineScope = services
   }
 
   /* --- recede ------------------------------------------------------------
-     A shadow that pools over the card as the next one covers it. Driven by
-     --svc-dim (registered in southwell.css) so the keyframes below can
-     animate the overlay and the transform together on one timeline. */
-  .service::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    border-radius: inherit;
-    background: var(--ink-950);
-    opacity: var(--svc-dim, 0);
-    pointer-events: none;
-  }
-
+     The card underneath eases back a touch as the next one covers it. No
+     shadow: a darkening card under a sliding one read as a glitch. */
   /* The timeline itself is set inline per card (animation-timeline:
      --svc-N). The range is card N+1's travel from the bottom of the viewport
      up to where it sticks. In lengths, not percentages: a sticky subject's
@@ -179,7 +167,6 @@ const timelineScope = services
   @keyframes svc-recede {
     to {
       transform: translateZ(calc((var(--i, 0) - 3) * 26px)) translateY(-14px) scale(0.965);
-      --svc-dim: 0.14;
     }
   }
 

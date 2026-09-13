@@ -124,15 +124,13 @@ an `<Image>` and keeps the hover-zoom as-is.
   rather than the page ground. The long-form content lives in
   `src/data/reap-capital.ts`, apart from the summary the grid reads from the
   MDX. Every figure in it is the prototype's draft copy: confirm with Reap
-  before launch. Section 05 is an ice island inside the ink page; it
-  re-declares the light tokens on itself the way service card 03 breaks from
-  the pile. `BeforeAfter.astro` takes optional `before` / `after` images and
+  before launch. `BeforeAfter.astro` takes optional `before` / `after` images and
   shows flat colour until they land.
 
 ## Still to do
 
 - **Assets.** Every render and project capture is still a striped placeholder.
-  On the Reap Capital story that means the three flagship detail shots, the
+  On the Reap Capital story that means the
   brand tiles, the reel, the social and email tiles, and the before/after
   captures for La Fortuna and The Landry.
 - **Case-study copy.** The six work entries carry only the name and discipline

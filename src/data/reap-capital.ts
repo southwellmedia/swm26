@@ -1,6 +1,9 @@
 import type { ImageMetadata } from 'astro';
 import fortunaShot from '@/assets/work/reap-capital/fortuna-mockup.webp';
 import landryShot from '@/assets/work/reap-capital/landry-mockup.webp';
+import shotTrackRecord from '@/assets/work/reap-capital/shot-track-record.webp';
+import shotHomeMobile from '@/assets/work/reap-capital/shot-home-mobile.webp';
+import shotInvest from '@/assets/work/reap-capital/shot-invest.webp';
 
 // Content for the Reap Capital case study (/work/reap-capital).
 //
@@ -44,11 +47,6 @@ export interface Film {
   dur: string;
 }
 
-export interface Capability {
-  title: string;
-  desc: string;
-}
-
 export interface StackGroup {
   label: string;
   items: string[];
@@ -72,8 +70,15 @@ export const flagship = {
   url: 'https://reapcapital.com',
   intro:
     'A 34% average realized IRR deserved better than a template. We rebuilt the firm’s front door as an investment platform: sixteen deals as a living track record, a founder’s editorial voice, and an invest flow that qualifies before it converts.',
-  /** Stripe-placeholder captions for the three detail shots still to come. */
-  shots: ['track record grid', 'deal page — Sierra Heights', 'invest flow — mobile'],
+  /** The three detail shots under the cover: device mockups of the live site. */
+  shots: [
+    {
+      image: shotTrackRecord,
+      alt: 'The track record page on a laptop, in front of a rainy city window',
+    },
+    { image: shotHomeMobile, alt: 'The homepage hero on a phone, held in one hand' },
+    { image: shotInvest, alt: 'The invest section and footer on a tablet, on a desk' },
+  ] as { image: ImageMetadata; alt: string }[],
   notes: [
     {
       label: 'PROBLEM',
@@ -91,9 +96,8 @@ export const chapters: Chapter[] = [
   { num: '02', title: 'Property sites — La Fortuna, The Landry' },
   { num: '03', title: 'Brand system' },
   { num: '04', title: 'Films — the founder series' },
-  { num: '05', title: 'LucidOS, customized' },
-  { num: '06', title: 'Social media' },
-  { num: '07', title: 'Email campaigns' },
+  { num: '05', title: 'Social media' },
+  { num: '06', title: 'Email campaigns' },
 ];
 
 // The shots are laptop mockups of the live homepages. Both are landscape 4:3
@@ -145,13 +149,6 @@ export const films: Film[] = [
     kind: 'Founder series · August 2026',
     dur: '1:08',
   },
-];
-
-export const lucidos: Capability[] = [
-  { title: 'AppFolio sync', desc: 'Hourly units, pricing, dates.' },
-  { title: 'Portfolio view', desc: 'Leads and tours, all communities.' },
-  { title: 'Offer engine', desc: 'One special, three surfaces.' },
-  { title: 'Bilingual', desc: 'ES mirrors from one model.' },
 ];
 
 /** Placeholder captions for the social grid. Each is a slot for a real post. */
