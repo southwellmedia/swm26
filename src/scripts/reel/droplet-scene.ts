@@ -105,7 +105,7 @@ void main() {
 const FRAG = /* glsl */ `
 precision highp float;
 
-uniform int uSteps, uBlobCount, uShadowSteps, uAoSteps;
+uniform int uSteps, uBlobCount, uShadowSteps, uAoSteps, uFloorShadowSteps, uShadowBlobs;
 uniform vec2  uRes;
 uniform vec3  uRo, uFw, uRt, uUp;
 uniform vec4  uBlobs[${NBLOB}];
@@ -135,6 +135,17 @@ float map(vec3 p) {
   return d;
 }
 
+// The body only: shadows and occlusion ignore the tiny strays, which cast
+// nothing you could see and cost a full loop each.
+float mapShadow(vec3 p) {
+  float d = 1e5;
+  for (int i = 0; i < uShadowBlobs; i++) {
+    vec4 bl = uBlobs[i];
+    d = smin(d, length(p - bl.xyz) - bl.w, uK);
+  }
+  return d;
+}
+
 float tintAt(vec3 p) {
   float wsum = 0.0, tsum = 0.0;
   for (int i = 0; i < uBlobCount; i++) {
@@ -154,10 +165,10 @@ vec3 calcNormal(vec3 p, float eps) {
   );
 }
 
-float softShadow(vec3 ro, vec3 rd) {
+float softShadow(vec3 ro, vec3 rd, int steps) {
   float res = 1.0, t = 0.08;
-  for (int i = 0; i < uShadowSteps; i++) {
-    float h = map(ro + rd * t);
+  for (int i = 0; i < steps; i++) {
+    float h = mapShadow(ro + rd * t);
     res = min(res, 8.0 * h / t);
     t += clamp(h, 0.08, 0.45);
     if (res < 0.01 || t > 6.0) break;
@@ -169,7 +180,7 @@ float ambientOcclusion(vec3 p, vec3 n) {
   float occ = 0.0, sca = 1.0;
   for (int i = 0; i < uAoSteps; i++) {
     float h = 0.05 + 0.18 * float(i);
-    occ += (h - map(p + n * h)) * sca;
+    occ += (h - mapShadow(p + n * h)) * sca;
     sca *= 0.7;
   }
   return clamp(1.0 - 1.4 * occ, 0.0, 1.0);
@@ -180,7 +191,7 @@ vec3 shade(vec3 p, vec3 n, vec3 rd, float tint) {
   vec3 r = reflect(rd, n);
   vec3 L = normalize(KEY);
   float ao = ambientOcclusion(p, n);
-  float sh = softShadow(p + n * 0.03, L);
+  float sh = softShadow(p + n * 0.03, L, uShadowSteps);
   float ndl = max(dot(n, L), 0.0);
   float fres = pow(1.0 - max(dot(n, v), 0.0), 5.0);
   vec3 albedo = dropletColor(tint);
@@ -209,7 +220,7 @@ void main() {
     vec3 p = ro + rd * tFloor;
     float dist = length(p.xz);
     vec3 albedo = mix(uBg2, uBg, 0.75) * uWarm;
-    float sh = softShadow(p + vec3(0.0, 0.04, 0.0), L);
+    float sh = softShadow(p + vec3(0.0, 0.04, 0.0), L, uFloorShadowSteps);
     // Contact darkening: how close the sculpture hovers over this point.
     float near = map(p + vec3(0.0, 0.12, 0.0));
     float contact = 1.0 - 0.55 * exp(-near * 2.2);
@@ -261,8 +272,42 @@ const smoothstep = (a: number, b: number, x: number) => {
 const damp = (a: number, b: number, lambda: number, dt: number) =>
   a + (b - a) * (1 - Math.exp(-lambda * dt));
 
+/**
+ * What one frame is allowed to cost, from most to least. Every field is a
+ * texture scale or a loop bound that is already a uniform, so moving between
+ * tiers reallocates one texture and sets a few ints — no recompile.
+ */
+type Tier = { scale: number; steps: number; shadow: number; floorShadow: number; ao: number };
+
+const TIERS: readonly Tier[] = [
+  { scale: 1.0, steps: 48, shadow: 6, floorShadow: 4, ao: 3 },
+  { scale: 0.8, steps: 40, shadow: 5, floorShadow: 3, ao: 2 },
+  { scale: 0.62, steps: 32, shadow: 4, floorShadow: 3, ao: 2 },
+  { scale: 0.48, steps: 26, shadow: 3, floorShadow: 2, ao: 2 },
+];
+
+/** Governor: a rendered frame that lands this much later than the display's
+ *  cadence asked for is a miss. Judged per one-second window. */
+const FRAME_TARGET_MS = 1000 / 60;
+const MISS_SLACK_MS = 14;
+const MISS_RATE_DOWN = 0.08;
+const MISS_RATE_UP = 0.01;
+const WINDOW_MS = 1000;
+
 export class DropletScene {
   readonly target: WebGLRenderTarget;
+  // Governor state.
+  private tier = 1;
+  private appliedTier = -1;
+  private baseW = 2;
+  private baseH = 2;
+  private windowStart = 0;
+  private windowFrames = 0;
+  private windowMisses = 0;
+  private goodWindows = 0;
+  private goodNeeded = 3;
+  private settleUntil = 0;
+  private lastRender = 0;
   private scene = new Scene();
   private camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private material: ShaderMaterial;
@@ -304,7 +349,9 @@ export class DropletScene {
         ...this.colors,
         uSteps: { value: 48 },
         uBlobCount: { value: NBLOB },
+        uShadowBlobs: { value: LABELLED },
         uShadowSteps: { value: 6 },
+        uFloorShadowSteps: { value: 4 },
         uAoSteps: { value: 3 },
         uRes: { value: new Vector2(2, 2) },
         uBlobs: { value: this.blobs },
@@ -329,12 +376,91 @@ export class DropletScene {
     this.colors.uCool.value.copy(p.cool);
   }
 
+  /** The size the texture would be at full quality; the tier scales it. */
   setSize(width: number, height: number) {
     const w = Math.max(2, Math.round(width));
     const h = Math.max(2, Math.round(height));
-    if (w === this.target.width && h === this.target.height) return;
-    this.target.setSize(w, h);
-    this.material.uniforms.uRes.value.set(w, h);
+    if (w === this.baseW && h === this.baseH && this.appliedTier === this.tier) return;
+    this.baseW = w;
+    this.baseH = h;
+    this.applyTier();
+  }
+
+  /** The quality tier in use, 0 (best) … 3. */
+  get quality() {
+    return this.tier;
+  }
+
+  private applyTier() {
+    const q = TIERS[this.tier];
+    this.appliedTier = this.tier;
+    const w = Math.max(2, Math.round(this.baseW * q.scale));
+    const h = Math.max(2, Math.round(this.baseH * q.scale));
+    if (w !== this.target.width || h !== this.target.height) {
+      this.target.setSize(w, h);
+      this.material.uniforms.uRes.value.set(w, h);
+    }
+    const u = this.material.uniforms;
+    u.uSteps.value = q.steps;
+    u.uShadowSteps.value = q.shadow;
+    u.uFloorShadowSteps.value = q.floorShadow;
+    u.uAoSteps.value = q.ao;
+  }
+
+  private resetWindow(now: number) {
+    this.windowStart = now;
+    this.windowFrames = 0;
+    this.windowMisses = 0;
+  }
+
+  private setTier(next: number, now: number) {
+    next = Math.max(0, Math.min(TIERS.length - 1, next));
+    if (next === this.tier) return;
+    this.tier = next;
+    this.applyTier();
+    this.resetWindow(now);
+    this.settleUntil = now + WINDOW_MS;
+  }
+
+  /**
+   * Call once per rendered frame, while frames are expected back to back.
+   * Too many late frames in a window steps the quality down; a clean run
+   * steps it up, and each step up demands a longer clean run than the last,
+   * so a step that proves too much is paid for once, not every few seconds.
+   * Call `pause()` when frames stop on purpose (idle, off screen), so the
+   * gap is not judged as a miss.
+   */
+  govern(now: number, target = FRAME_TARGET_MS) {
+    const interval = this.lastRender ? now - this.lastRender : target;
+    this.lastRender = now;
+    if (now < this.settleUntil) {
+      this.resetWindow(now);
+      return;
+    }
+    this.windowFrames++;
+    if (interval > target + MISS_SLACK_MS) this.windowMisses++;
+    if (now - this.windowStart < WINDOW_MS || this.windowFrames < 10) return;
+    const missRate = this.windowMisses / this.windowFrames;
+    if (missRate > MISS_RATE_DOWN) {
+      this.goodWindows = 0;
+      this.setTier(this.tier + 1, now);
+    } else if (missRate < MISS_RATE_UP && this.tier > 0) {
+      this.goodWindows++;
+      if (this.goodWindows >= this.goodNeeded) {
+        this.goodWindows = 0;
+        this.goodNeeded = Math.min(this.goodNeeded * 2, 48);
+        this.setTier(this.tier - 1, now);
+      }
+    } else {
+      this.goodWindows = 0;
+    }
+    this.resetWindow(now);
+  }
+
+  /** Frames are stopping on purpose; don't judge the gap. */
+  pause() {
+    this.lastRender = 0;
+    this.settleUntil = performance.now() + WINDOW_MS * 0.5;
   }
 
   /** How resolved the sculpture is right now, 0 chaos … 1 one slab. */

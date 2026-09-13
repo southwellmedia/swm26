@@ -570,6 +570,12 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
   const pointer = { x: 0, y: 0, dirty: false, inside: false, down: false };
   let pointerLast = -Infinity;
   let frameIndex = 0;
+  let asleep = false;
+  // The display's own frame interval: the shortest gap the loop has seen.
+  // The scene's governor judges lateness against this, not a fixed 60 Hz,
+  // so a 30 Hz screen or a throttled tab is not mistaken for a slow GPU.
+  let refresh = Infinity;
+  let lastScrollY = Number.NaN;
 
   const scrollVelocity = () => {
     const top = runway.getBoundingClientRect().top;
@@ -618,6 +624,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     const dt = Math.min(0.05, (now - (lastTime || now)) / 1000);
     lastTime = now;
     time += dt;
+    if (dt > 0.003) refresh = Math.min(refresh, dt * 1000);
 
     const stageRect = stage.getBoundingClientRect();
     const runwayRect = runway.getBoundingClientRect();
@@ -625,6 +632,10 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     fullV.set(stageRect.left + fullOff.x, stageRect.top + fullOff.y, fullOff.z, fullOff.w);
 
     const sY = window.scrollY;
+    // Stillness comes from the scroll position itself, not from Lenis's
+    // velocity, which can hold a stale value after a programmatic jump.
+    const moved = Number.isNaN(lastScrollY) || Math.abs(sY - lastScrollY) >= 0.5;
+    lastScrollY = sY;
     const vh = height || 1;
     const s = sY / vh;
     const pinScroll = runwayRect.top + sY;
@@ -672,6 +683,9 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       return;
     }
     progress = damp(progress, openT, 9, dt);
+    // A damped value only approaches its target; snap the last hair so
+    // "fully open" is a state the rest of the frame can test for.
+    if (Math.abs(progress - openT) < 1e-3) progress = openT;
 
     // --- Where the ball wants to be ---------------------------------------------
     let tx = heroPos.x;
@@ -860,7 +874,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       u.uMap.value = droplets.target.texture;
       u.uTexAspect.value = droplets.target.width / Math.max(1, droplets.target.height);
     }
-    const v = velocityOf();
+    const v = moved ? velocityOf() : 0;
     u.uVelocity.value = damp(u.uVelocity.value, v, 12, dt);
 
     // --- The scene inside, the pointer on it, the words around it -------------
@@ -882,11 +896,27 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
         if (pointer.inside && mixAmt > 0.5) droplets.burst();
         pointerLast = now;
       }
+      // The texture is sized to the frame as it is right now, not to the
+      // open frame: during the bloom and the close it is a fraction of the
+      // size. Quantised so a growing frame reallocates a handful of times,
+      // not every frame.
+      const dpr = Math.min(window.devicePixelRatio || 1, SCENE_DPR) * SCENE_SCALE;
+      const tw = Math.min(1600, Math.max(64, Math.round((rw * dpr) / 64) * 64));
+      droplets.setSize(tw, Math.round(tw * (rh / Math.max(1, rw))));
+
       // At rest — no cursor for a while, page still — the scene breathes at
-      // half rate, which halves the cost of a held reel nobody is touching.
-      const idle = now - pointerLast > 3000 && Math.abs(v) < 0.01 && progress >= 1;
+      // half rate, and after a while longer it stops and holds its frame.
+      // Any pointer move or scroll wakes it, so nobody sees the pause.
+      const still = !moved && progress >= 1;
+      const quiet = now - pointerLast;
+      const idle = still && quiet > 3000;
+      asleep = still && quiet > 7000;
       frameIndex++;
-      if (!idle || frameIndex % 2 === 0) {
+      if (asleep) {
+        droplets.pause();
+      } else if (!idle || frameIndex % 2 === 0) {
+        if (idle) droplets.pause();
+        else droplets.govern(now, Math.max(1000 / 60, refresh));
         droplets.update(idle ? dt * 2 : dt, now);
         droplets.render(renderer);
       }
@@ -895,10 +925,11 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       setClear(droplets.clarity > 0.55);
     } else {
       pointer.down = false;
+      asleep = false;
+      droplets.pause();
       setOpen(false);
     }
 
-    renderer.render(scene, camera);
     if (import.meta.env.DEV) {
       (window as unknown as { __reelDebug?: object }).__reelDebug = {
         x: Math.round(pos.x),
@@ -914,8 +945,20 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
         geometry,
         delivered,
         clarity: +droplets.clarity.toFixed(2),
+        quality: droplets.quality,
+        texture: [droplets.target.width, droplets.target.height],
+        refresh: +refresh.toFixed(1),
+        quiet: Math.round(now - pointerLast),
+        asleep,
       };
     }
+
+    // Asleep: nothing on the canvas changes, so nothing is drawn.
+    if (asleep) {
+      raf = requestAnimationFrame(frame);
+      return;
+    }
+    renderer.render(scene, camera);
     raf = requestAnimationFrame(frame);
   };
 
