@@ -232,6 +232,16 @@ const LABELS = [
     height: 100%;
     z-index: 40;
     pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  /* While the menu is open the engine rests, and a ball frozen mid-journey
+     should not show through the dimmed strip under the sheet: the canvas
+     and the words on the frame step out until the menu closes. */
+  :global(html[data-menu-open='true']) .reel__canvas,
+  :global(html[data-menu-open='true']) .reel[data-reel-open] .reel__overlay {
+    opacity: 0;
+    transition: opacity 0.2s ease;
   }
 
   /* --- the words on the open frame ------------------------------------ */
