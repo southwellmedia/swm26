@@ -76,7 +76,12 @@ export default defineConfig({
     // GitHub), which Lucide only approximates; Font Awesome solid for the
     // handset in the nav.
     icon({
-      include: { lucide: ['*'], 'fa6-brands': ['linkedin-in', 'github'], 'fa6-solid': ['phone'] },
+      include: {
+        lucide: ['*'],
+        'fa6-brands': ['linkedin-in', 'github'],
+        // The handset in the nav; the arrows, envelope and pin in the menu.
+        'fa6-solid': ['phone', 'arrow-right-long', 'envelope', 'location-dot'],
+      },
     }),
   ],
 

@@ -16,7 +16,6 @@
 import { Icon } from 'astro-icon/components';
 import { getNavItems } from '@/config/nav.config';
 import siteConfig from '@/config/site.config';
-import ThemeToggle from '@/components/layout/ThemeToggle.astro';
 
 interface Props {
   /**
@@ -133,16 +132,14 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     <nav class="sw-menu__nav" aria-label="Main">
       <ul class="sw-menu__list">
         {
-          items.map((item, i) => (
+          items.map((item) => (
             <li class="sw-menu__item">
               <a
                 class="sw-menu__link"
                 href={item.href}
                 aria-current={isCurrent(item.href) ? 'page' : undefined}
               >
-                <span class="sw-menu__index label-mono" aria-hidden="true">
-                  0{i + 1}
-                </span>
+                <Icon name="fa6-solid:arrow-right-long" class="sw-menu__arrow" aria-hidden="true" />
                 <span class="sw-menu__label">{item.label}</span>
               </a>
             </li>
@@ -161,12 +158,18 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
         themes.
       </p>
       <div class="sw-menu__contact">
-        <a href={'mailto:' + siteConfig.email}>{siteConfig.email}</a>
-        <a href={'tel:' + siteConfig.phoneHref}>{siteConfig.phone}</a>
+        <a href={'mailto:' + siteConfig.email}>
+          <Icon name="fa6-solid:envelope" aria-hidden="true" />
+          {siteConfig.email}
+        </a>
+        <a href={'tel:' + siteConfig.phoneHref}>
+          <Icon name="fa6-solid:phone" aria-hidden="true" />
+          {siteConfig.phone}
+        </a>
       </div>
-      <div class="sw-menu__meta">
-        <span class="label-mono">{siteConfig.location}</span>
-        <ThemeToggle class="sw-menu__theme" />
+      <div class="sw-menu__meta label-mono">
+        <Icon name="fa6-solid:location-dot" aria-hidden="true" />
+        {siteConfig.location}
       </div>
     </aside>
   </div>
@@ -485,16 +488,32 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
 
   .sw-menu__link {
     display: grid;
-    grid-template-columns: 36px auto;
-    align-items: baseline;
+    grid-template-columns: 28px auto;
+    align-items: center;
     gap: 14px;
     padding: 4px 0;
     text-decoration: none;
     color: inherit;
   }
 
-  .sw-menu__index {
+  /* The arrow sits where an index would, turned to point up and out; quiet
+     until the row is hovered, then it takes the word's colour and moves a
+     step along its own direction. */
+  .sw-menu__arrow {
+    width: 20px;
+    height: 20px;
     color: var(--color-foreground-muted);
+    transform: rotate(-45deg);
+    transition:
+      color 0.3s ease,
+      transform 0.4s var(--ease-sw);
+  }
+
+  .sw-menu__link:hover .sw-menu__arrow,
+  .sw-menu__link:focus-visible .sw-menu__arrow,
+  .sw-menu__link[aria-current='page'] .sw-menu__arrow {
+    color: var(--color-foreground);
+    transform: rotate(-45deg) translateX(4px);
   }
 
   .sw-menu__label {
@@ -524,10 +543,6 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     letter-spacing: var(--display-em-tracking);
   }
 
-  .sw-menu__link[aria-current='page'] .sw-menu__index {
-    color: var(--color-foreground);
-  }
-
   .sw-menu__aside {
     display: grid;
     gap: 16px;
@@ -547,22 +562,30 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   }
 
   .sw-menu__contact a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
     color: var(--color-foreground);
     text-decoration: none;
-    border-bottom: 1px solid transparent;
-    width: fit-content;
-    transition: border-color 0.3s ease;
+    transition: color 0.3s ease;
   }
 
   .sw-menu__contact a:hover {
-    border-color: currentColor;
+    color: var(--color-foreground-secondary);
+  }
+
+  .sw-menu__contact :global(svg),
+  .sw-menu__meta :global(svg) {
+    width: 14px;
+    height: 14px;
+    color: var(--color-foreground-muted);
   }
 
   .sw-menu__meta {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    gap: 10px;
     color: var(--color-foreground-muted);
   }
 
