@@ -385,7 +385,11 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     powerPreference: 'high-performance',
   });
   renderer.setClearColor(0x000000, 0);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  // 1.5, not 2: this canvas covers the whole viewport and is composited
+  // every frame the journey is live, and the ball and frame edges are
+  // anti-aliased in the shader, so a retina screen loses almost nothing
+  // while the layer loses nearly half its pixels.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
   renderer.autoClear = true;
 
   const scene = new Scene();
