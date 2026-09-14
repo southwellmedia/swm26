@@ -91,8 +91,11 @@ void main() {
 
 export interface MenuEdgeOptions {
   canvas: HTMLCanvasElement;
-  /** The sheet whose bottom this edge belongs to; its colour and motion are read off it. */
+  /** The sheet whose bottom this edge belongs to; its motion is read off it. */
   sheet: HTMLElement;
+  /** The element carrying the sheet's colour, when the sheet itself is
+   *  transparent (its fill layer). Defaults to the sheet. */
+  paint?: HTMLElement | null;
   /** How many strip px the canvas overlaps the sheet's bottom. */
   overlap: number;
 }
@@ -120,6 +123,7 @@ function parseColor(css: string): [number, number, number] {
 
 export function createMenuEdge(options: MenuEdgeOptions): MenuEdge {
   const { canvas, sheet, overlap } = options;
+  const paint = options.paint ?? sheet;
   const gl = canvas.getContext('webgl', {
     alpha: true,
     premultipliedAlpha: true,
@@ -216,7 +220,7 @@ export function createMenuEdge(options: MenuEdgeOptions): MenuEdge {
   };
 
   const readColors = () => {
-    const ink = parseColor(getComputedStyle(sheet).backgroundColor);
+    const ink = parseColor(getComputedStyle(paint).backgroundColor);
     gl.uniform3f(uInk, ink[0], ink[1], ink[2]);
     // The rim: a dark sheet catches the lighter page it hangs over; a light
     // sheet shows a shaded underside instead.

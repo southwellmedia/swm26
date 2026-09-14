@@ -180,6 +180,15 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
     gap: 40px;
   }
 
+  /* The headline shares its row with the blurb, and the shell stops growing
+     at --shell-max while the section size keeps climbing to 116px. Past
+     ~1740px that pushed "Bold ideas, built to ship." onto two lines, which
+     the ball's landing also relies on being one. 94px is the largest size
+     the line fits at in the capped shell (924px next to the blurb). */
+  .reel__head h2 {
+    font-size: clamp(46px, 4.2vw + 24px, 94px);
+  }
+
   /* The empty slot the picture starts in. 5/12 of the shell, like the lead
      column of the grid below. It only defines a rectangle. */
   .reel__thumb {
