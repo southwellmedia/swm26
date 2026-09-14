@@ -10,6 +10,10 @@
  * headline. It gives the sign-off a surface of its own between the ink
  * founder card above and the ink footer below, without adding an object the
  * type has to negotiate with.
+ *
+ * "Start a conversation" opens the chat sheet (site/ChatSheet.astro, rendered
+ * once by SiteLayout); the link underneath goes to /contact for anyone
+ * without the script.
  */
 import siteConfig from '@/config/site.config';
 import PillButton from '@/components/site/PillButton.astro';
@@ -35,8 +39,12 @@ import PillButton from '@/components/site/PillButton.astro';
       data-reveal
       data-reveal-delay="0.32"
     >
-      <PillButton href={'mailto:' + siteConfig.email}>Chat with Southwell</PillButton>
-      <PillButton href="/contact" variant="outline">Book a meeting</PillButton>
+      <PillButton href="/contact" data-chat-open="">Start a conversation</PillButton>
+      <PillButton
+        href="https://calendly.com/michael-southwellmedia/30min"
+        target="_blank"
+        variant="outline">Book a meeting</PillButton
+      >
     </div>
   </div>
 </section>

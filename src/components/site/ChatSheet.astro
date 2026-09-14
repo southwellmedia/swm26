@@ -1,0 +1,945 @@
+---
+/**
+ * ChatSheet
+ *
+ * "Start a conversation": a card of ink that rises out of the bottom of the
+ * page — the footer's slab, come up to meet you — holding a short exchange
+ * rather than a form. One question at a time, in the studio's own voice,
+ * each answer left standing in the thread as the next question arrives:
+ * what you are building, then where to reply, then it is sent.
+ *
+ * It is the counterpart of the menu sheet (Nav.astro), which pours down
+ * from the top, and shares its plumbing: a scrim that closes it, inert
+ * while closed, Escape, focus handed in and back out, the page locked
+ * under it (Lenis pauses off the same overflow flag the nav sets).
+ *
+ * Rendered once per page from SiteLayout. Anything with data-chat-open
+ * opens it; the CTA's button links to /contact underneath, so without
+ * JavaScript it is still a way in.
+ *
+ * Submits to /api/contact (see src/pages/api/contact.ts). If the endpoint
+ * is not there — a static deploy, an outage — the thread says so and offers
+ * the studio's address instead, so a message is never simply lost.
+ */
+import siteConfig from '@/config/site.config';
+---
+
+<button
+  class="chat__scrim"
+  id="sw-chat-scrim"
+  type="button"
+  tabindex="-1"
+  aria-label="Close chat"
+  data-state="closed"
+  inert></button>
+
+<section
+  class="chat invert-section"
+  id="sw-chat"
+  data-state="closed"
+  data-step="1"
+  data-email={siteConfig.email}
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="sw-chat-title"
+  inert
+>
+  <div class="chat__inner">
+    <header class="chat__head">
+      <div class="chat__who">
+        <span class="chat__avatar" aria-hidden="true">{siteConfig.mark}</span>
+        <div>
+          <h2 class="chat__title" id="sw-chat-title">Start a conversation</h2>
+          <p class="chat__status label-mono">
+            <span class="chat__dot" aria-hidden="true"></span>
+            Michael replies himself, usually the same day
+          </p>
+        </div>
+      </div>
+      <button class="chat__close" id="sw-chat-close" type="button" aria-label="Close chat">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+    </header>
+
+    <form class="chat__thread" id="sw-chat-form" action="/api/contact" method="POST" novalidate>
+      {/* 1 — what are you building */}
+      <div class="chat__step" data-step="1">
+        <p class="chat__msg chat__msg--them">
+          Hi. What are you building, and what&rsquo;s in the way?
+        </p>
+        <div class="chat__msg chat__msg--you">
+          <div class="chat__field">
+            <label class="sr-only" for="sw-chat-message">What are you building?</label>
+            <textarea
+              class="chat__textarea"
+              id="sw-chat-message"
+              name="message"
+              rows="2"
+              required
+              minlength="10"
+              maxlength="5000"
+              placeholder="A site, an app, a brand, a rescue…"
+              autocomplete="off"></textarea>
+          </div>
+          <button class="chat__sent" type="button" data-edit="1" title="Edit this">
+            <span class="chat__sent-text" data-echo="message"></span>
+            <span class="chat__sent-edit label-mono">edit</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2 — where to reply */}
+      <div class="chat__step" data-step="2">
+        <p class="chat__msg chat__msg--them">Good. Who are you, and where should I reply?</p>
+        <div class="chat__msg chat__msg--you">
+          <div class="chat__field chat__field--pair">
+            <label class="sr-only" for="sw-chat-name">Your name</label>
+            <input
+              class="chat__input"
+              id="sw-chat-name"
+              name="name"
+              type="text"
+              required
+              minlength="2"
+              maxlength="100"
+              placeholder="Your name"
+              autocomplete="name"
+            />
+            <label class="sr-only" for="sw-chat-email">Email address</label>
+            <input
+              class="chat__input"
+              id="sw-chat-email"
+              name="email"
+              type="email"
+              required
+              placeholder="you@company.com"
+              autocomplete="email"
+              inputmode="email"
+            />
+          </div>
+          <button class="chat__sent" type="button" data-edit="2" title="Edit this">
+            <span class="chat__sent-text"
+              ><span data-echo="name"></span> &middot; <span data-echo="email"></span></span
+            >
+            <span class="chat__sent-edit label-mono">edit</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 3 — sent */}
+      <div class="chat__step" data-step="3">
+        <p class="chat__msg chat__msg--them" data-outcome="sent">
+          Got it. I&rsquo;ll write back to <strong data-echo="email"></strong> soon.
+        </p>
+        <p class="chat__msg chat__msg--them chat__msg--error" data-outcome="failed">
+          That didn&rsquo;t go through. Email me directly at
+          <a href={'mailto:' + siteConfig.email}>{siteConfig.email}</a> and I&rsquo;ll pick it up.
+        </p>
+      </div>
+
+      {/* Anti-spam: bots fill it, people never see it. */}
+      <div class="hidden" aria-hidden="true">
+        <input type="text" name="honeypot" tabindex="-1" autocomplete="off" />
+      </div>
+      <input type="hidden" name="source" value="chat" />
+
+      <p class="chat__error" id="sw-chat-error" role="alert"></p>
+
+      <div class="chat__actions">
+        <button class="chat__send" id="sw-chat-send" type="submit">
+          <span data-send-label>Next</span>
+          <svg
+            class="chat__send-arrow"
+            viewBox="0 0 20 20"
+            width="16"
+            height="16"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"><path d="M3 10h13M11 5l5 5-5 5"></path></svg
+          >
+        </button>
+        <span class="chat__hint label-mono" aria-hidden="true">or press Enter</span>
+        <button class="chat__done" id="sw-chat-done" type="button">Close</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="chat__live sr-only" aria-live="polite" id="sw-chat-live"></div>
+</section>
+
+<style>
+  /* --- the sheet -------------------------------------------------------- */
+  .chat {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 71;
+    max-height: 82vh;
+    max-height: 82svh;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-background);
+    color: var(--color-foreground);
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -24px 80px rgb(12 16 22 / 0.35);
+    visibility: hidden;
+    transform: translateY(104%);
+    transition:
+      transform 0.55s cubic-bezier(0.4, 0.7, 0.15, 1),
+      visibility 0s 0.55s;
+  }
+
+  .chat[data-state='open'] {
+    visibility: visible;
+    transform: none;
+    transition:
+      transform 0.7s cubic-bezier(0.2, 0.9, 0.2, 1),
+      visibility 0s;
+    will-change: transform;
+  }
+
+  /* The thread is held to a reading measure, not the shell: it is a
+     conversation, not a page. */
+  .chat__inner {
+    width: 100%;
+    max-width: 680px;
+    margin-inline: auto;
+    padding: 28px var(--gutter) max(28px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* The contents follow the sheet up, a beat behind. */
+  .chat__head,
+  .chat__thread {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease;
+  }
+
+  .chat[data-state='open'] .chat__head,
+  .chat[data-state='open'] .chat__thread {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.5s ease 0.25s,
+      transform 0.6s var(--ease-sw) 0.25s;
+  }
+
+  /* --- head ------------------------------------------------------------- */
+  .chat__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .chat__who {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .chat__avatar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color-foreground);
+    color: var(--color-background);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    padding-top: 1px;
+  }
+
+  .chat__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    letter-spacing: var(--display-tracking);
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  .chat__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0 0;
+    color: var(--color-foreground-muted);
+  }
+
+  .chat__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 0 3px rgb(74 222 128 / 0.18);
+  }
+
+  .chat__close {
+    position: relative;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    margin: -8px -8px 0 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition: background-color 0.25s ease;
+  }
+
+  .chat__close:hover {
+    background: var(--color-secondary);
+  }
+
+  .chat__close span {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 18px;
+    height: 1.5px;
+    background: currentColor;
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  .chat__close span:last-child {
+    transform: translate(-50%, -50%) rotate(-45deg);
+  }
+
+  /* --- thread ----------------------------------------------------------- */
+  .chat__thread {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-top: 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    min-height: 0;
+    /* Room so the last bubble can sit above the actions row. */
+    scroll-padding-bottom: 20px;
+  }
+
+  /* Steps arrive one at a time: a step shows once the sheet has reached it. */
+  .chat__step {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .chat[data-step='1'] .chat__step[data-step='1'],
+  .chat[data-step='2'] .chat__step[data-step='1'],
+  .chat[data-step='2'] .chat__step[data-step='2'],
+  .chat[data-step='3'] .chat__step {
+    display: flex;
+  }
+
+  .chat__msg {
+    margin: 0;
+    max-width: 88%;
+    padding: 14px 18px;
+    border-radius: 18px;
+    font-size: 17px;
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+    animation: chat-arrive 0.45s var(--ease-quart) both;
+  }
+
+  @keyframes chat-arrive {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Theirs: a quiet bubble on the left. */
+  .chat__msg--them {
+    align-self: flex-start;
+    background: var(--color-secondary);
+    border-bottom-left-radius: 6px;
+  }
+
+  .chat__msg--them strong {
+    font-weight: 600;
+  }
+
+  .chat__msg--them a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .chat__msg--error {
+    outline: 1px solid var(--color-border-strong);
+    outline-offset: -1px;
+  }
+
+  /* Yours: an outlined bubble on the right that is, until you answer, the
+     field itself. */
+  .chat__msg--you {
+    align-self: flex-end;
+    width: 88%;
+    padding: 0;
+    background: transparent;
+    border-bottom-right-radius: 6px;
+    animation-delay: 0.22s;
+  }
+
+  .chat__field {
+    display: grid;
+    gap: 2px;
+    padding: 6px 8px;
+    border: 1.5px solid var(--color-border-strong);
+    border-radius: inherit;
+    transition: border-color 0.25s ease;
+  }
+
+  .chat__field:focus-within {
+    border-color: var(--color-foreground);
+  }
+
+  .chat__field--pair {
+    grid-template-columns: 1fr 1.3fr;
+    gap: 0;
+  }
+
+  .chat__field--pair .chat__input + label + .chat__input {
+    border-left: 1px solid var(--color-border);
+  }
+
+  .chat__textarea,
+  .chat__input {
+    width: 100%;
+    margin: 0;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 17px;
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+    resize: none;
+    outline: none;
+  }
+
+  .chat__textarea::placeholder,
+  .chat__input::placeholder {
+    color: var(--color-foreground-muted);
+  }
+
+  /* Once answered, the field folds away and the answer stands as a sent
+     bubble; a click on it reopens the field. */
+  .chat__sent {
+    display: none;
+    width: 100%;
+    margin: 0;
+    padding: 14px 18px;
+    border: 0;
+    border-radius: inherit;
+    background: var(--color-foreground);
+    color: var(--color-background);
+    font: inherit;
+    font-size: 17px;
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .chat__sent-text {
+    display: block;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .chat__sent-edit {
+    display: block;
+    margin-top: 8px;
+    opacity: 0.55;
+    transition: opacity 0.2s ease;
+  }
+
+  .chat__sent:hover .chat__sent-edit,
+  .chat__sent:focus-visible .chat__sent-edit {
+    opacity: 1;
+  }
+
+  .chat__step[data-done] .chat__field {
+    display: none;
+  }
+
+  .chat__step[data-done] .chat__sent {
+    display: block;
+  }
+
+  /* --- actions ---------------------------------------------------------- */
+  .chat__error {
+    display: none;
+    margin: -4px 0 0;
+    align-self: flex-end;
+    max-width: 88%;
+    font-size: 13px;
+    color: var(--color-foreground-secondary);
+  }
+
+  .chat__error:not(:empty) {
+    display: block;
+  }
+
+  .chat__actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 6px;
+    position: sticky;
+    bottom: 0;
+    padding-top: 10px;
+    background: var(--color-background);
+  }
+
+  .chat__send,
+  .chat__done {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: auto;
+    padding: 14px 26px;
+    border: 1.5px solid var(--color-foreground);
+    border-radius: 999px;
+    background: var(--color-foreground);
+    color: var(--color-background);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      transform 0.3s ease,
+      opacity 0.3s ease;
+  }
+
+  .chat__send:hover:not(:disabled) {
+    transform: scale(1.04);
+  }
+
+  .chat__send:disabled {
+    opacity: 0.6;
+    cursor: progress;
+  }
+
+  .chat__send-arrow {
+    transition: transform 0.3s var(--ease-sw);
+  }
+
+  .chat__send:hover:not(:disabled) .chat__send-arrow {
+    transform: translateX(3px);
+  }
+
+  .chat__hint {
+    color: var(--color-foreground-muted);
+  }
+
+  .chat__done {
+    display: none;
+    background: transparent;
+    color: var(--color-foreground);
+  }
+
+  /* On the last step the send row becomes a close row, and the answers are
+     no longer for editing. */
+  .chat[data-step='3'] .chat__send,
+  .chat[data-step='3'] .chat__hint,
+  .chat[data-step='3'] .chat__sent-edit {
+    display: none;
+  }
+
+  .chat[data-step='3'] .chat__sent {
+    cursor: default;
+  }
+
+  .chat[data-step='3'] .chat__done {
+    display: inline-flex;
+  }
+
+  /* Only one outcome shows. */
+  .chat__msg[data-outcome] {
+    display: none;
+  }
+
+  .chat[data-outcome='sent'] .chat__msg[data-outcome='sent'],
+  .chat[data-outcome='failed'] .chat__msg[data-outcome='failed'] {
+    display: block;
+  }
+
+  /* --- scrim ------------------------------------------------------------ */
+  .chat__scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    padding: 0;
+    border: 0;
+    background: rgb(12 16 22 / 0.5);
+    opacity: 0;
+    visibility: hidden;
+    cursor: pointer;
+    transition:
+      opacity 0.45s ease,
+      visibility 0s 0.45s;
+  }
+
+  .chat__scrim[data-state='open'] {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity 0.6s ease 0.05s,
+      visibility 0s;
+  }
+
+  @media (max-width: 700px) {
+    .chat {
+      max-height: 92vh;
+      max-height: 92svh;
+      border-radius: 20px 20px 0 0;
+    }
+
+    .chat__inner {
+      padding-top: 22px;
+    }
+
+    .chat__title {
+      font-size: 21px;
+    }
+
+    .chat__msg,
+    .chat__msg--you {
+      max-width: 100%;
+      width: auto;
+    }
+
+    .chat__msg--you {
+      width: 100%;
+    }
+
+    .chat__field--pair {
+      grid-template-columns: 1fr;
+    }
+
+    .chat__field--pair .chat__input + label + .chat__input {
+      border-left: 0;
+      border-top: 1px solid var(--color-border);
+    }
+
+    .chat__hint {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chat,
+    .chat__head,
+    .chat__thread,
+    .chat__msg {
+      transition: none;
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  function initChatSheet() {
+    const sheet = document.getElementById('sw-chat');
+    const scrim = document.getElementById('sw-chat-scrim');
+    const form = document.getElementById('sw-chat-form') as HTMLFormElement | null;
+    if (!sheet || !scrim || !form) return;
+
+    const closeBtn = document.getElementById('sw-chat-close');
+    const doneBtn = document.getElementById('sw-chat-done');
+    const send = document.getElementById('sw-chat-send') as HTMLButtonElement | null;
+    const sendLabel = send?.querySelector<HTMLElement>('[data-send-label]');
+    const error = document.getElementById('sw-chat-error');
+    const live = document.getElementById('sw-chat-live');
+    const thread = form;
+
+    const message = form.elements.namedItem('message') as HTMLTextAreaElement;
+    const name = form.elements.namedItem('name') as HTMLInputElement;
+    const email = form.elements.namedItem('email') as HTMLInputElement;
+    const fieldsFor: Record<number, (HTMLInputElement | HTMLTextAreaElement)[]> = {
+      1: [message],
+      2: [name, email],
+    };
+    const LAST = 3;
+
+    let open = false;
+    let step = 1;
+    let sending = false;
+    let opener: HTMLElement | null = null;
+
+    const say = (text: string) => {
+      if (live) live.textContent = text;
+    };
+
+    const setError = (text: string) => {
+      if (error) error.textContent = text;
+    };
+
+    // The textarea grows with what is typed, up to a few lines.
+    const grow = () => {
+      message.style.height = 'auto';
+      message.style.height = Math.min(message.scrollHeight, 220) + 'px';
+    };
+
+    // Answers are echoed into the sent bubbles and the sign-off.
+    const echo = () => {
+      const values: Record<string, string> = {
+        message: message.value.trim(),
+        name: name.value.trim(),
+        email: email.value.trim(),
+      };
+      sheet.querySelectorAll<HTMLElement>('[data-echo]').forEach((el) => {
+        el.textContent = values[el.dataset.echo ?? ''] ?? '';
+      });
+    };
+
+    const focusStep = (n: number) => {
+      const first = fieldsFor[n]?.[0];
+      if (first) first.focus({ preventScroll: true });
+    };
+
+    const scrollToEnd = () => {
+      requestAnimationFrame(() => {
+        thread.scrollTo({ top: thread.scrollHeight, behavior: 'smooth' });
+      });
+    };
+
+    const setStep = (n: number) => {
+      step = n;
+      sheet.dataset.step = String(n);
+      if (sendLabel) sendLabel.textContent = n === LAST - 1 ? 'Send' : 'Next';
+      // Every step before this one is answered and folded.
+      sheet.querySelectorAll<HTMLElement>('.chat__step').forEach((el) => {
+        const s = Number(el.dataset.step);
+        if (s < n) el.dataset.done = '';
+        else delete el.dataset.done;
+      });
+      setError('');
+      echo();
+      scrollToEnd();
+      if (n < LAST) focusStep(n);
+    };
+
+    // Native validity, reported in the thread rather than as a tooltip.
+    const validate = (n: number) => {
+      for (const field of fieldsFor[n] ?? []) {
+        if (field.checkValidity()) continue;
+        field.focus({ preventScroll: true });
+        if (field.validity.valueMissing) {
+          setError(
+            field === message
+              ? 'Tell me a little about it first.'
+              : field === email
+                ? 'I need an address to reply to.'
+                : 'And your name?'
+          );
+        } else if (field.validity.tooShort) {
+          setError(field === message ? 'A sentence or two would help.' : 'A little longer?');
+        } else if (field.validity.typeMismatch) {
+          setError('That address doesn’t look right.');
+        } else {
+          setError(field.validationMessage);
+        }
+        return false;
+      }
+      return true;
+    };
+
+    const submit = async () => {
+      if (sending || !send) return;
+      sending = true;
+      send.disabled = true;
+      if (sendLabel) sendLabel.textContent = 'Sending…';
+      say('Sending your message.');
+
+      let outcome: 'sent' | 'failed' = 'failed';
+      try {
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: new FormData(form),
+          headers: { Accept: 'application/json' },
+        });
+        const data = (await response.json().catch(() => null)) as {
+          success?: boolean;
+          errors?: Record<string, string[]>;
+        } | null;
+        if (response.ok && data?.success) {
+          outcome = 'sent';
+        } else if (data?.errors && response.status === 400) {
+          // The server disagreed about a field: back to it.
+          const fields = Object.keys(data.errors);
+          const first = Object.values(data.errors).flat()[0];
+          sending = false;
+          send.disabled = false;
+          setStep(fields.includes('message') ? 1 : 2);
+          setError(first ?? 'Something in that needs another look.');
+          return;
+        }
+      } catch {
+        outcome = 'failed';
+      }
+
+      sheet.dataset.outcome = outcome;
+      sending = false;
+      send.disabled = false;
+      setStep(LAST);
+      say(
+        outcome === 'sent'
+          ? 'Sent. Michael will reply to ' + email.value.trim() + '.'
+          : 'The message did not send. Email ' + (sheet.dataset.email ?? 'the studio') + ' instead.'
+      );
+      doneBtn?.focus({ preventScroll: true });
+    };
+
+    const reset = () => {
+      form.reset();
+      delete sheet.dataset.outcome;
+      grow();
+      setStep(1);
+    };
+
+    const setOpen = (next: boolean, from?: HTMLElement | null) => {
+      if (next === open) return;
+      open = next;
+      sheet.dataset.state = next ? 'open' : 'closed';
+      scrim.dataset.state = next ? 'open' : 'closed';
+
+      // inert keeps the closed sheet out of the tab order and the
+      // accessibility tree; visibility: hidden alone would not.
+      if (next) {
+        sheet.removeAttribute('inert');
+        scrim.removeAttribute('inert');
+      } else {
+        sheet.setAttribute('inert', '');
+        scrim.setAttribute('inert', '');
+      }
+
+      // Lock the page under it. Lenis pauses off this flag (autoToggle),
+      // the same way it does for the menu.
+      document.documentElement.style.overflow = next ? 'hidden' : '';
+      // Not data-chat-open: that is the trigger's hook, and a flag of the
+      // same name on <html> would make every click on the page a trigger.
+      document.documentElement.dataset.chatSheet = next ? 'open' : 'closed';
+
+      if (next) {
+        opener = from ?? (document.activeElement as HTMLElement | null);
+        // A sent thread starts over next time; a half-written one is kept.
+        if (sheet.dataset.outcome) reset();
+        else {
+          echo();
+          if (sendLabel) sendLabel.textContent = step === LAST - 1 ? 'Send' : 'Next';
+        }
+        // After the sheet has risen, so the focus ring does not scroll it.
+        window.setTimeout(() => {
+          if (open && step < LAST) focusStep(step);
+          else if (open) doneBtn?.focus({ preventScroll: true });
+        }, 120);
+      } else {
+        opener?.focus({ preventScroll: true });
+        opener = null;
+      }
+    };
+
+    // --- wiring ---------------------------------------------------------
+
+    // Anything on the page with data-chat-open opens it. The CTA's button
+    // is a link to /contact underneath, so it still goes somewhere without
+    // this script. Listened for in the capture phase: the ClientRouter
+    // takes link clicks on the document too, and it registered first.
+    const onDocumentClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const trigger = (event.target as HTMLElement | null)?.closest<HTMLElement>(
+        '[data-chat-open]'
+      );
+      if (!trigger) return;
+      event.preventDefault();
+      setOpen(true, trigger);
+    };
+
+    const onKeydown = (event: KeyboardEvent) => {
+      if (!open) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
+      // Enter sends the step; Shift+Enter is a new line in the message.
+      if (event.key === 'Enter' && event.target === message && !event.shiftKey) {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    };
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (step >= LAST) return;
+      if (!validate(step)) return;
+      if (step === LAST - 1) void submit();
+      else setStep(step + 1);
+    });
+
+    // Typing clears the last complaint.
+    form.addEventListener('input', () => setError(''));
+    message.addEventListener('input', grow);
+
+    // The sent bubbles reopen their step.
+    sheet.querySelectorAll<HTMLButtonElement>('[data-edit]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (sending || step >= LAST) return;
+        setStep(Number(btn.dataset.edit));
+      });
+    });
+
+    closeBtn?.addEventListener('click', () => setOpen(false));
+    doneBtn?.addEventListener('click', () => setOpen(false));
+    scrim.addEventListener('click', () => setOpen(false));
+    document.addEventListener('click', onDocumentClick, true);
+    document.addEventListener('keydown', onKeydown);
+
+    grow();
+
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        document.removeEventListener('click', onDocumentClick, true);
+        document.removeEventListener('keydown', onKeydown);
+        document.documentElement.style.overflow = '';
+        delete document.documentElement.dataset.chatSheet;
+      },
+      { once: true }
+    );
+  }
+
+  initChatSheet();
+  document.addEventListener('astro:after-swap', initChatSheet);
+</script>

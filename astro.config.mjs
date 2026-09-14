@@ -4,13 +4,35 @@ import sitemap from '@astrojs/sitemap';
 import react from '@astrojs/react';
 import icon from 'astro-icon';
 import tailwindcss from '@tailwindcss/vite';
+import vercel from '@astrojs/vercel';
 
 export default defineConfig({
   site: process.env.SITE_URL || 'https://southwell.media',
 
+  // Static by default; only /api/contact opts out (prerender = false) so the
+  // chat sheet and the contact page have somewhere to send to. The adapter
+  // turns that one route into a Vercel function and leaves the rest as files.
+  adapter: vercel(),
+
   env: {
     schema: {
       SITE_URL: envField.string({ context: 'server', access: 'public', optional: true }),
+      // The contact endpoint mails through Resend. Without the key, dev logs
+      // the message and accepts it; production refuses it.
+      RESEND_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      CONTACT_TO: envField.string({
+        context: 'server',
+        access: 'public',
+        optional: true,
+        default: 'hello@southwellmedia.com',
+      }),
+      // A sender on a domain verified in Resend.
+      CONTACT_FROM: envField.string({
+        context: 'server',
+        access: 'public',
+        optional: true,
+        default: 'Southwell Media <hello@southwellmedia.com>',
+      }),
       PUBLIC_GA_MEASUREMENT_ID: envField.string({
         context: 'client',
         access: 'public',
