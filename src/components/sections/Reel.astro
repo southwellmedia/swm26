@@ -482,6 +482,10 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
           // the --hero-* palette hooks live.
           heroPanel: document.querySelector<HTMLElement>('.hero__render'),
           heroFloor: document.querySelector<HTMLElement>('.hero__foot'),
+          heroBaseline: document.querySelector<HTMLElement>('.hero__baseline'),
+          heroLine: document
+            .querySelector<HTMLElement>('.hero__word--2')
+            ?.closest<HTMLElement>('.hero__line'),
           paletteScope: document.querySelector<HTMLElement>('.hero'),
           // The words on the open frame.
           overlay: root.querySelector<HTMLElement>('[data-reel-overlay]'),

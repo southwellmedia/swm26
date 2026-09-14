@@ -48,6 +48,7 @@
  */
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { EXIT_Z, arcAt, copyOpacity, releaseAt, type ArcPoint } from '@/scripts/reel/handoff';
 
 const NBLOB = 11;
 const FLOOR_Y = -1.0;
@@ -63,7 +64,6 @@ const FOCAL = 1.9;
 declare global {
   interface Window {
     __heroDroplet?: { x: number; y: number; r: number; at: number };
-    __heroDropletRelease?: number;
   }
 }
 
@@ -650,6 +650,8 @@ class HeroEngine {
   private height = 0;
   private tmpTarget = new THREE.Vector3();
   private tmpView = new THREE.Vector3();
+  private tmpArc = new THREE.Vector3();
+  private arcPoint: ArcPoint = { x: 0, y: 0, r: 0, squash: 1, impact: 0, t: 0, yMax: 0 };
   private up = new THREE.Vector3(0, 1, 0);
   private handoff = { x: 0, y: 0, r: 0, at: 0 };
 
@@ -905,12 +907,11 @@ class HeroEngine {
 
   /** Project a droplet through the camera to viewport pixels and publish it.
    *  One layout read (the canvas rect) per rendered frame, inside the frame. */
-  private publishDroplet(b: THREE.Vector4, now: number) {
+  private publishDroplet(b: THREE.Vector4, now: number, rect: DOMRect) {
     const cam = this.camera;
     const v = this.tmpView.set(b.x, b.y, b.z).sub(cam.uRo.value);
     const z = v.dot(cam.uFw.value);
     if (z <= 0.1) return;
-    const rect = this.canvas.getBoundingClientRect();
     if (rect.width < 1 || rect.height < 1) return;
     // The shaders map uv = (px - res/2) / res.y and rd = fw·FOCAL + rt·u + up·v,
     // so a view-space point lands at u = x/z·FOCAL, v = y/z·FOCAL, in units
@@ -1106,30 +1107,47 @@ class HeroEngine {
     }
 
     // --- Handoff: the last stray droplet leaves with the reel -------------------
-    // As the reel releases it, it rolls off toward the camera and out of the
-    // bottom of the frame — near things cross a frame fast, and the panel's
-    // lower edge is a fade — so the reel's own droplet can take over below
-    // the panel, out of sight. Published after the move so the reel always
-    // knows where it is; gone (a negative radius is nothing, not a point)
-    // only once it is well out of frame. Positions are recomputed every
-    // frame, so none of this compounds.
-    const release = window.__heroDropletRelease ?? 0;
+    // The reel publishes the arc the droplet falls on (handoff.ts) and draws
+    // its own copy beneath the panel's fade. Here the same point on that
+    // arc, for this frame's scroll, is unprojected through the camera at a
+    // depth that comes toward the lens, and the droplet is blended onto it
+    // as the release grows: two renderers, one position, no frame of lag.
+    // Gone (a negative radius is nothing, not a point) once the reel's copy
+    // is fully opaque. Positions are recomputed every frame, so none of this
+    // compounds.
     const stray = this.blobs[NBLOB - 1];
-    if (release > 0) {
-      const e = Math.pow(release, 1.6); // accelerating: a fall, not a drift
-      // Three units out, just under the frame's lower edge: close enough to
-      // grow as it comes, far enough that it stays a droplet, not a planet.
-      const exit = this.tmpView
-        .copy(cam.uRo.value)
-        .addScaledVector(cam.uFw.value, 3.0)
-        .addScaledVector(cam.uRt.value, -0.3)
-        .addScaledVector(cam.uUp.value, -0.9);
-      stray.x = lerp(stray.x, exit.x, e);
-      stray.y = lerp(stray.y, exit.y, e);
-      stray.z = lerp(stray.z, exit.z, e);
+    const rect = this.canvas.getBoundingClientRect();
+    const arc = window.__heroDropletArc;
+    if (arc && !Number.isNaN(arc.x) && rect.height >= 1) {
+      const scrollY = window.scrollY;
+      const vh = Math.max(1, window.innerHeight);
+      const e = releaseAt(scrollY / vh);
+      if (e > 0) {
+        const p = arcAt(arc, scrollY, vh, this.arcPoint);
+        if (copyOpacity(p.yMax, arc.panelBottom) >= 1) {
+          stray.w = -0.08;
+        } else {
+          const zNat = Math.max(
+            0.5,
+            this.tmpView.set(stray.x, stray.y, stray.z).sub(cam.uRo.value).dot(cam.uFw.value)
+          );
+          const z = lerp(zNat, EXIT_Z, e);
+          // The inverse of publishDroplet: screen px → view-plane units at z.
+          const u = ((p.x - rect.left - rect.width * 0.5) / rect.height) * (z / FOCAL);
+          const w = (-(p.y - scrollY - rect.top - rect.height * 0.5) / rect.height) * (z / FOCAL);
+          const at = this.tmpArc
+            .copy(cam.uRo.value)
+            .addScaledVector(cam.uFw.value, z)
+            .addScaledVector(cam.uRt.value, u)
+            .addScaledVector(cam.uUp.value, w);
+          stray.x = lerp(stray.x, at.x, e);
+          stray.y = lerp(stray.y, at.y, e);
+          stray.z = lerp(stray.z, at.z, e);
+          stray.w = lerp(stray.w, (p.r * z) / (FOCAL * rect.height), e);
+        }
+      }
     }
-    this.publishDroplet(stray, now);
-    if (release > 0.97) stray.w = -0.08;
+    this.publishDroplet(stray, now, rect);
 
     // --- Passes ----------------------------------------------------------------
     const gl = this.renderer;

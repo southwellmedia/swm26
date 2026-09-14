@@ -5,16 +5,19 @@
  * something to draw. It carries one thing through five acts, all driven by
  * scroll so every one of them plays backwards too:
  *
- *   drop      the hero rolls its stray chrome droplet off the front of the
- *             floor and out of the bottom of its panel (HeroScene.tsx does
- *             the move; it publishes the droplet's screen position as
- *             window.__heroDroplet and reads window.__heroDropletRelease).
- *             Ours takes over beneath the panel's fade, already falling,
- *             lands on the headline with one squash-and-stretch bounce and
- *             rides on it for a beat.
- *   travel    freed, it floats down with you, damped behind the scroll,
- *             swaying, growing as it comes closer, into the thumbnail slot
- *             of the reel's intro copy.
+ *   drop      the hero's stray chrome droplet lets go of the scene and falls
+ *             out of the bottom of the panel onto the headline, one
+ *             squash-and-stretch bounce, and rides on the type for a beat.
+ *             The path is one curve (handoff.ts) that this engine owns and
+ *             publishes as window.__heroDropletArc; the hero evaluates the
+ *             same curve in its own frame and draws its droplet exactly
+ *             there (HeroScene.tsx), so the copy drawn here beneath the
+ *             panel's fade is never a frame behind it. The hero publishes
+ *             where its droplet is before the release as window.__heroDroplet.
+ *   travel    freed, it floats down the page with you, damped behind the
+ *             scroll, ahead of it in y so the slot rises to meet it, swaying
+ *             only while the page moves, into the thumbnail slot of the
+ *             reel's intro copy.
  *   bloom     as the reel pins, the sphere spreads into the rounded frame —
  *             the circle's SDF blends into the box's — while the frame peels
  *             out of its slot per vertex, tilts, and opens to the full
@@ -60,14 +63,23 @@ import {
   WebGLRenderer,
 } from 'three';
 import { DropletScene, STUDIO_GLSL, type ScenePalette } from './droplet-scene';
+import {
+  EXIT_START,
+  LAND_SIZE,
+  REST_END,
+  arcAt,
+  copyOpacity,
+  onPageAt,
+  releaseAt,
+  type ArcPoint,
+  type DropletArc,
+} from './handoff';
 
 declare global {
   interface Window {
     /** Written by the hero each rendered frame: its stray droplet, in
      *  viewport px, and when. */
     __heroDroplet?: { x: number; y: number; r: number; at: number };
-    /** Written here, read by the hero: 0 = keep the droplet, 1 = it's gone. */
-    __heroDropletRelease?: number;
   }
 }
 
@@ -87,8 +99,14 @@ export interface ReelMorphOptions {
   copy?: HTMLElement;
   /** The hero's picture panel: the droplet emerges beneath its lower edge. */
   heroPanel?: HTMLElement | null;
-  /** The hero's foot block: the droplet lands on top of it. */
+  /** The hero's foot block: the droplet lands on top of it if there is no
+   *  baseline to land on. */
   heroFloor?: HTMLElement | null;
+  /** A zero-size inline-block sat on the headline's second baseline: the
+   *  surface the ball lands on. */
+  heroBaseline?: HTMLElement | null;
+  /** That line's mask, which gives a little under the landing. */
+  heroLine?: HTMLElement | null;
   /** Element to read the --hero-* palette hooks from. */
   paletteScope?: HTMLElement | null;
   /** The fixed layer holding the copy and call to action on the open frame. */
@@ -112,14 +130,7 @@ export interface ReelMorph {
   readonly travel: number;
 }
 
-// --- The timeline, in viewport heights of scroll --------------------------------
-/** The hero rolls the droplet out over this stretch. */
-const EXIT_START = 0.05;
-const EXIT_END = 0.22;
-/** It has fallen and bounced onto the headline by here … */
-const FALL_END = 0.36;
-/** … and rides on it until here, then floats off toward the reel. */
-const REST_END = 0.46;
+// --- The timeline before the pin lives in handoff.ts (EXIT_*, FALL_END, REST_END).
 // --- The pinned hold, as fractions of the hold distance -----------------------
 /** The frame is fully open at this point of the hold. */
 const OPEN_SPAN = 0.5;
@@ -211,6 +222,8 @@ uniform float uFloat;    // shadow under the floating droplet
 uniform float uOpacity;
 uniform float uSquash;   // vertical scale of the droplet, 1 = round
 uniform vec3 uDrop;      // droplet centre (viewport px) and radius
+uniform float uSoft;     // half-width of the edge, px: wide in the scene's fog
+uniform float uDim;      // 1 = still under the scene's vignette
 uniform float uCard;     // 1 = the picture is a work card at rest
 uniform vec3 uCardRest;  // grayscale, contrast, opacity of that rest look
 uniform vec3 uCardBg;    // the card's own backdrop, sRGB
@@ -275,13 +288,13 @@ void main() {
   float br = mix(r, uRadius, uShape);
   vec2 qq = (q - bc) * mix(squash, vec2(1.0), uShape);
   float sd = roundedBox(qq, bh, br);
-  float alpha = 1.0 - smoothstep(-0.75, 0.75, sd);
+  float alpha = 1.0 - smoothstep(-uSoft, uSoft, sd);
 
   // Surface: chrome, then the picture (object-fit: cover).
   float aspect = size.x / size.y;
   vec2 s = aspect > uTexAspect ? vec2(1.0, uTexAspect / aspect) : vec2(aspect / uTexAspect, 1.0);
   vec2 tuv = (vUv - 0.5) * s + 0.5;
-  vec3 col = chrome(dq, r);
+  vec3 col = chrome(dq, r) * mix(1.0, 0.93, uDim);
   if (uMix > 0.001) {
     vec3 pic = texture2D(uMap, tuv).rgb;
     if (uCard > 0.5) pic = cardRest(pic);
@@ -374,6 +387,8 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     copy,
     heroPanel,
     heroFloor,
+    heroBaseline,
+    heroLine,
     paletteScope,
     overlay,
     workHead,
@@ -442,6 +457,8 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     uOpacity: { value: 0 },
     uSquash: { value: 1 },
     uDrop: { value: new Vector3() },
+    uSoft: { value: 0.75 },
+    uDim: { value: 0 },
     uCard: { value: 0 },
     uCardRest: { value: new Vector3(1, 1, 1) },
     uCardBg: { value: new Color(0.9, 0.9, 0.9) },
@@ -565,13 +582,12 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
   let cleared = false;
   let progress = 0;
   let travel = 0;
-  let time = 0;
   let lastTop = Number.NaN;
   let lastTime = 0;
-  let exitX = Number.NaN; // where the hero's droplet left, viewport px …
-  let exitY = 0;
-  let exitR = 24; // … and how big it was
-  const heroPos = new Vector3();
+  // The arc the hero's droplet falls on, shared with the hero (handoff.ts).
+  const arc: DropletArc = { x: Number.NaN, y: 0, r: 20, landR: 30, floor: 0, panelBottom: 0 };
+  const arcPoint: ArcPoint = { x: 0, y: 0, r: 0, squash: 1, impact: 0, t: 0, yMax: 0 };
+  let nudge = 0;
   const pos = new Vector2();
   let rad = 0;
   let squash = 1;
@@ -597,18 +613,12 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
   };
   const velocityOf = options.velocity ?? scrollVelocity;
 
-  /** The hero's droplet right now, or a stand-in on its panel. */
-  const readHero = (now: number, panel: DOMRect | null) => {
-    const h = window.__heroDroplet;
-    if (h && now - h.at < 400 && h.r > 0) {
-      heroPos.set(h.x, h.y, h.r);
-      return;
-    }
-    if (panel && panel.width > 0) {
-      heroPos.set(panel.left + panel.width * 0.42, panel.bottom - 20, panel.height * 0.05);
-    } else {
-      heroPos.set(width * 0.4, height * 0.5, 18);
-    }
+  /** The headline's second line gives under the landing, a few pixels. */
+  const nudgeTo = (impact: number) => {
+    const px = impact > 0.1 ? +(impact * 3).toFixed(2) : 0;
+    if (px === nudge || !heroLine) return;
+    nudge = px;
+    heroLine.style.transform = px ? `translate3d(0, ${px}px, 0)` : '';
   };
 
   const setDelivered = (next: boolean) => {
@@ -635,7 +645,6 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
 
     const dt = Math.min(0.05, (now - (lastTime || now)) / 1000);
     lastTime = now;
-    time += dt;
     if (dt > 0.003) refresh = Math.min(refresh, dt * 1000);
 
     const stageRect = stage.getBoundingClientRect();
@@ -659,25 +668,34 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       copy.style.transform = `translate3d(0, ${-Math.min(scrolled, copyExit).toFixed(1)}px, 0)`;
     }
 
-    // --- Act 1: the hero drops it ----------------------------------------------
-    const release = smoothstep(EXIT_START, EXIT_END, s);
-    window.__heroDropletRelease = release;
+    // --- Act 1: the arc the hero's droplet is on ---------------------------------
+    // Before the release the anchor follows the hero's droplet; from the
+    // release on it is frozen, in document space, and the arc runs from it.
+    // A stale hero (a slow frame, not hydrated yet) keeps the last anchor
+    // rather than jumping to a stand-in: the ball must never teleport.
     const panel = heroPanel?.getBoundingClientRect() ?? null;
-    readHero(now, panel);
-    const panelBottom = panel ? panel.bottom : -1e5;
-    if (s < EXIT_END) {
-      // Document space, so the fall can start from here at any later scroll.
-      exitX = heroPos.x;
-      exitY = heroPos.y + sY;
-      exitR = Math.max(6, heroPos.z);
-    } else if (Number.isNaN(exitX)) {
-      exitX = panel ? panel.left + panel.width * 0.42 : width * 0.4;
-      exitY = panelBottom + sY + exitR;
+    const panelBottomDoc = (panel ? panel.bottom : -1e5) + sY;
+    const h = window.__heroDroplet;
+    if (s < EXIT_START && h && h.r > 0 && now - h.at < 400) {
+      arc.x = h.x;
+      arc.y = h.y + sY;
+      arc.r = Math.max(6, h.r);
     }
-    // The surface the ball lands on, in document space: the top of the hero's
-    // foot block. The headline overlaps the panel's edge, so it is no floor.
-    const floor = heroFloor?.getBoundingClientRect() ?? null;
-    const restSurfaceDoc = floor ? floor.top + sY - 4 : panelBottom + sY + 0.3 * vh;
+    if (Number.isNaN(arc.x)) {
+      // Nothing published yet (opened mid-page): a plausible spot on the panel.
+      arc.x = panel ? panel.left + panel.width * 0.42 : width * 0.4;
+      arc.y = panel ? panel.top + sY + panel.height * 0.5 : sY + vh * 0.5;
+      arc.r = panel ? panel.height * 0.05 : 18;
+    }
+    arc.panelBottom = panelBottomDoc;
+    arc.landR = panel ? panel.height * LAND_SIZE : 30;
+    // The surface the ball lands on, in document space: the headline's
+    // second baseline, so it sits on the type. Failing that, the top of the
+    // foot block.
+    const base = heroBaseline?.getBoundingClientRect() ?? null;
+    const floor = base ? null : (heroFloor?.getBoundingClientRect() ?? null);
+    arc.floor = base ? base.top + sY : floor ? floor.top + sY - 4 : panelBottomDoc + 0.3 * vh;
+    const p = arcAt(arc, sY, vh, arcPoint);
 
     // Where in the hold, and after it.
     const f = scrolled / holdDistance;
@@ -700,12 +718,13 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     if (Math.abs(progress - openT) < 1e-3) progress = openT;
 
     // --- Where the ball wants to be ---------------------------------------------
-    let tx = heroPos.x;
-    let ty = heroPos.y;
-    let tr = exitR;
+    let tx = p.x;
+    let ty = p.y - sY;
+    let tr = p.r;
     let squashT = 1;
     let opacity = 0;
     let float = 0;
+    let onPage = 1; // 0 = still in the scene's fog: soft edge, no shadow, dimmer
     let direct = false; // follow exactly, no damping
     let shape = 0;
     let mixAmt = 0;
@@ -721,38 +740,38 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     const closeR = fullV.w * CLOSE_RADIUS;
 
     if (sY < pinScroll) {
-      // Acts 1 and 2.
+      // Acts 1 and 2: on the arc, exactly — the hero draws the same point,
+      // so there is nothing for damping to smooth and a lag would show as
+      // a ghost. Visible once the ball is in the fade band at the panel's
+      // lower edge; on the page (shadow, crisp edge) once clear of it.
       setDelivered(false);
-      if (s < EXIT_END) {
-        // Tracking the hero's droplet; visible only once it is in the fade
-        // band at the panel's lower edge.
-        direct = true;
-        opacity = smoothstep(panelBottom - 90, panelBottom - 20, heroPos.y);
-        float = opacity;
-      } else {
-        opacity = 1;
-        float = 1;
-        const fallT = clamp((s - EXIT_END) / (FALL_END - EXIT_END), 0, 1);
-        const exitBottomDoc = exitY + exitR;
-        const bottomDoc = lerp(exitBottomDoc, restSurfaceDoc, bounce(fallT));
-        squashT = 1 - 0.28 * impact(fallT);
-        tx = exitX;
-        ty = bottomDoc - sY - exitR * squashT;
-        tr = exitR;
+      direct = true;
+      squashT = p.squash;
+      opacity = copyOpacity(p.yMax, panelBottomDoc);
+      onPage = onPageAt(p.yMax, p.r, panelBottomDoc);
+      float = onPage;
+      nudgeTo(p.impact);
 
-        const pT =
-          pinScroll - REST_END * vh > 40
-            ? smoothstep(REST_END * vh, pinScroll, sY)
-            : sY >= pinScroll
-              ? 1
-              : 0;
-        travel = pT;
-        if (pT > 0) {
-          const sway = pT * (1 - pT);
-          tx = lerp(exitX, thumbCx, pT) + Math.sin(time * 1.3) * 14 * sway;
-          ty = lerp(restSurfaceDoc - sY - exitR, thumbCy, pT) + Math.sin(time * 1.9) * 10 * sway;
-          tr = lerp(exitR, landR, pT);
-        }
+      // Freed, it floats down the page into the slot. Ahead of the scroll in
+      // y, so it seems to drift down and the slot to rise to meet it, and
+      // swaying with the scroll, never on its own.
+      const floatStart = REST_END * vh;
+      const pLin =
+        pinScroll - floatStart > 40
+          ? clamp((sY - floatStart) / (pinScroll - floatStart), 0, 1)
+          : sY >= pinScroll
+            ? 1
+            : 0;
+      const pS = smoothstep(0, 1, pLin);
+      travel = pS;
+      if (pLin > 0) {
+        direct = false;
+        const pY = Math.pow(pS, 0.65);
+        const sway = pS * (1 - pS);
+        const phase = sY / 110;
+        tx = lerp(p.x, thumbCx, pS) + Math.sin(phase) * 14 * sway;
+        ty = lerp(p.y, thumbCy + sY, pY) - sY + Math.sin(phase * 1.6) * 10 * sway;
+        tr = lerp(p.r, landR, pS);
       }
       visible = opacity > 0 && ty - tr * 2 < vh + 40 && ty + tr * 2 > -40;
     } else if (inHold) {
@@ -883,6 +902,8 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     u.uOpacity.value = opacity;
     u.uSquash.value = squash;
     u.uDrop.value.set(pos.x, pos.y, rad);
+    u.uSoft.value = lerp(2.0, 0.75, onPage);
+    u.uDim.value = 1 - onPage;
     u.uCard.value = card ? 1 : 0;
     if (card && cardTexture) {
       u.uMap.value = cardTexture;
@@ -953,7 +974,10 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
         y: Math.round(pos.y),
         r: +rad.toFixed(1),
         squash: +squash.toFixed(2),
-        release: +release.toFixed(2),
+        release: +releaseAt(s).toFixed(2),
+        arc: [Math.round(arc.x), Math.round(arc.y), +arc.r.toFixed(1), Math.round(arc.floor)],
+        fall: +p.t.toFixed(2),
+        onPage: +onPage.toFixed(2),
         travel: +travel.toFixed(2),
         progress: +progress.toFixed(2),
         hold: +f.toFixed(2),
@@ -1053,6 +1077,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     start() {
       if (running) return;
       running = true;
+      window.__heroDropletArc = arc;
       io.observe(runway);
       if (leadCard) io.observe(leadCard);
       ro.observe(stage);
@@ -1079,7 +1104,8 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       window.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('visibilitychange', onVisibility);
       document.removeEventListener('sw:menu', onVisibility);
-      window.__heroDropletRelease = 0;
+      if (window.__heroDropletArc === arc) delete window.__heroDropletArc;
+      nudgeTo(0);
       setOpen(false);
       setClear(false);
     },
