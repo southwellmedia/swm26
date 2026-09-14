@@ -55,7 +55,7 @@ export interface StackGroup {
 export const hero = {
   eyebrow: ['CLIENT STORY', 'REAP CAPITAL · DALLAS–FORT WORTH', '2024 — 2026'],
   intro:
-    'Reap Capital buys underperforming apartment communities across DFW and runs them with one team. Since 2024, that team has included us: the investor platform, every property’s site, the brand, the films, the inbox, and the software behind the leasing office.',
+    'Reap Capital buys underperforming apartment communities across DFW and runs them with one team. Since 2024, that team has included us: the investor platform, every property’s site, the films, the inbox, and the software behind the leasing office.',
 };
 
 // TODO: confirm every figure with Reap before launch.
@@ -94,10 +94,9 @@ export const flagship = {
 
 export const chapters: Chapter[] = [
   { num: '02', title: 'Property sites — La Fortuna, The Landry' },
-  { num: '03', title: 'Brand system' },
-  { num: '04', title: 'Films — the founder series' },
-  { num: '05', title: 'Social media' },
-  { num: '06', title: 'Email campaigns' },
+  { num: '03', title: 'Films — the founder series' },
+  { num: '04', title: 'Social media' },
+  { num: '05', title: 'Email campaigns' },
 ];
 
 // The shots are laptop mockups of the live homepages. Both are landscape 4:3

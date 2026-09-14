@@ -10,7 +10,6 @@
  * instead. It keeps the site's Nav, Cta and Footer; what changes is that the
  * whole story sits on its own paper — the site's ice with a breath of Reap's
  * forest in it — and the next-project door drops to ink to hand you on.
- * The client's own colours stay on the brand tiles.
  *
  * Content lives in @/data/reap-capital.ts. Every figure there is the
  * prototype's draft copy and needs confirming with Reap.
@@ -160,12 +159,12 @@ const nextImage = next.data.feature ?? next.data.cover;
       </div>
     </section>
 
-    {/* --- the ledger: sticky index + six more workstreams ---------------- */}
+    {/* --- the ledger: sticky index + five more workstreams --------------- */}
     <section class="ledger shell" aria-labelledby="ledger-title">
       <aside class="ledger__index">
         <p class="eyebrow label-mono">THE LEDGER</p>
         <h2 class="ledger__title" id="ledger-title">
-          six more <em>workstreams.</em>
+          five more <em>workstreams.</em>
         </h2>
         <ol class="ledger__list">
           {
@@ -234,53 +233,9 @@ const nextImage = next.data.feature ?? next.data.cover;
           </div>
         </article>
 
-        {/* 03 brand */}
+        {/* 03 films */}
         <article class="ws" id="ws-03" data-reveal>
-          <p class="eyebrow label-mono">03 · BRAND</p>
-          <h3 class="ws__title">one origin, <em>every asset.</em></h3>
-          <p class="ws__intro">
-            Forest green, aged gold, a serif that reads like a prospectus. Built to hold from a
-            pitch deck to a leasing office sign to a 288-unit front door.
-          </p>
-
-          <div class="brand">
-            <div class="brand__tile brand__tile--forest brand__tile--hero">
-              <img
-                class="brand__logomark"
-                src="/reap-logomark-gold.svg"
-                alt="Reap Capital logomark"
-                width="288"
-                height="371"
-                loading="lazy"
-                decoding="async"
-              />
-              <span class="brand__tag brand__tag--on-dark brand__tag--corner label-mono"
-                >logomark — gold on forest</span
-              >
-            </div>
-            <div class="brand__tile brand__tile--paper brand__tile--wide">
-              <span class="brand__tag brand__tag--on-light label-mono"
-                >wordmark — Playfair Display</span
-              >
-            </div>
-            <div class="brand__tile brand__tile--forest" aria-label="Forest green swatch"></div>
-            <div class="brand__tile brand__tile--gold" aria-label="Aged gold swatch"></div>
-            <div class="brand__tile brand__tile--sage" aria-label="Sage swatch"></div>
-            <div class="brand__tile brand__tile--slot">
-              <span class="brand__tag label-mono">signage</span>
-            </div>
-            <div class="brand__tile brand__tile--slot">
-              <span class="brand__tag label-mono">investor deck</span>
-            </div>
-            <div class="brand__tile brand__tile--slot">
-              <span class="brand__tag label-mono">sub-brands</span>
-            </div>
-          </div>
-        </article>
-
-        {/* 04 films */}
-        <article class="ws" id="ws-04" data-reveal>
-          <p class="eyebrow label-mono">04 · FILMS</p>
+          <p class="eyebrow label-mono">03 · FILMS</p>
           <h3 class="ws__title">the first film, <em>no stock.</em></h3>
           <p class="ws__intro">
             The founder series opens on the question every LP asks before the deck: if this goes
@@ -314,9 +269,9 @@ const nextImage = next.data.feature ?? next.data.cover;
           }
         </article>
 
-        {/* 05 social */}
-        <article class="ws" id="ws-05" data-reveal>
-          <p class="eyebrow label-mono">05 · SOCIAL</p>
+        {/* 04 social */}
+        <article class="ws" id="ws-04" data-reveal>
+          <p class="eyebrow label-mono">04 · SOCIAL</p>
           <h3 class="ws__title">the feed, <em>managed.</em></h3>
           <p class="ws__intro">
             Three accounts, a monthly calendar, one rule: every post comes from a real property, a
@@ -334,9 +289,9 @@ const nextImage = next.data.feature ?? next.data.cover;
           </div>
         </article>
 
-        {/* 06 email */}
-        <article class="ws" id="ws-06" data-reveal>
-          <p class="eyebrow label-mono">06 · EMAIL</p>
+        {/* 05 email */}
+        <article class="ws" id="ws-05" data-reveal>
+          <p class="eyebrow label-mono">05 · EMAIL</p>
           <h3 class="ws__title">two audiences, <em>one voice.</em></h3>
 
           <div class="email">
@@ -880,87 +835,7 @@ const nextImage = next.data.feature ?? next.data.cover;
     color: var(--dim);
   }
 
-  /* 03 brand */
-
-  .brand {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    grid-auto-rows: 140px;
-    gap: 12px;
-    margin-top: 36px;
-  }
-
-  .brand__tile {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-md);
-  }
-
-  .brand__tile--hero {
-    position: relative;
-    grid-column: span 3;
-    grid-row: span 2;
-  }
-
-  /* Reap's own mark, off /public and unprocessed — it's already an SVG.
-     Sized off the tile so it holds its margin at every breakpoint. */
-  .brand__logomark {
-    width: auto;
-    height: 56%;
-  }
-
-  .brand__tile--wide {
-    grid-column: span 3;
-  }
-
-  .brand__tile--slot {
-    grid-column: span 2;
-    background: var(--story-raised);
-    border: 1px solid var(--reap-line);
-  }
-
-  /* Reap's own palette — literal on purpose, it isn't ours. */
-  .brand__tile--forest {
-    background: #394334;
-  }
-
-  .brand__tile--gold {
-    background: #c9a961;
-  }
-
-  .brand__tile--sage {
-    background: #5a6650;
-  }
-
-  .brand__tile--paper {
-    background: #f3efe6;
-  }
-
-  .brand__tag {
-    padding: 5px 12px;
-    border-radius: 4px;
-    color: var(--color-foreground-muted);
-  }
-
-  .brand__tag--on-dark {
-    color: rgb(238 242 244 / 0.7);
-    background: rgb(37 44 33 / 0.5);
-  }
-
-  /* Out of the mark's way once a tile has real artwork in the middle. */
-  .brand__tag--corner {
-    position: absolute;
-    left: 12px;
-    bottom: 12px;
-  }
-
-  .brand__tag--on-light {
-    color: rgb(12 16 22 / 0.5);
-    background: rgb(12 16 22 / 0.06);
-  }
-
-  /* 04 films */
+  /* 03 films */
 
   .ws__film {
     margin: 36px 0 0;
@@ -1147,19 +1022,6 @@ const nextImage = next.data.feature ?? next.data.cover;
       gap: 72px;
     }
 
-    .brand {
-      grid-template-columns: repeat(3, 1fr);
-      grid-auto-rows: 120px;
-    }
-
-    .brand__tile--hero {
-      grid-column: span 3;
-    }
-
-    .brand__tile--slot {
-      grid-column: span 1;
-    }
-
     .posts {
       grid-template-columns: repeat(3, 1fr);
     }
@@ -1237,16 +1099,6 @@ const nextImage = next.data.feature ?? next.data.cover;
 
     .ws__title {
       font-size: 9vw;
-    }
-
-    .brand {
-      grid-template-columns: repeat(2, 1fr);
-      grid-auto-rows: 110px;
-    }
-
-    .brand__tile--hero,
-    .brand__tile--wide {
-      grid-column: span 2;
     }
 
     .films__row {
