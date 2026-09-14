@@ -19,7 +19,7 @@
   ],
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && pagefind --site dist --glob \"blog/**/*.html\"",
+    "build": "astro build && pagefind --site dist/client --glob \"blog/**/*.html\"",
     "preview": "astro preview",
     "check": "astro check",
     "lint": "eslint .",
