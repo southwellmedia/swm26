@@ -128,8 +128,12 @@ const CLOSE_START = 0.7;
 const CLOSE_END = 0.88;
 /** … and drops out from here. */
 const DROP_START = 0.9;
-/** Delivery ends when the lead card's centre reaches this viewport height. */
+/** Delivery ends when the lead card's centre reaches this viewport height … */
 const DELIVER_AT = 0.45;
+/** … or, if that comes first, when its top is this far below the fixed nav.
+ *  A tall card centred at DELIVER_AT would already have its top under the
+ *  bar, so the card would never be seen open in full. */
+const DELIVER_CLEAR = 24;
 
 /** Landing radius in the slot, as a fraction of the slot's height. */
 const LAND_RADIUS = 0.2;
@@ -512,6 +516,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
   let width = 0;
   let height = 0;
   let holdDistance = 1; // px the stage stays pinned for
+  let navHeight = 0; // the fixed bar the delivered card must sit clear of
   let copyExit = 0; // px the copy travels before it is fully off the stage
   const thumbOff = new Vector4();
   const fullOff = new Vector4();
@@ -533,6 +538,9 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     offsetRect(full, stage, fullOff);
     holdDistance = Math.max(1, runway.offsetHeight - stage.offsetHeight);
     copyExit = copy ? copy.offsetTop + copy.offsetHeight : 0;
+    // Published by the nav once its display font has loaded (see Nav.astro).
+    navHeight =
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sw-nav-h')) || 0;
 
     const dpr = Math.min(window.devicePixelRatio || 1, SCENE_DPR) * SCENE_SCALE;
     const sw = Math.min(1600, Math.round(fullOff.z * dpr));
@@ -767,7 +775,12 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       leadV.set(lead.left, lead.top, lead.width, lead.height);
       const leadCx = lead.left + lead.width / 2;
       const leadCyDoc = lead.top + sY + lead.height / 2;
-      const deliverScroll = leadCyDoc - DELIVER_AT * vh;
+      // Whichever the scroll reaches first: the card centred, or its top
+      // about to slip under the nav. Either way it is open while whole.
+      const deliverScroll = Math.min(
+        leadCyDoc - DELIVER_AT * vh,
+        lead.top + sY - navHeight - DELIVER_CLEAR
+      );
       const d =
         deliverScroll - dropScroll > 40
           ? clamp((sY - dropScroll) / (deliverScroll - dropScroll), 0, 1)
