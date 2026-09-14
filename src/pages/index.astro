@@ -8,7 +8,6 @@ import Hero from '@/components/sections/Hero.astro';
 import Reel from '@/components/sections/Reel.astro';
 import WorkGrid from '@/components/sections/WorkGrid.astro';
 import Services from '@/components/sections/Services.astro';
-import Founder from '@/components/sections/Founder.astro';
 import Cta from '@/components/sections/Cta.astro';
 import siteConfig from '@/config/site.config';
 ---
@@ -30,6 +29,9 @@ import siteConfig from '@/config/site.config';
   }
   <WorkGrid count={6} deliverLead />
   <Services />
-  <Founder />
+  {
+    /* The founder section (@/components/sections/Founder.astro) is parked
+      off the homepage for now; it still runs on /studio. */
+  }
   <Cta />
 </SiteLayout>
