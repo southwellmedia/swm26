@@ -55,7 +55,7 @@ export interface StackGroup {
 export const hero = {
   eyebrow: ['CLIENT STORY', 'REAP CAPITAL · DALLAS–FORT WORTH', '2024 — 2026'],
   intro:
-    'Reap Capital buys underperforming apartment communities across DFW and runs them with one team. Since 2024, that team has included us: the investor platform, every property’s site, the films, the inbox, and the software behind the leasing office.',
+    'Reap Capital buys underperforming apartment communities across DFW and runs them with one team. Since 2026, that team has included us: the investor platform, every property’s site, the films, the inbox, and the software behind the leasing office.',
 };
 
 // TODO: confirm every figure with Reap before launch.
