@@ -63,7 +63,7 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
     <div class="reel__stage shell" data-reel-stage>
       <div class="reel__copy" data-reel-copy>
         <header class="reel__head" data-reveal>
-          <h2 class="display-section m-0">{title}</h2>
+          <h2 class="display-section m-0" data-reel-head>{title}</h2>
           <p
             class="text-foreground-secondary m-0 max-w-[380px] text-[18px] leading-[1.55] max-[800px]:text-base"
           >
@@ -483,9 +483,8 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
           heroPanel: document.querySelector<HTMLElement>('.hero__render'),
           heroFloor: document.querySelector<HTMLElement>('.hero__foot'),
           heroBaseline: document.querySelector<HTMLElement>('.hero__baseline'),
-          heroLine: document
-            .querySelector<HTMLElement>('.hero__word--2')
-            ?.closest<HTMLElement>('.hero__line'),
+          heroHead: document.querySelector<HTMLElement>('.hero__headline'),
+          reelHead: root.querySelector<HTMLElement>('[data-reel-head]'),
           paletteScope: document.querySelector<HTMLElement>('.hero'),
           // The words on the open frame.
           overlay: root.querySelector<HTMLElement>('[data-reel-overlay]'),

@@ -27,11 +27,12 @@
  *             the disciplines and the call to action sit with it.
  *   close     late in the hold the frame folds back into a ball at its
  *             centre, and the ball drops out of it as the stage releases.
- *   deliver   it falls through the gap, bounces on the "Work" heading, rolls
- *             into the lead card's slot and blooms into the card itself —
- *             the card's own rest picture as its surface — at which point
- *             the real card takes over and the canvas lets go. The ball is
- *             used up where the work begins.
+ *   deliver   it is flung out of the frame at the "Work" heading, punches
+ *             through it — the letters part for it and close behind
+ *             (type-field.ts) — drops under it and blooms into the lead
+ *             card from where it landed, the card's own rest picture as
+ *             its surface, at which point the real card takes over and the
+ *             canvas lets go. The ball is used up where the work begins.
  *
  * Everything is measured in viewport pixels each frame, so a fixed canvas can
  * draw over the hero, the gaps and the sticky stage alike. Page-anchored
@@ -63,9 +64,11 @@ import {
   WebGLRenderer,
 } from 'three';
 import { DropletScene, STUDIO_GLSL, type ScenePalette } from './droplet-scene';
+import { createTypeField, type FieldBall, type TypeField } from './type-field';
 import {
   EXIT_START,
   LAND_SIZE,
+  LAND_T,
   REST_END,
   arcAt,
   copyOpacity,
@@ -105,13 +108,17 @@ export interface ReelMorphOptions {
   /** A zero-size inline-block sat on the headline's second baseline: the
    *  surface the ball lands on. */
   heroBaseline?: HTMLElement | null;
-  /** That line's mask, which gives a little under the landing. */
-  heroLine?: HTMLElement | null;
+  /** The headline itself: its letters give under the ball (type-field.ts). */
+  heroHead?: HTMLElement | null;
+  /** The reel's own heading, which the ball floats through on its way to
+   *  the slot: its letters part for it. */
+  reelHead?: HTMLElement | null;
   /** Element to read the --hero-* palette hooks from. */
   paletteScope?: HTMLElement | null;
   /** The fixed layer holding the copy and call to action on the open frame. */
   overlay?: HTMLElement | null;
-  /** The "Work" heading the ball bounces on, and the card it becomes. */
+  /** The "Work" heading the ball punches through (its letters part for it),
+   *  and the card it becomes. */
   workHead?: HTMLElement | null;
   leadCard?: HTMLElement | null;
   /** Corner radius in CSS px. */
@@ -152,6 +159,10 @@ const LAND_RADIUS = 0.2;
 const CLOSE_RADIUS = 0.11;
 /** The ball just before it becomes the card, as a fraction of the card's height. */
 const CARD_RADIUS = 0.2;
+/** Of the delivery: when the ball meets the "Work" heading, and when it is
+ *  through it. */
+const PUNCH_AT = 0.5;
+const PUNCH_END = 0.62;
 /** Scene render target size relative to the full frame, and its DPR cap. */
 const SCENE_SCALE = 0.8;
 const SCENE_DPR = 1.5;
@@ -318,12 +329,6 @@ const smoothstep = (a: number, b: number, x: number) => {
 };
 const damp = (a: number, b: number, lambda: number, dt: number) =>
   a + (b - a) * (1 - Math.exp(-lambda * dt));
-/** A fall that lands at 0.62, bounces a fifth of the way back up, and rests. */
-const bounce = (t: number) =>
-  t < 0.62 ? (t / 0.62) * (t / 0.62) : 1 - 0.2 * Math.sin((Math.PI * (t - 0.62)) / 0.38);
-/** How hard the ball is hitting the surface at t — both landings. */
-const impact = (t: number) =>
-  Math.exp(-(((t - 0.62) / 0.05) ** 2)) + 0.5 * Math.exp(-(((t - 0.96) / 0.03) ** 2));
 
 /** Box of `el` in `stage` space, ignoring transforms on anything between. */
 function offsetRect(el: HTMLElement, stage: HTMLElement, out: Vector4) {
@@ -388,7 +393,8 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     heroPanel,
     heroFloor,
     heroBaseline,
-    heroLine,
+    heroHead,
+    reelHead,
     paletteScope,
     overlay,
     workHead,
@@ -529,11 +535,24 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
   };
   void prepareCard();
 
+  // --- The type that gives way ---------------------------------------------------
+  // The hero headline is a rope the ball lands on; the "Work" heading parts
+  // for it. Both are split into glyphs once, here.
+  const heroField: TypeField | null = heroHead ? createTypeField(heroHead) : null;
+  const reelField: TypeField | null = reelHead ? createTypeField(reelHead) : null;
+  const workField: TypeField | null = workHead
+    ? createTypeField(workHead, { mask: workHead.querySelector<HTMLElement>('.sh__mask') })
+    : null;
+  const heroBall: FieldBall = { x: 0, y: 0, r: 0, impact: 0, sag: 0, push: 0 };
+  const reelBall: FieldBall = { x: 0, y: 0, r: 0, impact: 0, sag: 0, push: 0 };
+  const workBall: FieldBall = { x: 0, y: 0, r: 0, impact: 0, sag: 0, push: 0 };
+
   // --- layout ------------------------------------------------------------------
   let width = 0;
   let height = 0;
   let holdDistance = 1; // px the stage stays pinned for
   let navHeight = 0; // the fixed bar the delivered card must sit clear of
+  let workXHeight = 0; // px from the "Work" heading's box top to its x-height
   let copyExit = 0; // px the copy travels before it is fully off the stage
   const thumbOff = new Vector4();
   const fullOff = new Vector4();
@@ -558,6 +577,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     // Published by the nav once its display font has loaded (see Nav.astro).
     navHeight =
       parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sw-nav-h')) || 0;
+    workXHeight = workHead ? 0.37 * (parseFloat(getComputedStyle(workHead).fontSize) || 0) : 0;
 
     const dpr = Math.min(window.devicePixelRatio || 1, SCENE_DPR) * SCENE_SCALE;
     const sw = Math.min(1600, Math.round(fullOff.z * dpr));
@@ -587,7 +607,6 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
   // The arc the hero's droplet falls on, shared with the hero (handoff.ts).
   const arc: DropletArc = { x: Number.NaN, y: 0, r: 20, landR: 30, floor: 0, panelBottom: 0 };
   const arcPoint: ArcPoint = { x: 0, y: 0, r: 0, squash: 1, impact: 0, t: 0, yMax: 0 };
-  let nudge = 0;
   const pos = new Vector2();
   let rad = 0;
   let squash = 1;
@@ -612,14 +631,6 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     return clamp(v / 42, -1, 1);
   };
   const velocityOf = options.velocity ?? scrollVelocity;
-
-  /** The headline's second line gives under the landing, a few pixels. */
-  const nudgeTo = (impact: number) => {
-    const px = impact > 0.1 ? +(impact * 3).toFixed(2) : 0;
-    if (px === nudge || !heroLine) return;
-    nudge = px;
-    heroLine.style.transform = px ? `translate3d(0, ${px}px, 0)` : '';
-  };
 
   const setDelivered = (next: boolean) => {
     if (next === delivered || !leadCard) return;
@@ -725,6 +736,12 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     let opacity = 0;
     let float = 0;
     let onPage = 1; // 0 = still in the scene's fog: soft edge, no shadow, dimmer
+    let heroOn = false; // the ball is on the headline's line
+    let heroImpact = 0;
+    let heroHold = 0;
+    let workPush = 0;
+    let workImpact = 0;
+    let reelPush = 0;
     let direct = false; // follow exactly, no damping
     let shape = 0;
     let mixAmt = 0;
@@ -750,7 +767,6 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       opacity = copyOpacity(p.yMax, panelBottomDoc);
       onPage = onPageAt(p.yMax, p.r, panelBottomDoc);
       float = onPage;
-      nudgeTo(p.impact);
 
       // Freed, it floats down the page into the slot. Ahead of the scroll in
       // y, so it seems to drift down and the slot to rise to meet it, and
@@ -764,9 +780,22 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
             : 0;
       const pS = smoothstep(0, 1, pLin);
       travel = pS;
+      // The headline is a rope: struck on landing, weighed down while the
+      // ball sits on it — its letters make room — and released as it
+      // floats off.
+      heroOn = opacity > 0;
+      heroImpact = p.impact;
+      heroHold =
+        (p.t >= LAND_T ? 1 : 0) *
+        smoothstep(6, 0, arc.floor - (p.y + p.r * p.squash)) *
+        (1 - pS) *
+        (1 - pS);
       if (pLin > 0) {
         direct = false;
-        const pY = Math.pow(pS, 0.65);
+        // The reel's heading is in the way: its letters part for the ball.
+        reelPush = 1;
+        // Along the line first, then down: it rolls off, not through.
+        const pY = Math.pow(smoothstep(0.15, 1, pS), 0.65);
         const sway = pS * (1 - pS);
         const phase = sY / 110;
         tx = lerp(p.x, thumbCx, pS) + Math.sin(phase) * 14 * sway;
@@ -805,38 +834,60 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
           ? clamp((sY - dropScroll) / (deliverScroll - dropScroll), 0, 1)
           : 1;
       const head = workHead?.getBoundingClientRect() ?? null;
-      const headDoc = head ? head.bottom + sY : lead.top + sY - 40;
+      // The heading's box is a line box; the lowercase letters start about
+      // 0.37em below its top, and that is what the ball hits.
+      const headTopDoc = head ? head.top + sY + workXHeight : lead.top + sY - 120;
+      const headBotDoc = head ? head.bottom + sY : headTopDoc + 80;
+      const headCx = head ? head.left + head.width / 2 : leadCx;
       // The ball's document position as it lets go: the frame's centre while
       // the stage was still pinned, not wherever the stage has scrolled to.
       const y0Doc = dropScroll + fullOff.y + fullOff.w / 2;
       const cardR = lead.height * CARD_RADIUS;
+      // Where it comes to rest under the heading, and blooms from: a little
+      // toward the card's centre, never as far as it.
+      const landX = lerp(headCx, leadCx, 0.3);
+      // It meets the heading at PUNCH_AT and is through by PUNCH_END.
+      const contact = Math.exp(-(((d - PUNCH_AT) / 0.04) ** 2));
 
       opacity = 1;
       float = 1;
-      if (d < 0.7) {
-        const a = d / 0.7;
-        const bottomDoc = lerp(y0Doc + closeR, headDoc, bounce(a));
-        squashT = 1 - 0.28 * impact(a);
+      if (d < PUNCH_AT) {
+        // Flung out of the frame toward the heading: steady across, falling.
+        const a = d / PUNCH_AT;
         tr = closeR;
-        tx = lerp(fullCx, lerp(fullCx, leadCx, 0.35), a);
-        ty = bottomDoc - sY - tr * squashT;
+        tx = lerp(fullCx, headCx, a);
+        squashT = 1 - 0.28 * contact;
+        ty = lerp(y0Doc + closeR, headTopDoc, a * a) - sY - tr * squashT;
+      } else if (d < PUNCH_END) {
+        // Through the word, slowed by it: its letters are shoved aside.
+        const b = smoothstep(0, 1, (d - PUNCH_AT) / (PUNCH_END - PUNCH_AT));
+        tr = closeR;
+        tx = headCx;
+        squashT = 1 - 0.28 * contact;
+        ty = lerp(headTopDoc - closeR * squashT, headBotDoc + closeR, b) - sY;
       } else if (d < 0.85) {
-        const b = smoothstep(0, 1, (d - 0.7) / 0.15);
-        tr = lerp(closeR, cardR, b);
-        tx = lerp(lerp(fullCx, leadCx, 0.35), leadCx, b);
-        ty = lerp(headDoc - closeR, leadCyDoc, b) - sY;
+        const c = smoothstep(0, 1, (d - PUNCH_END) / (0.85 - PUNCH_END));
+        tr = lerp(closeR, cardR, c);
+        tx = lerp(headCx, landX, c);
+        ty = lerp(headBotDoc + closeR, leadCyDoc, c) - sY;
       } else {
         const c = (d - 0.85) / 0.15;
         geometry = 'card';
         card = true;
         tr = cardR;
-        tx = leadCx;
+        tx = landX;
         ty = leadCyDoc - sY;
         shape = smoothstep(0, 1, c);
         mixAmt = cardTexture ? smoothstep(0.3, 0.9, c) : 0;
         opacity = 1 - smoothstep(0.96, 1, d);
         float = 1 - shape;
       }
+      // The heading parts for the ball while it is passing, and dips as it
+      // is struck.
+      workPush =
+        smoothstep(PUNCH_AT - 0.04, PUNCH_AT + 0.04, d) *
+        (1 - smoothstep(PUNCH_END, PUNCH_END + 0.16, d));
+      workImpact = contact;
       setDelivered(d >= 0.96);
       visible = opacity > 0 && ty - tr * 2 < vh + 40 && ty + tr * 2 > -40;
     } else {
@@ -861,6 +912,35 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       pos.y = damp(pos.y, ty, 9, dt);
       rad = damp(rad, tr, 9, dt);
       squash = damp(squash, squashT, 14, dt);
+    }
+
+    // --- The type under it -----------------------------------------------------
+    if (heroField) {
+      heroBall.x = pos.x;
+      heroBall.y = pos.y + sY;
+      heroBall.r = rad;
+      heroBall.impact = heroImpact;
+      heroBall.sag = heroHold;
+      heroBall.push = 0.45 * heroHold;
+      if (heroOn || heroField.moving) heroField.update(dt, heroOn ? heroBall : null);
+    }
+    if (reelField) {
+      reelBall.x = pos.x;
+      reelBall.y = pos.y + sY;
+      reelBall.r = rad;
+      reelBall.push = reelPush;
+      const on = reelPush > 0.001;
+      if (on || reelField.moving) reelField.update(dt, on ? reelBall : null);
+    }
+    if (workField) {
+      workBall.x = pos.x;
+      workBall.y = pos.y + sY;
+      workBall.r = rad;
+      workBall.impact = workImpact;
+      workBall.sag = 0;
+      workBall.push = workPush;
+      const on = workPush > 0.001 || workImpact > 0.001;
+      if (on || workField.moving) workField.update(dt, on ? workBall : null);
     }
 
     // --- Draw ----------------------------------------------------------------------
@@ -978,6 +1058,8 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
         arc: [Math.round(arc.x), Math.round(arc.y), +arc.r.toFixed(1), Math.round(arc.floor)],
         fall: +p.t.toFixed(2),
         onPage: +onPage.toFixed(2),
+        heroHold: +heroHold.toFixed(2),
+        push: +workPush.toFixed(2),
         travel: +travel.toFixed(2),
         progress: +progress.toFixed(2),
         hold: +f.toFixed(2),
@@ -1105,7 +1187,6 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       document.removeEventListener('visibilitychange', onVisibility);
       document.removeEventListener('sw:menu', onVisibility);
       if (window.__heroDropletArc === arc) delete window.__heroDropletArc;
-      nudgeTo(0);
       setOpen(false);
       setClear(false);
     },
@@ -1115,6 +1196,9 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       mesh.geometry.dispose();
       material.dispose();
       droplets.dispose();
+      heroField?.destroy();
+      reelField?.destroy();
+      workField?.destroy();
       cardTexture?.dispose();
       renderer.dispose();
     },
