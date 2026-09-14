@@ -50,21 +50,12 @@ const {
   src,
   poster,
   title = 'Bold ideas, built to ship.',
-  blurb = 'Design, motion and engineering under one roof — from the first sketch to the last deploy.',
+  blurb = 'Ideas, design and engineering under one roof — from the first sketch to the last deploy.',
   hold = '160vh',
   class: className,
 } = Astro.props;
 
 const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
-
-// The four disciplines the scene's droplets stand for, listed on the open
-// frame. The services have no pages of their own, so they link to the section.
-const LABELS = [
-  { text: 'Development', href: '/#services' },
-  { text: 'Prototypes', href: '/#services' },
-  { text: 'Brand & design', href: '/#services' },
-  { text: 'Advisory', href: '/#services' },
-];
 ---
 
 <section class:list={['reel', className]} data-reel style={`--reel-hold-set: ${hold}`}>
@@ -117,30 +108,33 @@ const LABELS = [
 
   {
     /* Above the canvas, on the open frame's rectangle (the engine sizes it):
-      the line that follows the scene's state, the four disciplines, a hint
-      for pointers, and the call to action. Hidden until the frame is open,
+      the line that follows the scene's state, the one-desk argument, a hint
+      for pointers, and a link down to the work. Hidden until the frame is open,
       so nothing here is reachable before it can be seen. */
   }
   <div class="reel__overlay" data-reel-overlay>
     <div class="reel__caption">
-      <p class="reel__line reel__line--chaos m-0" aria-hidden="true">
-        Four disciplines. Every project starts as pieces.
+      <p class="reel__line reel__line--chaos m-0" aria-hidden="true">Ideas are the easy part.</p>
+      <p class="reel__line reel__line--clear m-0">Building them is ours.</p>
+      <p class="reel__desc m-0">
+        Brand, website, product. Bring us the idea, however rough it is. We'll ask the hard
+        questions, sharpen it, and then build it properly.
       </p>
-      <p class="reel__line reel__line--clear m-0">One team. We ship the clear version.</p>
-      <p class="reel__disciplines label-mono m-0">
-        {
-          LABELS.map((label, i) => (
-            <>
-              {i > 0 && <span class="reel__sep" aria-hidden="true" />}
-              <a href={label.href}>{label.text}</a>
-            </>
-          ))
-        }
-      </p>
-      <p class="reel__hint label-mono m-0" aria-hidden="true">Bring the cursor to the centre</p>
-      <PillButton href="/contact" class="reel__cta px-7 py-3.5">
-        Start a project
-        <Icon name="lucide:arrow-up-right" aria-hidden="true" />
+      <p class="reel__hint label-mono m-0" aria-hidden="true">Bring your cursor to the center</p>
+      {
+        /* The hash names the section; the landing is the lead card, sat where
+          the reel's delivery completes (morph.ts: the card's top just under
+          the nav), and the ride is slow enough that the ball is seen to
+          drop and become it on the way. */
+      }
+      <PillButton
+        href="#work"
+        data-scroll-target="[data-work-grid] .card[data-deliver]"
+        data-scroll-duration="2.6"
+        class="reel__cta px-7 py-3.5"
+      >
+        View our work
+        <Icon name="lucide:arrow-down" aria-hidden="true" />
       </PillButton>
     </div>
   </div>
@@ -273,34 +267,14 @@ const LABELS = [
     max-width: 440px;
   }
 
-  /* The four disciplines, as a plain row of links: what the pieces are. */
-  .reel__disciplines {
+  /* The one-desk argument, in the client's terms: what the pieces are and
+     why they fit here. */
+  .reel__desc {
     grid-area: 2 / 1;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-    color: var(--ink-950);
-    pointer-events: auto;
-  }
-
-  .reel__disciplines a {
-    color: inherit;
-    text-decoration: none;
-    border-bottom: 1px solid rgb(12 16 22 / 0.25);
-    transition: border-color 0.3s ease;
-  }
-
-  .reel__disciplines a:hover {
-    border-color: currentColor;
-  }
-
-  .reel__sep {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: currentColor;
-    opacity: 0.4;
+    max-width: 440px;
+    font-size: 15px;
+    line-height: 1.55;
+    color: rgb(12 16 22 / 0.72);
   }
 
   /* How to play, for pointers; gone once the scene has resolved. */

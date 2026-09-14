@@ -17,9 +17,11 @@ interface Props {
   variant?: 'solid' | 'outline';
   target?: string;
   class?: string;
+  /** Anything else (data-* hooks) goes straight through to the anchor. */
+  [key: `data-${string}`]: string | undefined;
 }
 
-const { href, variant = 'solid', target, class: className } = Astro.props;
+const { href, variant = 'solid', target, class: className, ...rest } = Astro.props;
 
 const pill = [
   'rounded-full h-auto px-10 py-[18px] text-[17px] font-semibold',
@@ -39,6 +41,7 @@ const look =
   size="lg"
   data-button
   class={cn(pill, look, className)}
+  {...rest}
 >
   <slot />
 </Button>
