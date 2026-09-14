@@ -22,7 +22,14 @@ import HeroScene from '@/components/site/HeroScene.tsx';
 ---
 
 <section class="hero shell flex min-h-screen flex-col justify-end pt-24 pb-9 max-[700px]:pt-[84px]">
-  <HeroVisual class="hero__render h-[58vh] max-[700px]:h-[42vh]">
+  {
+    /* On a phone the content is shorter than the screen, and with the column
+      bottom-aligned the slack would sit as a gap under the nav; the panel
+      grows to take it instead, never shorter than 42vh. */
+  }
+  <HeroVisual
+    class="hero__render h-[58vh] max-[700px]:h-auto max-[700px]:min-h-[42vh] max-[700px]:flex-1"
+  >
     <HeroScene client:idle />
     {
       /* The panel dissolves into the page along its lower edge rather than
