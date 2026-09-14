@@ -68,4 +68,4 @@ If you're building something that needs to hold up under real conditions, we sho
 
 ---
 
-*Michael Froseth is the founder of Southwell Media, a Dallas-based agency specializing in custom web development and brand systems.*
+*Michael Froseth is the founder of Southwell Media, a Dallas-based studio specializing in custom web development and brand systems.*
