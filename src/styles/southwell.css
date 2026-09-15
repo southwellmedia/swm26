@@ -255,10 +255,11 @@
   }
 
   /* The mask a rise climbs out of: one line of a headline, clipped. The
-     small negative inset keeps descenders and the display italics whole. */
+     small negative inset keeps descenders and the display italics whole.
+     clip-path alone does the clipping: overflow: hidden would clip to the
+     line box and cut the descenders the inset is there to spare. */
   .rv-mask {
     display: block;
-    overflow: hidden;
     clip-path: inset(-0.2em 0 -0.3em);
   }
 

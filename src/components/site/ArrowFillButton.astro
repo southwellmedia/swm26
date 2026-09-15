@@ -1,0 +1,235 @@
+---
+/**
+ * ArrowFillButton
+ *
+ * A pill with a small contrasting disc at its right end. On hover (or
+ * keyboard focus) the disc grows to fill the whole pill and an arrow slides
+ * into it, so the button appears to invert itself and point the way.
+ *
+ * Rebuilt from ObsidianUI's "Arrow Fill Button" on the studio's tokens: the
+ * pill is ink, the disc is paper, and both flip inside `.invert-section`
+ * because they read the remapped --color-* variables. Sized to sit next to
+ * PillButton without looking like a different family.
+ *
+ * How it works: the disc is an absolutely positioned copy of the whole
+ * button (same padding, same label) that is clipped down to a circle with
+ * `clip-path: inset(... round)`. Hover animates the clip out to the full
+ * pill, and because the copy is laid out identically to the button beneath
+ * it, the label appears to change colour in place while the arrow's two
+ * paths swap - one leaves right, one arrives from the left.
+ *
+ * Like PillButton it wraps Velocity's Button so there is still one anchor /
+ * button implementation on the site; the scoped styles below override the
+ * base utilities (they are unlayered, so they win regardless of specificity).
+ */
+import { Icon } from 'astro-icon/components';
+import Button from '@/components/ui/form/Button/Button.astro';
+import { cn } from '@/lib/cn';
+
+interface Props {
+  href?: string;
+  variant?: 'solid' | 'outline';
+  /**
+   * An astro-icon name (`fa6-solid:comment`, `lucide:calendar`) to show in
+   * the disc instead of the arrow. It gets the same slide-and-swap on hover.
+   */
+  icon?: string;
+  target?: string;
+  class?: string;
+  /** Anything else (data-* hooks) goes straight through to the anchor. */
+  [key: `data-${string}`]: string | undefined;
+}
+
+const { href, variant = 'solid', icon, target, class: className, ...rest } = Astro.props;
+
+// The label is rendered twice (once in the pill, once in the disc's copy), so
+// it is pulled out of the slot once here rather than slotted twice.
+const label = await Astro.slots.render('default');
+
+const arrow =
+  'M3.82475e-07 5.625L7.625 5.625L4.125 9.125L5 10L10 5L5 -4.37114e-07L4.125 0.874999L7.625 4.375L4.91753e-07 4.375L3.82475e-07 5.625Z';
+---
+
+<Button
+  href={href}
+  target={target}
+  variant={variant === 'solid' ? 'primary' : 'outline'}
+  size="lg"
+  data-button
+  class={cn('afb', variant === 'outline' && 'afb--outline', className)}
+  {...rest}
+>
+  <span class="afb__label"><Fragment set:html={label} /></span>
+
+  <span class="afb__fill" aria-hidden="true">
+    <span class="afb__label"><Fragment set:html={label} /></span>
+    {
+      icon ? (
+        <span class="afb__glyph">
+          <Icon name={icon} class="afb__swap" />
+          <Icon name={icon} class="afb__swap" />
+        </span>
+      ) : (
+        <svg class="afb__glyph" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path class="afb__swap" fill-rule="evenodd" clip-rule="evenodd" d={arrow} />
+          <path class="afb__swap" fill-rule="evenodd" clip-rule="evenodd" d={arrow} />
+        </svg>
+      )
+    }
+  </span>
+</Button>
+
+<style>
+  .afb {
+    /* Geometry. The disc is (height - 2 * inset) across; the right padding
+       leaves room for it plus a gap so the label never sits under it. */
+    --afb-inset: 0.5rem;
+    --afb-disc: 2.75rem;
+    --afb-pad-left: 2.25rem;
+    --afb-pad-right: calc(var(--afb-pad-left) + var(--afb-disc) + var(--afb-inset));
+    --afb-ease: cubic-bezier(0.785, 0.135, 0.15, 0.86);
+    --afb-duration: 0.45s;
+
+    /* Colourway. Solid: ink pill, paper disc. */
+    --afb-bg: var(--color-foreground);
+    --afb-text: var(--color-background);
+    --afb-fill-bg: var(--color-background);
+    --afb-fill-text: var(--color-foreground);
+    --afb-border: transparent;
+    /* The outline ring is an inset shadow, not a border: it paints inside the
+       padding box beneath the fill, so both variants share one geometry and
+       the ring vanishes under the ink once the disc has opened. */
+    --afb-ring: inset 0 0 0 1.5px var(--afb-border);
+
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    height: auto;
+    width: fit-content;
+    padding: 18px var(--afb-pad-right) 18px var(--afb-pad-left);
+    border-radius: 9999px;
+    border: 0;
+    box-shadow: var(--afb-ring);
+    background: var(--afb-bg);
+    color: var(--afb-text);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: nowrap;
+    text-decoration: none;
+    text-rendering: geometricPrecision;
+    overflow: hidden;
+    cursor: pointer;
+    transition: none;
+  }
+
+  /* Outline: ink ring on paper; the disc is ink and fills the pill with ink. */
+  .afb--outline {
+    --afb-bg: transparent;
+    --afb-text: var(--color-foreground);
+    --afb-fill-bg: var(--color-foreground);
+    --afb-fill-text: var(--color-background);
+    --afb-border: var(--color-foreground);
+  }
+
+  /* Base Button paints a hover tint, a border on the outline variant and a
+     press scale; none of them belong here. */
+  .afb:hover,
+  .afb:active {
+    background: var(--afb-bg);
+    color: var(--afb-text);
+    border-color: transparent;
+    scale: 1;
+  }
+
+  .afb:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 4px;
+    box-shadow: var(--afb-ring);
+  }
+
+  .afb__label {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* The copy of the button that becomes the disc. The -1px inset hides the
+     anti-aliased edge of the pill behind it once the clip is fully open; the
+     padding gives that pixel back so the copied label lands exactly over the
+     real one instead of a pixel to its left. */
+  .afb__fill {
+    position: absolute;
+    inset: -1px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    padding: 0 calc(var(--afb-pad-right) - 1px) 0 calc(var(--afb-pad-left) + 1px);
+    border-radius: 9999px;
+    background-color: var(--afb-fill-bg);
+    color: var(--afb-fill-text);
+    clip-path: inset(
+      var(--afb-inset) var(--afb-inset) var(--afb-inset)
+        calc(100% - var(--afb-disc) - var(--afb-inset)) round 9999px
+    );
+    transition:
+      clip-path var(--afb-duration) var(--afb-ease),
+      background-color var(--afb-duration) var(--afb-ease),
+      color var(--afb-duration) var(--afb-ease);
+  }
+
+  .afb:is(:hover, :focus-visible):not(:disabled, [aria-disabled='true']) .afb__fill {
+    clip-path: inset(0 round 9999px);
+  }
+
+  /* The glyph sits centred in the disc: disc centre is (inset + disc / 2)
+     from the right edge, so the glyph's right edge is that minus half its
+     width. It is either the arrow SVG (two paths) or a box holding two
+     copies of a named icon; either way the two children swap on hover. */
+  .afb__glyph {
+    --afb-glyph-size: 0.875rem;
+    position: absolute;
+    right: calc(var(--afb-inset) + var(--afb-disc) / 2 - var(--afb-glyph-size) / 2);
+    width: var(--afb-glyph-size);
+    height: var(--afb-glyph-size);
+    overflow: hidden;
+    color: var(--afb-fill-text);
+  }
+
+  /* Named icons render as full SVGs, so stack them on top of each other. */
+  .afb__glyph > svg.afb__swap {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .afb__swap {
+    fill: currentColor;
+    transform-origin: center center;
+    transition: transform var(--afb-duration) var(--afb-ease);
+  }
+
+  /* Two copies of the glyph: the first waits off to the left, the second is
+     the one you see at rest. On hover they trade places. */
+  .afb__swap:first-child {
+    transform: translateX(-120%) scale(0);
+  }
+
+  .afb:is(:hover, :focus-visible):not(:disabled, [aria-disabled='true']) .afb__swap:first-child {
+    transform: translateX(0) scale(1);
+  }
+
+  .afb:is(:hover, :focus-visible):not(:disabled, [aria-disabled='true']) .afb__swap:last-child {
+    transform: translateX(120%) scale(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .afb__fill,
+    .afb__swap {
+      transition: none;
+    }
+  }
+</style>

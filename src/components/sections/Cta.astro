@@ -16,7 +16,7 @@
  * without the script.
  */
 import siteConfig from '@/config/site.config';
-import PillButton from '@/components/site/PillButton.astro';
+import ArrowFillButton from '@/components/site/ArrowFillButton.astro';
 ---
 
 <section class="cta relative overflow-hidden">
@@ -39,11 +39,14 @@ import PillButton from '@/components/site/PillButton.astro';
       data-reveal
       data-reveal-delay="0.32"
     >
-      <PillButton href="/contact" data-chat-open="">Start a conversation</PillButton>
-      <PillButton
+      <ArrowFillButton href="/contact" icon="fa6-solid:comment" data-chat-open=""
+        >Start a conversation</ArrowFillButton
+      >
+      <ArrowFillButton
         href="https://calendly.com/michael-southwellmedia/30min"
         target="_blank"
-        variant="outline">Book a meeting</PillButton
+        icon="fa6-solid:calendar"
+        variant="outline">Book a meeting</ArrowFillButton
       >
     </div>
   </div>

@@ -101,8 +101,9 @@ export default defineConfig({
       include: {
         lucide: ['*'],
         'fa6-brands': ['linkedin-in', 'github'],
-        // The handset in the nav; the arrows, envelope and pin in the menu.
-        'fa6-solid': ['phone', 'arrow-right-long', 'envelope', 'location-dot'],
+        // The handset in the nav; the arrows, envelope and pin in the menu;
+        // the chat bubble and calendar in the sign-off buttons.
+        'fa6-solid': ['phone', 'arrow-right-long', 'envelope', 'location-dot', 'comment', 'calendar'],
       },
     }),
   ],
