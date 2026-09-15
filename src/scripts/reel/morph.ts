@@ -100,6 +100,10 @@ export interface ReelMorphOptions {
   full: HTMLElement;
   /** The block that should scroll away 1:1 while the stage is pinned. */
   copy?: HTMLElement;
+  /** The hero's pinned stage. The release anchor is kept relative to it, so
+   *  the arc rides with the stage while it is pinned and after it lets go.
+   *  Absent, the anchor is frozen in document space. */
+  heroStage?: HTMLElement | null;
   /** The hero's picture panel: the droplet emerges beneath its lower edge. */
   heroPanel?: HTMLElement | null;
   /** The hero's foot block: the droplet lands on top of it if there is no
@@ -140,12 +144,14 @@ export interface ReelMorph {
 // --- The timeline before the pin lives in handoff.ts (EXIT_*, FALL_END, REST_END).
 // --- The pinned hold, as fractions of the hold distance -----------------------
 /** The frame is fully open at this point of the hold. */
-const OPEN_SPAN = 0.5;
-/** It folds back into a ball over this stretch … */
-const CLOSE_START = 0.7;
-const CLOSE_END = 0.88;
+const OPEN_SPAN = 0.36;
+/** The ball drifts from the slot to the centre from here, ahead of the fold … */
+const CENTRE_START = 0.68;
+/** … folds back into a ball over this stretch … */
+const CLOSE_START = 0.786;
+const CLOSE_END = 0.91;
 /** … and drops out from here. */
-const DROP_START = 0.9;
+const DROP_START = 0.93;
 /** Delivery ends when the lead card's centre reaches this viewport height … */
 const DELIVER_AT = 0.45;
 /** … or, if that comes first, when its top is this far below the fixed nav.
@@ -390,6 +396,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     thumb,
     full,
     copy,
+    heroStage,
     heroPanel,
     heroFloor,
     heroBaseline,
@@ -606,6 +613,10 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
   let lastTime = 0;
   // The arc the hero's droplet falls on, shared with the hero (handoff.ts).
   const arc: DropletArc = { x: Number.NaN, y: 0, r: 20, landR: 30, floor: 0, panelBottom: 0 };
+  // Where the release began, relative to the hero's stage (document space
+  // when there is no stage): the stage is sticky, so a document position
+  // would slide up the screen while the panel it came from stays put.
+  const anchor = { x: Number.NaN, y: 0, r: 20 };
   const arcPoint: ArcPoint = { x: 0, y: 0, r: 0, squash: 1, impact: 0, t: 0, yMax: 0 };
   const pos = new Vector2();
   let rad = 0;
@@ -686,18 +697,24 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     // rather than jumping to a stand-in: the ball must never teleport.
     const panel = heroPanel?.getBoundingClientRect() ?? null;
     const panelBottomDoc = (panel ? panel.bottom : -1e5) + sY;
+    // The stage's top in document space: 0 while it is pinned at the top of
+    // the page, growing once it scrolls away. Without a stage, 0 always.
+    const stageTop = heroStage ? heroStage.getBoundingClientRect().top + sY : 0;
     const h = window.__heroDroplet;
     if (s < EXIT_START && h && h.r > 0 && now - h.at < 400) {
-      arc.x = h.x;
-      arc.y = h.y + sY;
-      arc.r = Math.max(6, h.r);
+      anchor.x = h.x;
+      anchor.y = h.y + sY - stageTop;
+      anchor.r = Math.max(6, h.r);
     }
-    if (Number.isNaN(arc.x)) {
+    if (Number.isNaN(anchor.x)) {
       // Nothing published yet (opened mid-page): a plausible spot on the panel.
-      arc.x = panel ? panel.left + panel.width * 0.42 : width * 0.4;
-      arc.y = panel ? panel.top + sY + panel.height * 0.5 : sY + vh * 0.5;
-      arc.r = panel ? panel.height * 0.05 : 18;
+      anchor.x = panel ? panel.left + panel.width * 0.42 : width * 0.4;
+      anchor.y = (panel ? panel.top + panel.height * 0.5 : vh * 0.5) + sY - stageTop;
+      anchor.r = panel ? panel.height * 0.05 : 18;
     }
+    arc.x = anchor.x;
+    arc.y = anchor.y + stageTop;
+    arc.r = anchor.r;
     arc.panelBottom = panelBottomDoc;
     arc.landR = panel ? panel.height * LAND_SIZE : 30;
     // The surface the ball lands on, in document space: the headline's
@@ -809,7 +826,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       travel = 1;
       opacity = 1;
       geometry = 'frame';
-      const toCentre = smoothstep(0.55, CLOSE_START, f);
+      const toCentre = smoothstep(CENTRE_START, CLOSE_START, f);
       tx = lerp(thumbCx, fullCx, toCentre);
       ty = lerp(thumbCy, fullCy, toCentre);
       tr = lerp(landR, closeR, toCentre);
