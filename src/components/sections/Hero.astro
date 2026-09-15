@@ -22,7 +22,10 @@
  * stage holds still, so the droplet that leaves the panel and lands on the
  * headline (src/scripts/reel/handoff.ts) has a whole screen of scroll to
  * fall in and a floor that is not moving away from it. The hold has to run
- * to REST_END there: 1 + hold = REST_END, in viewport heights. Without JS,
+ * to REST_END there: hold = REST_END, in viewport heights. While pinned the
+ * foot (blurb and scroll cue) fades and lifts with the scroll, driven by the
+ * reel's engine through --hero-foot-y / --hero-foot-o, so the page answers
+ * the first pixel of scroll rather than sitting still. Without JS,
  * or when the reel's engine cannot run (data-hero-mode="static", set by the
  * reel's script), the runway collapses and the hero is a plain section.
  */
@@ -34,7 +37,7 @@ interface Props {
   hold?: string;
 }
 
-const { hold = '120vh' } = Astro.props;
+const { hold = '80vh' } = Astro.props;
 ---
 
 <section class="hero" data-hero style={`--hero-hold-set: ${hold}`}>
@@ -94,7 +97,7 @@ const { hold = '120vh' } = Astro.props;
     /* The prop arrives as an inline --hero-hold-set. Resolved here, in the
        stylesheet, so the static mode below can zero it: an inline
        --hero-hold would beat any rule. */
-    --hero-hold: var(--hero-hold-set, 120vh);
+    --hero-hold: var(--hero-hold-set, 80vh);
     /* Art direction for the WebGL scene lives here as --hero-* custom
        properties (see HeroScene.tsx for every hook). Unset, the scene is
        monochrome from the theme greys with a neutral studio light. */
@@ -104,8 +107,8 @@ const { hold = '120vh' } = Astro.props;
 
   .hero__runway {
     /* The stage plus the pinned budget. */
-    height: calc(100vh + var(--hero-hold, 120vh));
-    height: calc(100svh + var(--hero-hold, 120vh));
+    height: calc(100vh + var(--hero-hold, 80vh));
+    height: calc(100svh + var(--hero-hold, 80vh));
   }
 
   .hero__stage {
@@ -215,6 +218,17 @@ const { hold = '120vh' } = Astro.props;
       color-mix(in srgb, var(--color-background) 55%, transparent) 72%,
       var(--color-background) 100%
     );
+  }
+
+  /* Answers the scroll while the stage is pinned. `translate`, not
+     `transform`: the entrance (hero.ts) owns transform and opacity on the
+     foot itself, so the scroll response lives beside it, on the children. */
+  .hero__foot {
+    translate: 0 var(--hero-foot-y, 0px);
+  }
+
+  .hero__foot > * {
+    opacity: var(--hero-foot-o, 1);
   }
 
   .hero__scroll {

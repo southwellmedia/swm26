@@ -514,7 +514,10 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
         });
         engine.start();
       },
-      { rootMargin: '100% 0px' }
+      // The hero above is pinned for a screen of scroll, so the reel sits
+      // two screens down at load; the engine has to be running before the
+      // first pixel of scroll, when the droplet's release begins.
+      { rootMargin: '300% 0px' }
     );
     observer.observe(root);
   }

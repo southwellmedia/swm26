@@ -20,17 +20,18 @@
  * scroll from the top of the page. The hero is pinned (Hero.astro: a sticky
  * stage on a runway) until its hold runs out, so the panel and the headline
  * hold still on screen for the whole of the release, the fall and the rest;
- * REST_END must not run past the end of that hold (1 + the hero's hold).
+ * REST_END must not run past the end of that hold (the hero's hold, in
+ * viewport heights).
  */
 
 /** The reel begins to pull the droplet at this scroll … */
-export const EXIT_START = 0.08;
+export const EXIT_START = 0.04;
 /** … and has it entirely by here (the hero's blend toward the arc is done). */
-export const EXIT_END = 0.3;
+export const EXIT_END = 0.22;
 /** The fall, bounce and settle are over by here … */
-export const FALL_END = 0.95;
+export const FALL_END = 0.7;
 /** … and the ball rests on the headline until here, then floats to the reel. */
-export const REST_END = 1.2;
+export const REST_END = 0.8;
 /** Where in the fall the ball first touches down. */
 export const LAND_T = 0.62;
 /** How far back up it comes, as a fraction of the fall: a droplet, not a
@@ -111,9 +112,11 @@ const impactAt = (t: number) =>
  * Where the ball is at `scrollY`. Released at EXIT_START it falls from the
  * anchor to the floor under gravity, lands at LAND_T, bounces BOUNCE of the
  * way back and settles by FALL_END. The anchor and the floor are both on the
- * hero's pinned stage, so neither moves on screen during the fall: the ball
- * starts from rest, hangs for the first stretch of scroll, then drops.
+ * hero's pinned stage, so neither moves on screen during the fall. It leaves
+ * with a little of the drift it had in the scene (DRIFT of its fall speed),
+ * so the first pixel of scroll moves it, then gravity takes over.
  */
+const DRIFT = 0.4;
 export function arcAt(arc: DropletArc, scrollY: number, vh: number, out: ArcPoint): ArcPoint {
   const s = scrollY / vh;
   const t = clamp((s - EXIT_START) / (FALL_END - EXIT_START), 0, 1);
@@ -123,7 +126,7 @@ export function arcAt(arc: DropletArc, scrollY: number, vh: number, out: ArcPoin
   let curve: number;
   if (t < LAND_T) {
     const u = t / LAND_T;
-    curve = u * u;
+    curve = DRIFT * u + (1 - DRIFT) * u * u;
   } else {
     curve = 1 - BOUNCE * Math.sin((Math.PI * (t - LAND_T)) / (1 - LAND_T));
   }

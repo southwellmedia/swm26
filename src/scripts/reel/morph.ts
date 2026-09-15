@@ -617,6 +617,8 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
   // when there is no stage): the stage is sticky, so a document position
   // would slide up the screen while the panel it came from stays put.
   const anchor = { x: Number.NaN, y: 0, r: 20 };
+  let heroFootY = 0;
+  let heroFootO = 1;
   const arcPoint: ArcPoint = { x: 0, y: 0, r: 0, squash: 1, impact: 0, t: 0, yMax: 0 };
   const pos = new Vector2();
   let rad = 0;
@@ -715,6 +717,21 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     arc.x = anchor.x;
     arc.y = anchor.y + stageTop;
     arc.r = anchor.r;
+    // The hero answers the scroll while it is pinned: its foot lifts a
+    // little and fades, so the page is seen to move from the first pixel.
+    if (heroStage) {
+      // How far into its pin the stage is: its top against its runway's.
+      const runwayTop = (heroStage.parentElement?.getBoundingClientRect().top ?? 0) + sY;
+      const held = Math.max(0, stageTop - runwayTop);
+      const footY = -Math.min(held * 0.35, 96);
+      const footO = 1 - smoothstep(0, 0.22 * vh, held);
+      if (Math.abs(footY - heroFootY) > 0.2 || Math.abs(footO - heroFootO) > 0.005) {
+        heroFootY = footY;
+        heroFootO = footO;
+        heroStage.style.setProperty('--hero-foot-y', `${footY.toFixed(1)}px`);
+        heroStage.style.setProperty('--hero-foot-o', footO.toFixed(3));
+      }
+    }
     arc.panelBottom = panelBottomDoc;
     arc.landR = panel ? panel.height * LAND_SIZE : 30;
     // The surface the ball lands on, in document space: the headline's
