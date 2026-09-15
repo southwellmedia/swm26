@@ -16,12 +16,30 @@
  * WebGL rod field that resolves into order around the cursor. It hydrates on
  * idle so it never competes with the type for the first paint; the CSS
  * treatments underneath are the no-JS / pre-hydration state.
+ *
+ * The section is pinned, the same way the reel is: a sticky, full-height
+ * stage on a runway that is `hold` taller. While the runway scrolls the
+ * stage holds still, so the droplet that leaves the panel and lands on the
+ * headline (src/scripts/reel/handoff.ts) has a whole screen of scroll to
+ * fall in and a floor that is not moving away from it. The hold has to run
+ * to REST_END there: 1 + hold = REST_END, in viewport heights. Without JS,
+ * or when the reel's engine cannot run (data-hero-mode="static", set by the
+ * reel's script), the runway collapses and the hero is a plain section.
  */
 import HeroVisual from '@/components/site/HeroVisual.astro';
 import HeroScene from '@/components/site/HeroScene.tsx';
+
+interface Props {
+  /** Pinned scroll after the stage, as a CSS length. */
+  hold?: string;
+}
+
+const { hold = '120vh' } = Astro.props;
 ---
 
-<section class="hero shell flex min-h-screen flex-col justify-end pt-24 pb-9 max-[700px]:pt-[84px]">
+<section class="hero" data-hero style={`--hero-hold-set: ${hold}`}>
+<div class="hero__runway">
+<div class="hero__stage shell flex flex-col justify-end pt-24 pb-9 max-[700px]:pt-[84px]">
   {
     /* On a phone the content is shorter than the screen, and with the column
       bottom-aligned the slack would sit as a gap under the nav; the panel
@@ -66,20 +84,54 @@ import HeroScene from '@/components/site/HeroScene.tsx';
       <span class="hero__scroll-line"></span>
     </div>
   </div>
+</div>
+</div>
 </section>
 
 <style>
   .hero {
     position: relative;
-    /* The headline is sized in container units off this box, so it is one
-       line per row at every width. Inline-size containment only; the section
-       still grows to its content vertically. */
-    container-type: inline-size;
+    /* The prop arrives as an inline --hero-hold-set. Resolved here, in the
+       stylesheet, so the static mode below can zero it: an inline
+       --hero-hold would beat any rule. */
+    --hero-hold: var(--hero-hold-set, 120vh);
     /* Art direction for the WebGL scene lives here as --hero-* custom
        properties (see HeroScene.tsx for every hook). Unset, the scene is
        monochrome from the theme greys with a neutral studio light. */
     --hero-warm: #ffffff;
     --hero-cool: #f4f7fa;
+  }
+
+  .hero__runway {
+    /* The stage plus the pinned budget. */
+    height: calc(100vh + var(--hero-hold, 120vh));
+    height: calc(100svh + var(--hero-hold, 120vh));
+  }
+
+  .hero__stage {
+    position: sticky;
+    top: 0;
+    /* The screen, and no more: taller and it would pin for less than the
+       hold. On a phone the panel flexes to fill it (see HeroVisual below). */
+    height: 100vh;
+    height: 100svh;
+    /* The headline is sized in container units off this box (the shell),
+       so it is one line per row at every width. Inline-size containment
+       only; the stage keeps its own height. */
+    container-type: inline-size;
+  }
+
+  :global(html:not(.js)) .hero__runway,
+  .hero[data-hero-mode='static'] .hero__runway {
+    height: auto;
+  }
+
+  :global(html:not(.js)) .hero__stage,
+  .hero[data-hero-mode='static'] .hero__stage {
+    position: relative;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100svh;
   }
 
   .hero__render {

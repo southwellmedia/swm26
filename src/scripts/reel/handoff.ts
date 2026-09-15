@@ -16,17 +16,21 @@
  * read a frame late, and the fall starts with the velocity the ball already
  * has on screen.
  *
- * All positions are document px, y down. Timeline in viewport heights.
+ * All positions are document px, y down. Timeline in viewport heights of
+ * scroll from the top of the page. The hero is pinned (Hero.astro: a sticky
+ * stage on a runway) until its hold runs out, so the panel and the headline
+ * hold still on screen for the whole of the release, the fall and the rest;
+ * REST_END must not run past the end of that hold (1 + the hero's hold).
  */
 
 /** The reel begins to pull the droplet at this scroll … */
-export const EXIT_START = 0.05;
+export const EXIT_START = 0.08;
 /** … and has it entirely by here (the hero's blend toward the arc is done). */
-export const EXIT_END = 0.2;
+export const EXIT_END = 0.3;
 /** The fall, bounce and settle are over by here … */
-export const FALL_END = 0.42;
+export const FALL_END = 0.95;
 /** … and the ball rests on the headline until here, then floats to the reel. */
-export const REST_END = 0.5;
+export const REST_END = 1.2;
 /** Where in the fall the ball first touches down. */
 export const LAND_T = 0.62;
 /** How far back up it comes, as a fraction of the fall: a droplet, not a
@@ -106,25 +110,20 @@ const impactAt = (t: number) =>
 /**
  * Where the ball is at `scrollY`. Released at EXIT_START it falls from the
  * anchor to the floor under gravity, lands at LAND_T, bounces BOUNCE of the
- * way back and settles by FALL_END. The fall begins with exactly the
- * velocity that holds it still on screen (one page-length of scroll per
- * page-length of fall), so the ball a moment ago drifting in the scene
- * neither stalls nor jumps: it hangs, then drops.
+ * way back and settles by FALL_END. The anchor and the floor are both on the
+ * hero's pinned stage, so neither moves on screen during the fall: the ball
+ * starts from rest, hangs for the first stretch of scroll, then drops.
  */
 export function arcAt(arc: DropletArc, scrollY: number, vh: number, out: ArcPoint): ArcPoint {
   const s = scrollY / vh;
   const t = clamp((s - EXIT_START) / (FALL_END - EXIT_START), 0, 1);
   const rLand = landingRadius(arc);
   const top = arc.y + arc.r; // the ball's underside at release
-  const distance = Math.max(1, arc.floor - top);
-  // Scroll spent falling, in px; the initial velocity that cancels it.
-  const span = (FALL_END - EXIT_START) * vh * LAND_T;
-  const v = clamp(span / distance, 0, 1);
 
   let curve: number;
   if (t < LAND_T) {
     const u = t / LAND_T;
-    curve = v * u + (1 - v) * u * u;
+    curve = u * u;
   } else {
     curve = 1 - BOUNCE * Math.sin((Math.PI * (t - LAND_T)) / (1 - LAND_T));
   }

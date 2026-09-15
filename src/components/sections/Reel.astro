@@ -51,7 +51,7 @@ const {
   poster,
   title = 'Bold ideas, built to ship.',
   blurb = 'Ideas, design and engineering under one roof — from the first sketch to the last deploy.',
-  hold = '160vh',
+  hold = '280vh',
   class: className,
 } = Astro.props;
 
@@ -146,13 +146,13 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
     /* The prop arrives as an inline --reel-hold-set. Resolving it here, in
        the stylesheet, is what lets the static mode below zero it: an inline
        --reel-hold would beat any rule. */
-    --reel-hold: var(--reel-hold-set, 160vh);
+    --reel-hold: var(--reel-hold-set, 280vh);
   }
 
   .reel__runway {
     /* The stage plus the pinned budget. */
-    height: calc(100vh + var(--reel-hold, 160vh));
-    height: calc(100svh + var(--reel-hold, 160vh));
+    height: calc(100vh + var(--reel-hold, 280vh));
+    height: calc(100svh + var(--reel-hold, 280vh));
   }
 
   .reel__stage {
@@ -460,14 +460,19 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
     // no engine to do that, or when the page opens already past the reel,
     // it simply shows; the engine keeps that in step once it runs.
     const lead = document.querySelector<HTMLElement>('[data-work-grid] .card[data-deliver]');
+    // The hero is pinned only for the journey: with no engine to run it,
+    // a held hero is a screen of nothing.
+    const hero = document.querySelector<HTMLElement>('[data-hero]');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced || !hasWebGL(document.createElement('canvas'))) {
       root.dataset.reelMode = 'static';
+      if (hero) hero.dataset.heroMode = 'static';
       lead?.classList.add('is-in');
       return;
     }
 
     root.dataset.reelMode = 'live';
+    if (hero) hero.dataset.heroMode = 'live';
     if (lead && runway.getBoundingClientRect().bottom < 0) lead.classList.add('is-in');
 
     observer = new IntersectionObserver(
@@ -489,6 +494,7 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
           copy: copy ?? undefined,
           // The hero: where the droplet emerges, what it lands on, and where
           // the --hero-* palette hooks live.
+          heroStage: document.querySelector<HTMLElement>('.hero__stage'),
           heroPanel: document.querySelector<HTMLElement>('.hero__render'),
           heroFloor: document.querySelector<HTMLElement>('.hero__foot'),
           heroBaseline: document.querySelector<HTMLElement>('.hero__baseline'),
