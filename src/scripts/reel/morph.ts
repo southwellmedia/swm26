@@ -370,9 +370,7 @@ function makeColorReader(scope: HTMLElement) {
   };
 }
 
-function readPalette(
-  read: ReturnType<typeof makeColorReader>
-): ScenePalette & { signature: Color } {
+function readPalette(read: ReturnType<typeof makeColorReader>): ScenePalette {
   return {
     ink: read('var(--hero-ink, var(--color-foreground))', '#0c1016'),
     mid: read('var(--hero-mid, var(--gray-500))', '#7a7f86'),

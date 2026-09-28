@@ -2,7 +2,8 @@
 
 ## Design
 
-- One vermilion signature object (`--signature-color: #ff542e`) retains its pigment between the hero and the reel. The rest of the hero palette stays neutral.
+- One vermilion signature object (`--signature-color: #ff542e`) retains its pigment through the hero, the traveling ball and the interactive reel scene. The rest of the hero palette stays neutral.
+- Restrained footer with the studio mark, navigation and details; no repeated orb or tagline.
 - Full-color project imagery, visible project descriptions and status badges.
 - A direct work link, revised positioning and a wrapping mobile headline.
 - Shorter pinned sequence: 100vh desktop, 55svh mobile, with a 1.1s reel-to-work link.
