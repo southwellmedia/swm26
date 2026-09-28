@@ -93,9 +93,8 @@ if (includeOrgSchema) {
 
     <!-- Motion (src/scripts/motion) hides what it is about to reveal behind
          this class, so nothing is ever hidden for a visitor without JS. -->
-    <script is:inline>
-      document.documentElement.classList.add('js');
-    </script>
+    <!-- The motion module opts into hidden entrance states only after loading.
+         A blocked bundle must never hide the server-rendered page. -->
 
     <!-- Theme script (runs before render to prevent flash) -->
     <script is:inline>

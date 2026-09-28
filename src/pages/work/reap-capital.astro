@@ -92,18 +92,20 @@ const nextImage = next.data.feature ?? next.data.cover;
     </header>
 
     {/* --- results ------------------------------------------------------- */}
-    <section class="shell" aria-label="Results">
-      <div class="stats" data-reveal>
-        {
-          stats.map((stat) => (
-            <div class="stats__item">
-              <div class="stats__value">{stat.value}</div>
-              <div class="stats__label">{stat.label}</div>
-            </div>
-          ))
-        }
-      </div>
-    </section>
+    {
+      stats.length > 0 && (
+        <section class="shell" aria-label="Results">
+          <div class="stats" data-reveal>
+            {stats.map((stat) => (
+              <div class="stats__item">
+                <div class="stats__value">{stat.value}</div>
+                <div class="stats__label">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )
+    }
 
     {/* --- 01 flagship --------------------------------------------------- */}
     <section class="flagship shell" aria-labelledby="flagship-title">

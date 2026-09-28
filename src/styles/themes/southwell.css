@@ -12,6 +12,8 @@
    ============================================================================= */
 
 :root {
+  /* Lacquer-red signature object; deliberately independent of UI and chrome. */
+  --signature-color: #ff542e;
   /* -------------------------------------------------------------------------
      Semantic Tokens - Light Mode
      ------------------------------------------------------------------------- */
@@ -78,14 +80,15 @@
      Outfit for headlines, Archivo for body and UI, IBM Plex Mono for the
      eyebrow and meta labels.
      ------------------------------------------------------------------------- */
-  --theme-font-sans: 'Archivo Variable', 'Archivo', system-ui, -apple-system,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --theme-font-sans:
+    'Archivo Variable', 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
   /* Display face. This one line changes every headline on the site.
      Outfit: near-monoline geometric, open and even at large sizes — the
      opposite of the crowding Archivo showed at display scale. */
   --theme-font-display: 'Outfit Variable', 'Outfit', var(--theme-font-sans);
-  --theme-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, 'SF Mono',
-    Menlo, Consolas, monospace;
+  --theme-font-mono:
+    'IBM Plex Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 
   --theme-heading-weight: 600;
   --theme-heading-tracking: -0.03em;
@@ -225,9 +228,9 @@
      hover. On a monochrome identity that means colour only ever appears on
      intent, and the grid reads as one surface instead of eleven competing
      photographs. */
-  --work-rest-grayscale: 1;
-  --work-rest-opacity: 0.62;
-  --work-rest-contrast: 1.05;
+  --work-rest-grayscale: 0;
+  --work-rest-opacity: 1;
+  --work-rest-contrast: 1;
 
   /* -------------------------------------------------------------------------
      Brand ramp override

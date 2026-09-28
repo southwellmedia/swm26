@@ -16,7 +16,7 @@
  * Content lives in @/data/vana.ts. The app is in development, so a lot of it
  * is draft copy and every striped box is a slot for a capture still to come.
  */
-import { getCollection } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
 import { Image } from 'astro:assets';
 import SiteLayout from '@/layouts/SiteLayout.astro';
 import Placeholder from '@/components/site/Placeholder.astro';
@@ -40,6 +40,10 @@ import {
 } from '@/data/vana';
 import feature from '@/assets/work/vana/feature.webp';
 import cover from '@/assets/work/vana/cover.webp';
+
+// Keep the unfinished story in development previews until its claims and assets are approved.
+const entry = await getEntry('work', 'vana');
+if (import.meta.env.PROD && entry?.data.draft) return Astro.redirect('/work', 302);
 
 // Same ordering as the generic template, so "next" agrees with the grid.
 const projects = (
@@ -246,10 +250,10 @@ const journeyPct = Math.round((journey.day / journey.days) * 100);
           <p class="eyebrow label-mono">03 · JOURNEYS</p>
           <h3 class="ch__title">six weeks, <em>three phases.</em></h3>
           <p class="ch__intro">
-            A journey is the reason the rituals exist. You pick one — becoming a morning person,
-            say — and it lays out six weeks in three phases. Foundation sets the core habits.
-            Expansion grows them and adds one. Integration grows them again. Nothing from an earlier
-            phase is ever taken away.
+            A journey is the reason the rituals exist. You pick one — becoming a morning person, say
+            — and it lays out six weeks in three phases. Foundation sets the core habits. Expansion
+            grows them and adds one. Integration grows them again. Nothing from an earlier phase is
+            ever taken away.
           </p>
 
           <div class="journey">
@@ -275,7 +279,7 @@ const journeyPct = Math.round((journey.day / journey.days) * 100);
                       </div>
                       <p class="phase__desc">{phase.desc}</p>
                       <span class="phase__bar" aria-hidden="true">
-                        <span class="phase__fill" style={`width: ${phase.progress}%`}></span>
+                        <span class="phase__fill" style={`width: ${phase.progress}%`} />
                       </span>
                     </div>
                   </li>
@@ -344,9 +348,9 @@ const journeyPct = Math.round((journey.day / journey.days) * 100);
           <h3 class="ch__title">warm, <em>unhurried.</em></h3>
           <p class="ch__intro">
             {/* TODO: draft copy. Rewrite once the identity is designed. */}
-            Terracotta and peach off a sunlit table, sage for the tick, paper for everything else.
-            An editorial serif that sounds like a letter, not a dashboard. The identity is still in
-            the studio; the tiles below are where it will land.
+            Terracotta and peach off a sunlit table, sage for the tick, paper for everything else. An
+            editorial serif that sounds like a letter, not a dashboard. The identity is still in the studio;
+            the tiles below are where it will land.
           </p>
 
           <div class="brand">
@@ -435,7 +439,10 @@ const journeyPct = Math.round((journey.day / journey.days) * 100);
             overnight by a job that reads yesterday, not by a model that guesses.
           </p>
 
-          <Placeholder label="diagram — data model, sync and the nightly letter" class="hood__shot" />
+          <Placeholder
+            label="diagram — data model, sync and the nightly letter"
+            class="hood__shot"
+          />
 
           <div class="hood__grid">
             {
@@ -458,7 +465,7 @@ const journeyPct = Math.round((journey.day / journey.days) * 100);
         {
           milestones.map((m) => (
             <li class="milestone" data-state={m.state}>
-              <span class="milestone__dot" aria-hidden="true"></span>
+              <span class="milestone__dot" aria-hidden="true" />
               <span class="milestone__label">{m.label}</span>
               <span class="milestone__when label-mono">{m.when.toUpperCase()}</span>
             </li>

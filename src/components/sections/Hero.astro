@@ -17,6 +17,7 @@
  * idle so it never competes with the type for the first paint; the CSS
  * treatments underneath are the no-JS / pre-hydration state.
  */
+import PillButton from '@/components/site/PillButton.astro';
 import HeroVisual from '@/components/site/HeroVisual.astro';
 import HeroScene from '@/components/site/HeroScene.tsx';
 ---
@@ -41,12 +42,11 @@ import HeroScene from '@/components/site/HeroScene.tsx';
   </HeroVisual>
 
   <h1 class="hero__headline display-hero">
-    <span class="hero__line"
-      ><span class="hero__word hero__word--1">A Dallas creative studio</span></span
+    <span class="hero__line"><span class="hero__word hero__word--1">Original by design.</span></span
     >
     <span class="hero__line"
       ><span class="hero__word hero__word--2"
-        ><em>for websites, apps and brands.</em>{
+        ><em>Built to earn its keep.</em>{
           /* A zero-size inline-block sat on the baseline: the reel's droplet
             lands on this line, and reads where the baseline is from here. */
         }<span class="hero__baseline" aria-hidden="true"></span></span
@@ -56,11 +56,13 @@ import HeroScene from '@/components/site/HeroScene.tsx';
 
   <div class="hero__foot mt-9 flex items-end justify-between gap-10">
     <p class="text-foreground-secondary m-0 max-w-[440px] text-[17px] leading-[1.6]">
-      <strong class="text-foreground font-medium">Work that earns its keep.</strong>
-      {' '}Southwell Media is a Dallas-based creative studio building original websites, apps and
-      brands: no templates, no themes, shipped in weeks.
+      Websites, apps and brands. Designed and built by one Dallas studio, from the first
+      conversation to the final detail.
     </p>
 
+    <PillButton href="#work" data-scroll-target="[data-work-grid]" class="hero__work px-7 py-3.5">
+      View selected work <span aria-hidden="true">↘</span>
+    </PillButton>
     <div class="hero__scroll" aria-hidden="true">
       Scroll
       <span class="hero__scroll-line"></span>
@@ -117,12 +119,8 @@ import HeroScene from '@/components/site/HeroScene.tsx';
        has no descenders, so the space under it reads as a gap. One token in
        themes/southwell.css. */
     line-height: var(--hero-leading, 0.88);
-    /* Sized to the shell, not the viewport: the second line is about 12.4em
-       of light Outfit at this tracking, and 7.7cqi puts it at roughly 95% of
-       the container's width at every size — one row per line on a phone as
-       well as on a 1440px shell. The shell caps at 1440px, so this caps
-       itself. */
-    font-size: 7.7cqi;
+    /* Desktop stays editorial; mobile below has its own wrapping composition. */
+    font-size: 9.4cqi;
   }
 
   /* Each line masks its word so it rises out from behind the line above.
@@ -185,7 +183,20 @@ import HeroScene from '@/components/site/HeroScene.tsx';
 
   @media (max-width: 700px) {
     .hero__headline {
-      margin-top: var(--hero-headline-pull-sm, -0.4em);
+      margin-top: -0.25em;
+      font-size: clamp(42px, 11.8vw, 76px);
+      line-height: 0.98;
+    }
+    .hero__foot {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 24px;
+    }
+    .hero__render {
+      min-height: 30svh;
+    }
+    .hero__word {
+      text-wrap: balance;
     }
 
     .hero__scroll {

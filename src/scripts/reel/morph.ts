@@ -243,6 +243,7 @@ uniform vec3 uInk, uMid, uSilver, uBg, uBg2, uWarm, uCool;
 varying vec2 vUv;
 
 ${STUDIO_GLSL}
+uniform vec3 uSignature;
 
 float roundedBox(vec2 q, vec2 b, float r) {
   vec2 d = abs(q) - b + vec2(r);
@@ -262,7 +263,7 @@ vec3 chrome(vec2 dq, float r) {
   vec3 L = normalize(KEY);
   float ndl = max(dot(n, L), 0.0);
   float fres = pow(1.0 - max(dot(n, v), 0.0), 5.0);
-  vec3 albedo = dropletColor(0.95);
+  vec3 albedo = uSignature;
   // The underside picks up the bright floor it floats over.
   float bounce = smoothstep(0.2, -1.0, n.y);
   vec3 diffuse = albedo * ((0.22 + 0.62 * ndl) + bounce * 0.3 * uBg);
@@ -369,11 +370,14 @@ function makeColorReader(scope: HTMLElement) {
   };
 }
 
-function readPalette(read: ReturnType<typeof makeColorReader>): ScenePalette {
+function readPalette(
+  read: ReturnType<typeof makeColorReader>
+): ScenePalette & { signature: Color } {
   return {
     ink: read('var(--hero-ink, var(--color-foreground))', '#0c1016'),
     mid: read('var(--hero-mid, var(--gray-500))', '#7a7f86'),
     silver: read('var(--hero-chrome, var(--gray-200))', '#e2e5e8'),
+    signature: read('var(--signature-color)', '#ff542e'),
     bg: read('var(--color-background-secondary)', '#e6ebef'),
     bg2: read('var(--color-background-tertiary)', '#d9dfe4'),
     warm: read('var(--hero-warm, #ffffff)', '#ffffff'),
@@ -428,6 +432,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     uInk: { value: new Color() },
     uMid: { value: new Color() },
     uSilver: { value: new Color() },
+    uSignature: { value: new Color() },
     uBg: { value: new Color() },
     uBg2: { value: new Color() },
     uWarm: { value: new Color() },
@@ -440,6 +445,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     colors.uInk.value.copy(p.ink);
     colors.uMid.value.copy(p.mid);
     colors.uSilver.value.copy(p.silver);
+    colors.uSignature.value.copy(p.signature);
     colors.uBg.value.copy(p.bg);
     colors.uBg2.value.copy(p.bg2);
     colors.uWarm.value.copy(p.warm);

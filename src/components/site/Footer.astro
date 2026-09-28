@@ -9,7 +9,6 @@
 import { Icon } from 'astro-icon/components';
 import siteConfig from '@/config/site.config';
 import { footerColumns } from '@/config/footer.config';
-import Placeholder from './Placeholder.astro';
 
 const year = new Date().getFullYear();
 ---
@@ -46,12 +45,9 @@ const year = new Date().getFullYear();
         </nav>
       </div>
 
-      <div data-reveal data-reveal-delay="0.3">
-        <Placeholder
-          invert
-          label="[ footer 3d render — cropped, bleeds off bottom ]"
-          class="mt-16 h-[220px] max-[900px]:mt-12 max-[900px]:h-[150px]"
-        />
+      <div class="footer__signature" data-reveal data-reveal-delay="0.3">
+        <p>Good ideas<br /><span>deserve to exist.</span></p>
+        <span class="footer__orb" aria-hidden="true"></span>
       </div>
 
       <div
@@ -100,6 +96,52 @@ const year = new Date().getFullYear();
     }
     to {
       translate: 0 0;
+    }
+  }
+
+  .footer__signature {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 65px 0 32px;
+    margin-top: 60px;
+    border-top: 1px solid rgb(238 242 244 / 0.16);
+  }
+  .footer__signature p {
+    margin: 0;
+    font: 500 clamp(38px, 6.8vw, 100px)/0.98 var(--font-display);
+    letter-spacing: -0.045em;
+  }
+  .footer__signature p span {
+    font-weight: 300;
+  }
+  .footer__orb {
+    flex: none;
+    width: clamp(62px, 11vw, 150px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at 30% 23%,
+      #ffded2 0%,
+      #ff997c 8%,
+      var(--signature-color) 34%,
+      #ac2712 72%,
+      #4c120b 100%
+    );
+    box-shadow:
+      inset -8px -12px 22px #4c120b55,
+      0 18px 35px #0005;
+  }
+  @media (max-width: 600px) {
+    .footer__signature {
+      margin-top: 40px;
+      padding-top: 35px;
+      gap: 14px;
+    }
+    .footer__signature p {
+      font-size: clamp(30px, 8vw, 46px);
     }
   }
 

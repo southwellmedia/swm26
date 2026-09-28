@@ -95,6 +95,7 @@ const marchFragment = /* glsl */ `
   uniform float uBlobTint[${NBLOB}];  // 0 ink .. 1 chrome
   uniform float uK;                   // smooth-union radius of the main body
   uniform vec3  uInk, uMid, uSilver, uBg, uBg2;
+  uniform vec3 uSignature;
   uniform vec3  uWarm, uCool;         // key / fill light tints
 
   in vec2 vUv;
@@ -127,6 +128,18 @@ const marchFragment = /* glsl */ `
       wsum += w; tsum += w * uBlobTint[i];
     }
     return wsum > 0.0 ? tsum / wsum : 0.5;
+  }
+
+  // Only the final stray carries the signature pigment. Nearby surfaces stay neutral.
+  float signatureAt(vec3 p) {
+    float total = 0.0, accent = 0.0;
+    for (int i = 0; i < uBlobCount; i++) {
+      float d = length(p - uBlobs[i].xyz) - uBlobs[i].w;
+      float weight = exp(-12.0 * max(d, 0.0));
+      total += weight;
+      if (i == ${NBLOB - 1}) accent = weight;
+    }
+    return smoothstep(0.25, 0.75, accent / max(total, 0.0001));
   }
 
   vec3 calcNormal(vec3 p, float eps) {
@@ -197,7 +210,7 @@ const marchFragment = /* glsl */ `
     float ndl = max(dot(n, L), 0.0);
     float fres = pow(1.0 - max(dot(n, v), 0.0), 5.0);
 
-    vec3 albedo = dropletColor(tint);
+    vec3 albedo = mix(dropletColor(tint), uSignature, signatureAt(p));
     // Bounce from the bright floor lifts the underside (and the reflection).
     float bounce = smoothstep(0.2, -1.0, n.y) * smoothstep(1.5, FLOOR_Y, p.y);
     vec3 diffuse = albedo * ((0.22 + 0.62 * ndl * sh) * ao + bounce * 0.35 * uBg);
@@ -428,6 +441,7 @@ type Palette = {
   ink: THREE.Color;
   mid: THREE.Color;
   silver: THREE.Color;
+  signature: THREE.Color;
   bg: THREE.Color;
   bg2: THREE.Color;
   warm: THREE.Color;
@@ -484,6 +498,7 @@ function readPalette(scope: HTMLElement): Palette {
     ink: cssColor(scope, 'var(--hero-ink, var(--color-foreground))', '#0c1016'),
     mid: cssColor(scope, 'var(--hero-mid, var(--gray-500))', '#7a7f86'),
     silver: cssColor(scope, 'var(--hero-chrome, var(--gray-200))', '#e2e5e8'),
+    signature: cssColor(scope, 'var(--signature-color)', '#ff542e'),
     bg: cssColor(scope, 'var(--color-background-secondary)', '#e6ebef'),
     bg2: cssColor(scope, 'var(--color-background-tertiary)', '#d9dfe4'),
     warm: cssColor(scope, 'var(--hero-warm, #ffffff)', '#ffffff'),
@@ -621,6 +636,7 @@ class HeroEngine {
     uInk: { value: new THREE.Color() },
     uMid: { value: new THREE.Color() },
     uSilver: { value: new THREE.Color() },
+    uSignature: { value: new THREE.Color() },
     uBg: { value: new THREE.Color() },
     uBg2: { value: new THREE.Color() },
     uWarm: { value: new THREE.Color() },
@@ -760,6 +776,7 @@ class HeroEngine {
     this.colors.uInk.value.copy(p.ink);
     this.colors.uMid.value.copy(p.mid);
     this.colors.uSilver.value.copy(p.silver);
+    this.colors.uSignature.value.copy(p.signature);
     this.colors.uBg.value.copy(p.bg);
     this.colors.uBg2.value.copy(p.bg2);
     this.colors.uWarm.value.copy(p.warm);
