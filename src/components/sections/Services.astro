@@ -114,9 +114,11 @@ const timelineScope = services
     isolation: isolate;
     display: grid;
     grid-template-columns: 1fr 1.1fr;
+    overflow: hidden;
     gap: 40px;
     min-height: 62vh;
-    padding: 28px 28px 28px 48px;
+    color: #0c1016;
+    padding: 48px;
     border: 1px solid var(--color-card-border);
     border-radius: var(--radius-xl);
     box-shadow: 0 -12px 40px rgb(12 16 22 / 0.1);
@@ -221,6 +223,8 @@ const timelineScope = services
   }
 
   .service__copy {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -322,6 +326,20 @@ const timelineScope = services
 
     .service__desc {
       font-size: 16px;
+    }
+  }
+</style>
+
+<style>
+  .service[data-theme='ink'] {
+    color: #eef2f4;
+  }
+  @media (max-width: 800px) {
+    .service {
+      background: #edf1f4;
+    }
+    .service[data-theme='ink'] {
+      background: #121619;
     }
   }
 </style>

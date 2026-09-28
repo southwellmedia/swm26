@@ -11,7 +11,9 @@
 
 ## Services art direction
 
-The service cards pair readable copy with four HTML/CSS/SVG compositions: a layered real Texas Trinkets capture, a clearly labelled fictional product concept, a Southwell typography study, and an abstract diagnostic diagram. Scroll-linked assembly/reveal effects progressively enhance static layouts; reduced-motion visitors see the finished compositions. Mobile places artwork above copy. No additional WebGL renderer or animation dependency is used.
+Preview study: the four cards now share a cropped pleated-titanium material study with tonal/crop variations, replacing literal UI illustrations. This uses an optimized generated WebP beneath live HTML copy, with subtle CSS scroll drift, not real-time 3D. Mobile separates the sculptural crop from copy; reduced motion is static.
+
+Asset: `src/assets/services/pleated-titanium.webp`. Generated with the built-in image tool from the approved still composition. Prompt: Preserve the brushed titanium pleated sculpture, studio lighting, diagonal S curve and right-side cropping; remove all typography and rounded corners; keep left 48 percent empty for HTML text; photoreal brushed metal, graphite valleys, pearl-gray studio, no new elements or text.
 
 ## Content decisions
 
