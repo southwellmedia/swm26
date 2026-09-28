@@ -1,140 +1,48 @@
 ---
 import { Image } from 'astro:assets';
 import sculpture from '@/assets/services/pleated-titanium.webp';
-interface Props {
-  index: number;
-}
-const { index } = Astro.props;
 ---
 
-<div class:list={['service-art', `service-art--${index}`]} aria-hidden="true">
-  {
-    index === 0 && (
-      <div class="tension-field" data-tension-field>
-        <>
-          <canvas aria-hidden="true" />
-          <span>Explore the surface ↗</span>
-        </>
-      </div>
-    )
-  }
-  <Image
-    src={sculpture}
-    alt=""
-    widths={[800, 1280, 1840]}
-    sizes="(max-width: 800px) 100vw, 95vw"
-    loading="lazy"
-  />
+<div class="service-art" data-sculpture aria-hidden="true">
+  <Image src={sculpture} alt="" widths={[800, 1280, 1840]} sizes="95vw" loading="lazy" />
+  <canvas></canvas>
 </div>
-<style>
-  .service-art {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-    z-index: 0;
-    background: #edf1f4;
-  }
-  .service-art :global(img) {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    transform: scale(1.035);
-  }
-  .service-art--1 :global(img) {
-    transform: scale(1.16) translateY(-3%);
-  }
-  .service-art--2 {
-    filter: invert(1) grayscale(1);
-  }
-  .service-art--3 :global(img) {
-    transform: scale(1.1) translateY(3%);
-  }
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-      .service-art {
-        animation: sculpture-drift linear both;
-        animation-timeline: view();
-        animation-range: entry 0% exit 100%;
-      }
-      @keyframes sculpture-drift {
-        from {
-          translate: 0 8px;
-          scale: 1.03;
-        }
-        to {
-          translate: 0 -8px;
-          scale: 1.06;
-        }
-      }
-    }
-  }
-  @media (max-width: 800px) {
-    .service-art {
-      position: relative;
-      height: 300px;
-      margin: -36px -28px 0;
-    }
-    .service-art :global(img) {
-      object-position: 80% center;
-      width: 150%;
-      max-width: none;
-      margin-left: -50%;
-    }
-  }
-</style>
-
 <script>
-  import { mountTension } from '@/scripts/service-tension';
+  import { mountSculpture } from '@/scripts/service-tension';
   const init = () =>
-    document.querySelectorAll<HTMLElement>('[data-tension-field]').forEach((host) => {
+    document.querySelectorAll<HTMLElement>('[data-sculpture]').forEach((host) => {
       if (host.dataset.mounted) return;
       host.dataset.mounted = 'true';
-      mountTension(host);
+      mountSculpture(host);
     });
   init();
   document.addEventListener('astro:page-load', init);
 </script>
 <style>
-  .service-art--0:has([data-ready='true']) :global(img) {
-    opacity: 0;
-  }
-  .service-art--0 {
-    animation: none;
-  }
-  .tension-field {
+  .service-art {
     position: absolute;
-    inset: 0 0 0 40%;
-    z-index: 1;
+    inset: 0;
+    overflow: hidden;
+    background: #111519;
   }
-  .tension-field canvas {
-    display: block;
+  .service-art :global(img) {
+    position: absolute;
     width: 100%;
     height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) brightness(0.3);
   }
-  .tension-field span {
+  .service-art canvas {
     position: absolute;
-    right: 30px;
-    bottom: 24px;
-    font: 10px var(--font-mono);
-    color: #626b75;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     opacity: 0;
   }
-  .tension-field[data-ready='true'] span {
+  .service-art[data-ready='true'] canvas {
     opacity: 1;
   }
-  @media (max-width: 800px) {
-    .tension-field {
-      inset: 0;
-    }
-    .tension-field span {
-      display: none;
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .tension-field span {
-      display: none;
-    }
+  .service-art[data-ready='true'] :global(img) {
+    opacity: 0;
   }
 </style>

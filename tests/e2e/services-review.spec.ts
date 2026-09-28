@@ -12,7 +12,7 @@ test('service artwork remains readable on desktop and mobile', async ({ page }) 
         true
       );
       if (process.env.REVIEW_SCREENSHOT_DIR)
-        await card.screenshot({
+        await page.screenshot({
           path: `${process.env.REVIEW_SCREENSHOT_DIR}/service-${width}-${i}.png`,
         });
     }

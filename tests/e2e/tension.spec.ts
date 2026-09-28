@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
-test('tension field renders and responds to the pointer', async ({ page }) => {
+test('sculpture renders, responds to the pointer and follows service chapters', async ({
+  page,
+}) => {
   test.setTimeout(90_000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  const field = page.locator('[data-tension-field]');
+  const field = page.locator('[data-sculpture]');
   await field.scrollIntoViewIfNeeded();
   await expect(field).toHaveAttribute('data-ready', 'true');
   if (process.env.REVIEW_SCREENSHOT_DIR)
@@ -20,6 +22,12 @@ test('tension field renders and responds to the pointer', async ({ page }) => {
   await expect(field).toHaveAttribute('data-interacting', 'true', { timeout: 20_000 });
   await page.mouse.move(0, 0);
   await expect(field).toHaveAttribute('data-interacting', 'false', { timeout: 20_000 });
+  await page.locator('[data-service-step="3"]').scrollIntoViewIfNeeded();
+  await expect(field).toHaveAttribute('data-chapter', '3', { timeout: 20_000 });
+  if (process.env.REVIEW_SCREENSHOT_DIR)
+    await page.screenshot({
+      path: `${process.env.REVIEW_SCREENSHOT_DIR}/sculpture-final-chapter.png`,
+    });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 390, height: 844 });
   await field.scrollIntoViewIfNeeded();

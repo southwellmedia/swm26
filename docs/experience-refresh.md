@@ -11,7 +11,9 @@
 
 ## Services art direction
 
-The first card now mounts a live Three.js tension field: 60 thin metallic ribbons with a slow wave, damped local pointer deformation, and scroll-linked orientation. Rendering pauses offscreen or in a hidden tab, respects reduced motion, and retains the image fallback if WebGL fails. The remaining cards share a cropped pleated-titanium material study with tonal/crop variations, replacing literal UI illustrations. This uses an optimized generated WebP beneath live HTML copy, with subtle CSS scroll drift, not real-time 3D. Mobile separates the sculptural crop from copy; reduced motion is static.
+Services now form one continuous dark stage with four scrolling text chapters and one shared WebGL sculpture. Eight thick curved blades use rounded cross sections, twisted spines, environment reflections, and soft inter-object shadows. Scroll changes the camera and sculpture orientation; pointer movement adds a small damped change in perspective. This replaces the striped tension field and separate card images.
+
+One renderer pauses offscreen and in hidden tabs. Reduced motion keeps the sculpture still; WebGL failure or context loss leaves the optimized static image beneath the live text. Mobile uses a top sculpture crop and a dark gradient behind copy. Tests exercise pointer response, the fourth chapter, and mobile overflow.
 
 Asset: `src/assets/services/pleated-titanium.webp`. Generated with the built-in image tool from the approved still composition. Prompt: Preserve the brushed titanium pleated sculpture, studio lighting, diagonal S curve and right-side cropping; remove all typography and rounded corners; keep left 48 percent empty for HTML text; photoreal brushed metal, graphite valleys, pearl-gray studio, no new elements or text.
 
