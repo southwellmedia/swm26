@@ -1,18 +1,23 @@
 ---
+import { particlePosition, accentWeight } from '@/scripts/particle-layout';
 interface Props { index: number }
 const { index } = Astro.props;
 const dots = Array.from({ length: 160 }, (_, i) => {
-  const u = ((i * 0.61803398875) % 1);
+  const u = (i * .61803398875) % 1;
   const spread = Math.sin(i * 12.9898) * Math.cos(i * 4.1414);
-  return { x: u * 720, y: 180 + Math.sin(u * 5) * 75 + spread * 85, r: 0.8 + (i % 4) * 0.35, accent: i % 5 === 0 };
+  const accent = i % 5 === 0;
+  const depth = (i * .41421356237) % 1;
+  const point = particlePosition(u, spread, depth, i, 0, 0, index, accent);
+  const weight = accentWeight((i * .754877666) % 1);
+  return { x: point.x * 720, y: point.y * 400, r: accent ? weight.radius : .8 + depth, accent, opacity: accent ? weight.opacity : .25 };
 });
 ---
-{index === 0 && <div class="service-art" data-particle-field aria-hidden="true">
+<div class="service-art" data-particle-field data-particle-variant={index} aria-hidden="true">
   <svg viewBox="0 0 720 400" preserveAspectRatio="xMidYMid slice">
-    {dots.map(dot => <circle cx={dot.x} cy={dot.y} r={dot.r} fill={dot.accent ? 'var(--signature-color, #ff542e)' : 'currentColor'} opacity={dot.accent ? .7 : .25} />)}
+    {dots.map(dot => <circle cx={dot.x} cy={dot.y} r={dot.r} fill={dot.accent ? 'var(--signature-color, #ff542e)' : 'currentColor'} opacity={dot.opacity} />)}
   </svg>
   <canvas></canvas>
-</div>}
+</div>
 <script>
   import { mountParticles } from '@/scripts/service-particles';
   const init = () => document.querySelectorAll<HTMLElement>('[data-particle-field]').forEach(host => {

@@ -6,8 +6,14 @@ test('stacked service particle study responds and respects reduced motion', asyn
   await page.goto('/');
   await expect(page.locator('.services__slot')).toHaveCount(4);
   await expect(page.locator('[data-sculpture]')).toHaveCount(0);
-  const field = page.locator('[data-particle-field]');
-  await expect(field).toHaveCount(1);
+  const fields = page.locator('[data-particle-field]');
+  await expect(fields).toHaveCount(4);
+  for (let i = 0; i < 4; i++) {
+    await fields.nth(i).scrollIntoViewIfNeeded();
+    await expect(fields.nth(i)).toHaveAttribute('data-ready', 'true');
+    await expect(fields.nth(i)).toHaveAttribute('data-particle-variant', String(i));
+  }
+  const field = fields.first();
   await field.scrollIntoViewIfNeeded();
   await expect(field).toHaveAttribute('data-ready', 'true');
   const still = await field.locator('canvas').evaluate(canvas => (canvas as HTMLCanvasElement).toDataURL());

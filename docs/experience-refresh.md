@@ -11,7 +11,7 @@
 
 ## Services art direction
 
-The preferred stacked cards are restored. The first card is a Canvas 2D particle study: a graphite field with depth-dependent size/opacity, a narrow vermilion current using the signature color, and damped pointer repulsion. Other cards retain quiet tonal backgrounds while this direction is reviewed. The blade model and its service renderer are removed.
+The preferred stacked cards are restored. All four cards use the approved Canvas 2D particle direction: a diagonal current, an open spiral, a broad ripple, and an asymmetric cloud. The signature orange particles have mostly fine specks, fewer medium points, and rare heavier accents, with size and opacity varying together. Graphite particles keep their quieter weight; dark cards use the foreground tone for contrast. Pointer repulsion and reduced-motion behavior remain shared. Static fallbacks use the same composition functions as the canvas. The blade model and its service renderer are removed.
 
 The particle canvas pauses offscreen and in hidden tabs; reduced motion renders a still. A deterministic SVG provides a no-JS/canvas fallback. Mobile returns to normal document flow with artwork above copy.
 
