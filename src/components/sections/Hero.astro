@@ -17,7 +17,6 @@
  * idle so it never competes with the type for the first paint; the CSS
  * treatments underneath are the no-JS / pre-hydration state.
  */
-import PillButton from '@/components/site/PillButton.astro';
 import HeroVisual from '@/components/site/HeroVisual.astro';
 import HeroScene from '@/components/site/HeroScene.tsx';
 ---
@@ -60,9 +59,6 @@ import HeroScene from '@/components/site/HeroScene.tsx';
       conversation to the final detail.
     </p>
 
-    <PillButton href="#work" data-scroll-target="[data-work-grid]" class="hero__work px-7 py-3.5">
-      View selected work <span aria-hidden="true">↘</span>
-    </PillButton>
     <div class="hero__scroll" aria-hidden="true">
       Scroll
       <span class="hero__scroll-line"></span>

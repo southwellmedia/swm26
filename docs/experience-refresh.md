@@ -5,7 +5,7 @@
 - One vermilion signature object (`--signature-color: #ff542e`) retains its pigment through the hero, the traveling ball and the interactive reel scene. The rest of the hero palette stays neutral.
 - Restrained footer with the studio mark, navigation and details; no repeated orb or tagline.
 - Full-color project imagery, visible project descriptions and status badges.
-- A direct work link, revised positioning and a wrapping mobile headline.
+- Revised positioning and a wrapping mobile headline. The hero uses the scroll cue without an extra work button.
 - Shorter pinned sequence: 100vh desktop, 55svh mobile, with a 1.1s reel-to-work link.
 - Texas Trinkets & Treasures enters the homepage after Reap Capital, with a dedicated responsive story.
 

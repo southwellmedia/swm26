@@ -16,8 +16,9 @@ test('reduced motion exposes work without the pinned sequence', async ({ page })
   await page.goto('/');
   await expect(page.locator('[data-reel]')).toHaveAttribute('data-reel-mode', 'static');
   await expect(page.locator('.card').first()).toHaveCSS('opacity', '1');
-  await page.getByRole('link', { name: 'View selected work' }).click();
-  await expect(page).toHaveURL(/#work$/);
+  await expect(page.getByRole('link', { name: 'View selected work' })).toHaveCount(0);
+  await page.locator('[data-work-grid]').scrollIntoViewIfNeeded();
+  await expect(page.getByRole('link', { name: /Texas Trinkets/ })).toBeVisible();
 });
 
 test('failed reel chunk restores the fallback and releases the project gate', async ({ page }) => {
