@@ -11,11 +11,11 @@
 
 ## Services art direction
 
-Services now form one continuous dark stage with four scrolling text chapters and one shared WebGL sculpture. Eight thick curved blades use rounded cross sections, twisted spines, environment reflections, and soft inter-object shadows. Scroll changes the camera and sculpture orientation; pointer movement adds a small damped change in perspective. This replaces the striped tension field and separate card images.
+The preferred stacked cards are restored. The first card is a Canvas 2D particle study: a graphite field with depth-dependent size/opacity, a narrow vermilion current using the signature color, and damped pointer repulsion. Other cards retain quiet tonal backgrounds while this direction is reviewed. The blade model and its service renderer are removed.
 
-One renderer pauses offscreen and in hidden tabs. Reduced motion keeps the sculpture still; WebGL failure or context loss leaves the optimized static image beneath the live text. Mobile uses a top sculpture crop and a dark gradient behind copy. Tests exercise pointer response, the fourth chapter, and mobile overflow.
+The particle canvas pauses offscreen and in hidden tabs; reduced motion renders a still. A deterministic SVG provides a no-JS/canvas fallback. Mobile returns to normal document flow with artwork above copy.
 
-Asset: `src/assets/services/pleated-titanium.webp`. Generated with the built-in image tool from the approved still composition. Prompt: Preserve the brushed titanium pleated sculpture, studio lighting, diagonal S curve and right-side cropping; remove all typography and rounded corners; keep left 48 percent empty for HTML text; photoreal brushed metal, graphite valleys, pearl-gray studio, no new elements or text.
+This iteration was edited through GitHub because the local execution environment was unavailable. Deployment and CI results can verify builds and behavior; visual approval still requires the live preview.
 
 ## Content decisions
 

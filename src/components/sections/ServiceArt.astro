@@ -1,48 +1,33 @@
 ---
-import { Image } from 'astro:assets';
-import sculpture from '@/assets/services/pleated-titanium.webp';
+interface Props { index: number }
+const { index } = Astro.props;
+const dots = Array.from({ length: 160 }, (_, i) => {
+  const u = ((i * 0.61803398875) % 1);
+  const spread = Math.sin(i * 12.9898) * Math.cos(i * 4.1414);
+  return { x: u * 720, y: 180 + Math.sin(u * 5) * 75 + spread * 85, r: 0.8 + (i % 4) * 0.35, accent: i % 5 === 0 };
+});
 ---
-
-<div class="service-art" data-sculpture aria-hidden="true">
-  <Image src={sculpture} alt="" widths={[800, 1280, 1840]} sizes="95vw" loading="lazy" />
+{index === 0 && <div class="service-art" data-particle-field aria-hidden="true">
+  <svg viewBox="0 0 720 400" preserveAspectRatio="xMidYMid slice">
+    {dots.map(dot => <circle cx={dot.x} cy={dot.y} r={dot.r} fill={dot.accent ? 'var(--signature-color, #ff542e)' : 'currentColor'} opacity={dot.accent ? .7 : .25} />)}
+  </svg>
   <canvas></canvas>
-</div>
+</div>}
 <script>
-  import { mountSculpture } from '@/scripts/service-tension';
-  const init = () =>
-    document.querySelectorAll<HTMLElement>('[data-sculpture]').forEach((host) => {
-      if (host.dataset.mounted) return;
-      host.dataset.mounted = 'true';
-      mountSculpture(host);
-    });
+  import { mountParticles } from '@/scripts/service-particles';
+  const init = () => document.querySelectorAll<HTMLElement>('[data-particle-field]').forEach(host => {
+    if (host.dataset.mounted) return;
+    host.dataset.mounted = 'true';
+    mountParticles(host);
+  });
   init();
   document.addEventListener('astro:page-load', init);
 </script>
 <style>
-  .service-art {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    background: #111519;
-  }
-  .service-art :global(img) {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: grayscale(1) brightness(0.3);
-  }
-  .service-art canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-  }
-  .service-art[data-ready='true'] canvas {
-    opacity: 1;
-  }
-  .service-art[data-ready='true'] :global(img) {
-    opacity: 0;
-  }
+.service-art { position:absolute; inset:0 0 0 43%; overflow:hidden; color:var(--card-fg); pointer-events:none; mask-image:linear-gradient(90deg,transparent,#000 18%); }
+.service-art canvas,.service-art svg { position:absolute; width:100%;height:100%;inset:0; }
+.service-art canvas { opacity:0; }
+.service-art[data-ready=true] canvas { opacity:1; }
+.service-art[data-ready=true] svg { opacity:0; }
+@media(max-width:800px) { .service-art { position:relative; inset:auto; height:250px; margin:-20px -28px 0; mask-image:linear-gradient(0deg,transparent,#000 16%); } }
 </style>

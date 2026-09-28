@@ -1,10 +1,35 @@
 ---
+/**
+ * Services
+ *
+ * Four cards that pile up as you scroll: each sticks 20px lower than the one
+ * before it, so the stack stays legible instead of the cards scrolling past
+ * one another.
+ *
+ * Two motions on top of the stacking:
+ *
+ *   entrance  as a card arrives its number fades in, the two title lines
+ *             rise out of their masks, then the tags and the paragraph
+ *             follow — play-once, via Motion's [data-reveal] system.
+ *   recede    as the next card slides up to cover it, the card underneath
+ *             eases back — scroll-linked, via a view timeline on
+ *             the *next* card. `timeline-scope` on the section lets card N
+ *             read card N+1's timeline. Browsers without it keep the static
+ *             depth from translateZ and nothing else.
+ */
 import SectionHead from './SectionHead.astro';
 import ServiceArt from './ServiceArt.astro';
 import { services } from '@/config/services.config';
+
+const last = services.length - 1;
+// One named timeline per covering card (every card but the first).
+const timelineScope = services
+  .slice(1)
+  .map((_, i) => `--svc-${i + 1}`)
+  .join(', ');
 ---
 
-<section class="services-section pt-[130px] max-[800px]:pt-[90px]">
+<section class="pt-[130px] max-[800px]:pt-[90px]" style={`timeline-scope: ${timelineScope}`}>
   <div class="shell mb-14">
     <SectionHead
       title="Services"
@@ -12,161 +37,312 @@ import { services } from '@/config/services.config';
       id="services"
     />
   </div>
-  <div class="services-story shell" data-services-story>
-    <div class="services-stage">
-      <ServiceArt /><div class="services-stage__shade"></div><span
-        class="services-caption"
-        aria-hidden="true">One studio. Many perspectives.</span
+
+  {
+    services.map((service, i) => (
+      <div
+        class="services__slot shell"
+        style={
+          '--sticky-top:' +
+          (90 + i * 20) +
+          'px; --i:' +
+          i +
+          (i > 0 ? `; view-timeline-name: --svc-${i}` : '')
+        }
       >
-    </div>
-    <div class="services-chapters">
-      {
-        services.map((service, i) => (
-          <article class="service" data-service-step={i}>
-            <div class="service__copy">
-              <span class="service__num label-mono">
+        <article
+          class:list={['service', i < last && 'service--covered']}
+          data-theme={service.theme}
+          style={i < last ? `animation-timeline: --svc-${i + 1}` : undefined}
+        >
+          <div class="service__copy">
+            <div class="service__lead">
+              <span class="service__num label-mono" data-reveal>
                 {service.num}
-                <span> / 04</span>
               </span>
-              <h3 class="service__title">
-                {service.title[0]}
-                <br />
-                {service.title[1]}
+              <h3 class="service__title display-service m-0">
+                <span class="rv-mask">
+                  <span data-reveal="rise" data-reveal-delay="0.08">
+                    {service.title[0]}
+                  </span>
+                </span>
+                <span class="rv-mask">
+                  <span data-reveal="rise" data-reveal-delay="0.16">
+                    {service.title[1]}
+                  </span>
+                </span>
               </h3>
-              <p class="service__desc">{service.desc}</p>
+            </div>
+
+            <div class="service__detail">
               <div class="service__tags">
-                {service.tags.map((tag) => (
-                  <span>{tag}</span>
+                {service.tags.map((tag, j) => (
+                  <span class="service__tag" data-reveal data-reveal-delay={0.38 + j * 0.06}>
+                    {tag}
+                  </span>
                 ))}
               </div>
+              <p class="service__desc" data-reveal data-reveal-delay="0.54">
+                {service.desc}
+              </p>
             </div>
-          </article>
-        ))
-      }
-    </div>
-  </div>
+          </div>
+          <ServiceArt index={i} />
+        </article>
+      </div>
+    ))
+  }
 </section>
+
 <style>
-  .services-story {
-    position: relative;
-    isolation: isolate;
-    padding: 0;
-    background: #111519;
-    color: #eef2f4;
-    border-radius: 24px;
-  }
-  .services-stage {
+  .services__slot {
     position: sticky;
-    top: 76px;
-    height: max(540px, calc(100svh - 90px));
-    min-height: 540px;
-    overflow: hidden;
-    border-radius: 24px;
+    top: var(--sticky-top);
+    margin-bottom: 28px;
+    /* Perspective per slot rather than one on the section: a single shared
+       vanishing point would skew the cards further from centre. */
+    perspective: 1600px;
   }
-  .services-stage__shade {
+
+  .service {
+    position: relative;
+    /* Cards that get covered sit further back, so the 20px slivers showing
+       above the top card read as a stack with depth rather than four flat
+       sheets of paper. The last card is the front of the pile, at Z 0. */
+    transform: translateZ(calc((var(--i, 0) - 3) * 26px));
+    /* Keeps the grain's blend mode working the card and nothing behind it. */
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    overflow: hidden;
+    gap: 40px;
+    min-height: 62vh;
+    padding: 48px;
+    border: 1px solid var(--color-card-border);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 -12px 40px rgb(12 16 22 / 0.1);
+    color: var(--card-fg);
+
+    /* Two soft pools over the flat ground, lit from a different corner per
+       card, so the pile reads as four surfaces catching light rather than
+       four swatches. */
+    background-color: var(--card-bg);
+    background-image:
+      radial-gradient(120% 95% at var(--card-light), var(--card-glow-a), transparent 62%),
+      radial-gradient(95% 75% at var(--card-light-b), var(--card-glow-b), transparent 68%);
+  }
+
+  /* Grain. soft-light keeps it tonal — it never blows out the white ground or
+     muddies the ink one, so a single layer serves both colour schemes. */
+  .service::before {
+    content: '';
     position: absolute;
     inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background-image: var(--sw-grain);
+    background-size: 180px 180px;
+    opacity: var(--card-grain, 0.5);
+    mix-blend-mode: soft-light;
     pointer-events: none;
-    background: linear-gradient(90deg, #111519 0%, #111519 30%, #111519dd 39%, transparent 60%);
   }
-  .services-caption {
-    position: absolute;
-    bottom: 30px;
-    right: 36px;
-    color: #a9b0b8;
-    font: 10px var(--font-mono);
-    letter-spacing: 0.06em;
-  }
-  .services-chapters {
+
+  /* Content rides above the grain. */
+  .service__lead,
+  .service__detail {
     position: relative;
-    margin-top: calc(-1 * max(540px, 100svh - 90px));
-    pointer-events: none;
+    z-index: 1;
   }
-  .service {
-    min-height: max(540px, calc(100svh - 90px));
-    display: flex;
-    align-items: center;
-    padding: 70px 5%;
+
+  /* --- recede ------------------------------------------------------------
+     The card underneath eases back a touch as the next one covers it. No
+     shadow: a darkening card under a sliding one read as a glitch. */
+  /* The timeline itself is set inline per card (animation-timeline:
+     --svc-N). The range is card N+1's travel from the bottom of the viewport
+     up to where it sticks. In lengths, not percentages: a sticky subject's
+     view range is stretched by its whole sticky travel, which is different
+     for every card, so a percentage would land somewhere else on each. */
+  @supports (timeline-scope: --a) {
+    .service--covered {
+      animation: svc-recede linear both;
+      animation-range: cover 40px cover calc(100vh - 130px);
+    }
   }
+
+  @keyframes svc-recede {
+    to {
+      transform: translateZ(calc((var(--i, 0) - 3) * 26px)) translateY(-14px) scale(0.965);
+    }
+  }
+
+  /* Colourways come from the component tier in themes/southwell.css, so all
+     four grounds — glows and grain included — re-map themselves in dark mode. */
+  .service[data-theme='white'] {
+    --card-bg: var(--service-white-bg);
+    --card-fg: var(--service-white-fg);
+    --card-chip: var(--service-white-chip);
+    --card-glow-a: var(--service-white-glow-a);
+    --card-glow-b: var(--service-white-glow-b);
+    --card-light: var(--service-white-light);
+    --card-light-b: var(--service-white-light-b);
+    --card-grain: var(--service-white-grain);
+  }
+
+  .service[data-theme='mid'] {
+    --card-bg: var(--service-mid-bg);
+    --card-fg: var(--service-mid-fg);
+    --card-chip: var(--service-mid-chip);
+    --card-glow-a: var(--service-mid-glow-a);
+    --card-glow-b: var(--service-mid-glow-b);
+    --card-light: var(--service-mid-light);
+    --card-light-b: var(--service-mid-light-b);
+    --card-grain: var(--service-mid-grain);
+  }
+
+  .service[data-theme='ink'] {
+    --card-bg: var(--service-ink-bg);
+    --card-fg: var(--service-ink-fg);
+    --card-chip: var(--service-ink-chip);
+    --card-glow-a: var(--service-ink-glow-a);
+    --card-glow-b: var(--service-ink-glow-b);
+    --card-light: var(--service-ink-light);
+    --card-light-b: var(--service-ink-light-b);
+    --card-grain: var(--service-ink-grain);
+  }
+
+  .service[data-theme='shade'] {
+    --card-bg: var(--service-shade-bg);
+    --card-fg: var(--service-shade-fg);
+    --card-chip: var(--service-shade-chip);
+    --card-glow-a: var(--service-shade-glow-a);
+    --card-glow-b: var(--service-shade-glow-b);
+    --card-light: var(--service-shade-light);
+    --card-light-b: var(--service-shade-light-b);
+    --card-grain: var(--service-shade-grain);
+  }
+
   .service__copy {
-    width: 43%;
-    max-width: 480px;
-    pointer-events: auto;
-  }
-  .service__num {
-    display: block;
-    font-size: 12px;
-    margin-bottom: 40px;
-  }
-  .service__num span {
-    opacity: 0.4;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 36px;
+    padding: 24px 0;
+    min-width: 0;
   }
   .service__title {
-    font-family: var(--font-display);
-    font-size: clamp(40px, 5.1vw, 76px);
-    font-weight: 500;
-    line-height: 0.96;
-    letter-spacing: -0.055em;
-    margin: 0 0 34px;
-    text-transform: lowercase;
+    font-size: clamp(34px, 4.4vw, 68px);
+    line-height: 1;
+    letter-spacing: -0.045em;
   }
-  .service__desc {
-    color: #b2bac3;
-    font-size: 16px;
-    line-height: 1.65;
-    max-width: 390px;
-    margin: 0 0 30px;
+
+  .service__lead {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 40px;
   }
+
+  .service__num {
+    font-size: 14px;
+    opacity: 0.55;
+  }
+
+  .service__detail {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 28px;
+  }
+
   .service__tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px 16px;
-    font: 10px var(--font-mono);
-    color: #818c98;
-    max-width: 350px;
+    gap: 10px;
   }
-  @media (max-width: 800px) {
-    .services-story {
-      border-radius: 16px;
-    }
-    .services-stage {
-      top: 68px;
-      height: max(600px, calc(100svh - 80px));
-      min-height: 600px;
-    }
-    .services-stage__shade {
-      background: linear-gradient(0deg, #111519 0%, #111519f5 38%, #11151966 58%, transparent 78%);
-    }
-    .services-chapters {
-      margin-top: calc(-1 * max(600px, 100svh - 80px));
-    }
+
+  .service__tag {
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.65;
+  }
+
+  .service__desc {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.65;
+    opacity: 0.75;
+  }
+
+  @media (max-width: 1000px) {
     .service {
-      min-height: max(600px, calc(100svh - 80px));
-      padding: 310px 28px 48px;
-      align-items: flex-end;
+      gap: 36px;
+      padding: 40px 36px;
     }
+  }
+
+  @media (max-width: 800px) {
+    .services__slot {
+      /* A card taller than the viewport cannot stack cleanly on a phone —
+         let them scroll normally instead. */
+      position: static;
+      margin-bottom: 20px;
+      perspective: none;
+    }
+
+    .service {
+      /* Nothing is stacking, so nothing should be receding. */
+      transform: none;
+      animation: none;
+      grid-template-columns: 1fr;
+      gap: 32px;
+      min-height: 0;
+      padding: 36px 28px;
+    }
+
     .service__copy {
-      width: 100%;
-      max-width: none;
-    }
-    .service__num {
-      margin-bottom: 22px;
+      padding: 0;
+      gap: 28px;
     }
     .service__title {
-      font-size: clamp(38px, 10vw, 58px);
-      margin-bottom: 22px;
+      font-size: clamp(38px, 8vw, 60px);
     }
-    .service__desc {
-      font-size: 14px;
-      margin-bottom: 22px;
+    .service :global(.service-art) {
+      grid-row: 1;
     }
-    .services-caption {
+
+    .service::after {
       display: none;
     }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .services-stage {
-      position: sticky;
+
+    .service__lead {
+      gap: 24px;
+    }
+
+    .service__desc {
+      font-size: 16px;
     }
   }
+</style>
+
+<style>
+  .service[data-theme='ink'] {
+    color: #eef2f4;
+  }
+  @media (max-width: 800px) {
+    .service {
+      background: #edf1f4;
+    }
+    .service[data-theme='ink'] {
+      background: #121619;
+    }
+  }
+</style>
+
+<style>
+@media (prefers-reduced-motion: reduce) { .service { animation: none; } }
 </style>
