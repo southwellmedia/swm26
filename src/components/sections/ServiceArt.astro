@@ -1,0 +1,604 @@
+---
+import { Image } from 'astro:assets';
+import desktop from '@/assets/work/texas-trinkets/desktop.webp';
+interface Props {
+  index: number;
+}
+const { index } = Astro.props;
+---
+
+<div class:list={['service-art', `service-art--${index}`]} aria-hidden="true">
+  <span class="art-label"
+    >{['01 / Assembly', '02 / Iteration', '03 / Identity', '04 / Clarity'][index]}</span
+  >
+  {
+    index === 0 && (
+      <div class="assembly">
+        <div class="assembly__plane assembly__plane--back">
+          <>
+            <span>Structure</span>
+            <div class="skeleton" />
+          </>
+        </div>
+        <div class="assembly__plane assembly__plane--image">
+          <Image
+            src={desktop}
+            alt=""
+            widths={[480, 800]}
+            sizes="(max-width: 800px) 80vw, 40vw"
+            loading="lazy"
+          />
+        </div>
+        <div class="assembly__plane assembly__plane--front">
+          <>
+            <span>Texas Trinkets & Treasures</span>
+            <span class="assembly__pill">Made by hand. Built for discovery. ↗</span>
+          </>
+        </div>
+      </div>
+    )
+  }
+  {
+    index === 1 && (
+      <div class="prototype">
+        <div class="prototype__wire">
+          <>
+            <span class="mini-label">First thought</span>
+            <div class="wire-heading" />
+            <div class="wire-box">↗</div>
+            <div class="wire-line" />
+            <div class="wire-line short" />
+          </>
+        </div>
+        <div class="prototype__product">
+          <>
+            <div class="product-top">
+              <>
+                <span>Fieldnotes</span>
+                <span>●</span>
+              </>
+            </div>
+            <span class="mini-label">Your next chapter</span>
+            <strong>
+              Make room
+              <br />
+              for the idea.
+            </strong>
+            <div class="product-chart">
+              <>
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+              </>
+            </div>
+            <div class="product-bottom">
+              <>
+                <span>From thought to first release</span>
+                <b>↗</b>
+              </>
+            </div>
+          </>
+        </div>
+        <span class="prototype__caption">Concept interface / exploring possibilities</span>
+      </div>
+    )
+  }
+  {
+    index === 2 && (
+      <div class="identity">
+        <span class="identity__outline">Aa</span>
+        <div class="identity__paper">
+          <>
+            <span class="mini-label">Southwell / Independent studio</span>
+            <strong>
+              Make
+              <>
+                <br />
+                <em>your</em>
+                <br />
+              </>
+              mark.
+            </strong>
+            <span class="identity__folio">Form / Voice / Character</span>
+          </>
+        </div>
+        <div class="identity__stamp">
+          sw<span>/</span>
+        </div>
+        <div class="identity__swatches">
+          <>
+            <i />
+            <i />
+            <i />
+            <i />
+          </>
+        </div>
+      </div>
+    )
+  }
+  {
+    index === 3 && (
+      <div class="advisory">
+        <svg viewBox="0 0 600 360" fill="none">
+          <>
+            <defs>
+              <pattern id="advisory-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+                <circle cx="1" cy="1" r="1" fill="currentColor" opacity=".2" />
+              </pattern>
+            </defs>
+            <rect width="600" height="360" fill="url(#advisory-grid)" />
+            <g class="advisory__noise" stroke="currentColor" stroke-width="1">
+              <>
+                <path d="M70 100L460 285 170 280 490 85 300 175 70 100 170 280 490 85" />
+                <path d="M70 100L300 175 460 285M170 280L300 175 490 85" />
+              </>
+            </g>
+            <g class="advisory__routes" stroke="currentColor" stroke-width="2">
+              <>
+                <path d="M70 100H220Q240 100 240 120V160Q240 180 260 180H300" />
+                <path d="M170 280H220Q240 280 240 260V200Q240 180 260 180" />
+                <path d="M300 180H370Q390 180 390 160V105Q390 85 410 85H490" />
+                <path d="M300 180H370Q390 180 390 200V265Q390 285 410 285H460" />
+              </>
+            </g>
+            <g fill="var(--art-ground)">
+              <>
+                <circle cx="70" cy="100" r="18" stroke="currentColor" />
+                <circle cx="170" cy="280" r="18" stroke="currentColor" />
+                <circle cx="490" cy="85" r="18" stroke="currentColor" />
+                <circle cx="460" cy="285" r="18" stroke="currentColor" />
+              </>
+            </g>
+            <rect x="266" y="146" width="68" height="68" rx="16" fill="currentColor" />
+            <path d="m287 180 9 9 18-19" stroke="var(--art-ground)" stroke-width="3" />
+          </>
+        </svg>
+        <>
+          <span class="advisory__note advisory__note--a">Find the friction.</span>
+          <span class="advisory__note advisory__note--b">Make the path clear.</span>
+        </>
+      </div>
+    )
+  }
+</div>
+<style>
+  .service-art {
+    --art-ground: #e1e5df;
+    position: relative;
+    min-height: 420px;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--art-ground);
+    color: #23332e;
+    isolation: isolate;
+  }
+  .art-label {
+    position: absolute;
+    left: 24px;
+    top: 22px;
+    z-index: 5;
+    font: 10px var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    opacity: 0.65;
+  }
+  .mini-label {
+    font: 9px var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+  .assembly {
+    position: absolute;
+    inset: 80px 35px 45px;
+    perspective: 1000px;
+  }
+  .assembly__plane {
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    box-shadow: 0 20px 35px #18332a26;
+    transform: rotateX(22deg) rotateY(-16deg) rotateZ(-8deg);
+    transition: transform 1s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .assembly__plane--back {
+    background: #d0d7cd;
+    border: 1px solid #98a999;
+    transform: translate(-22px, -20px) rotateX(22deg) rotateY(-16deg) rotateZ(-8deg);
+    padding: 18px;
+    font: 9px var(--font-mono);
+  }
+  .skeleton {
+    height: 65%;
+    margin-top: 20px;
+    border: 1px dashed #809784;
+    background: repeating-linear-gradient(90deg, transparent 0 22%, #80978455 22% 22.4%);
+  }
+  .assembly__plane--image {
+    inset: 25px -5px -10px 10px;
+    overflow: hidden;
+    background: #f4ecdb;
+  }
+  .assembly__plane--image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+  .assembly__plane--front {
+    inset: auto -12px -25px 28px;
+    padding: 20px;
+    background: #173f39;
+    color: #f6eee0;
+    transform: translate(14px, 20px) rotateX(22deg) rotateY(-16deg) rotateZ(-8deg);
+    display: grid;
+    gap: 15px;
+    font-family: Georgia, serif;
+    font-size: 19px;
+  }
+  .assembly__pill {
+    font: 9px var(--font-mono);
+    padding-top: 12px;
+    border-top: 1px solid #ffffff40;
+  }
+  .service-art:hover .assembly__plane {
+    transform: rotateX(0) rotateY(0) rotateZ(0);
+  }
+  .service-art--1 {
+    --art-ground: #d6d8e3;
+    color: #262939;
+  }
+  .prototype {
+    position: absolute;
+    inset: 75px 28px 40px;
+  }
+  .prototype__wire {
+    position: absolute;
+    width: 60%;
+    inset: 4px auto 25px 0;
+    border: 1px dashed #6c7089;
+    border-radius: 9px;
+    padding: 20px;
+    transform: rotate(-9deg);
+  }
+  .wire-heading {
+    width: 70%;
+    height: 20px;
+    border: 1px solid #9699ae;
+    margin-top: 25px;
+  }
+  .wire-box {
+    border: 1px solid #9699ae;
+    margin: 20px 0;
+    height: 100px;
+    display: grid;
+    place-items: center;
+    font-size: 40px;
+    font-weight: 200;
+  }
+  .wire-line {
+    height: 5px;
+    background: #a9acbd;
+    margin: 8px 0;
+  }
+  .short {
+    width: 60%;
+  }
+  .prototype__product {
+    position: absolute;
+    width: 73%;
+    right: -2px;
+    top: 0;
+    bottom: 10px;
+    padding: 22px;
+    background: #f9f7f1;
+    border-radius: 12px;
+    box-shadow: 0 18px 40px #30334733;
+    transform: rotate(6deg);
+    transition: transform 0.8s ease;
+  }
+  .product-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 25px;
+  }
+  .product-top + span {
+    opacity: 0.55;
+  }
+  .prototype__product strong {
+    display: block;
+    font-size: clamp(25px, 2.8vw, 39px);
+    font-weight: 500;
+    line-height: 1.02;
+    letter-spacing: -0.05em;
+    margin: 10px 0;
+  }
+  .product-chart {
+    display: flex;
+    gap: 7px;
+    height: 65px;
+    align-items: end;
+  }
+  .product-chart i {
+    flex: 1;
+    height: 30%;
+    background: #858aa5;
+    border-radius: 3px 3px 0 0;
+  }
+  .product-chart i:nth-child(2n) {
+    height: 48%;
+  }
+  .product-chart i:nth-child(3n) {
+    height: 65%;
+  }
+  .product-chart i:last-child {
+    height: 100%;
+    background: #383d59;
+  }
+  .product-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    font-size: 8px;
+  }
+  .product-bottom b {
+    font-size: 22px;
+    font-weight: 400;
+  }
+  .prototype__caption {
+    position: absolute;
+    bottom: -22px;
+    left: 0;
+    font: 8px var(--font-mono);
+    opacity: 0.6;
+  }
+  .service-art:hover .prototype__product {
+    transform: rotate(0) translateY(-8px);
+  }
+  .service-art--2 {
+    --art-ground: #222a2c;
+    color: #f0eddf;
+  }
+  .identity {
+    position: absolute;
+    inset: 0;
+  }
+  .identity__outline {
+    position: absolute;
+    top: 25px;
+    right: -20px;
+    font:
+      260px Georgia,
+      serif;
+    color: transparent;
+    -webkit-text-stroke: 1px #a4aaa44d;
+  }
+  .identity__paper {
+    position: absolute;
+    left: 12%;
+    top: 20%;
+    width: 58%;
+    bottom: 12%;
+    background: #e7e4d8;
+    color: #252c28;
+    padding: 22px;
+    transform: rotate(-8deg);
+    box-shadow: 0 22px 35px #0004;
+    transition: transform 0.8s ease;
+  }
+  .identity__paper strong {
+    display: block;
+    margin-top: 18px;
+    font:
+      clamp(42px, 5vw, 68px)/0.84 Georgia,
+      serif;
+    letter-spacing: -0.07em;
+  }
+  .identity__paper strong em {
+    font-weight: 400;
+  }
+  .identity__folio {
+    position: absolute;
+    bottom: 18px;
+    font: 8px var(--font-mono);
+  }
+  .identity__stamp {
+    position: absolute;
+    bottom: 18%;
+    right: 8%;
+    padding: 15px 20px;
+    color: #e9e6dc;
+    background: #455442;
+    font-size: 65px;
+    font-weight: 700;
+    letter-spacing: -0.09em;
+    transform: rotate(10deg);
+    box-shadow: 0 12px 25px #0004;
+    transition: transform 0.8s ease;
+  }
+  .identity__stamp span {
+    font-weight: 300;
+  }
+  .identity__swatches {
+    display: flex;
+    position: absolute;
+    right: 10%;
+    top: 18%;
+    transform: rotate(10deg);
+  }
+  .identity__swatches i {
+    width: 22px;
+    height: 45px;
+    background: #e7e4d8;
+  }
+  .identity__swatches i:nth-child(2) {
+    background: #b4b9a8;
+  }
+  .identity__swatches i:nth-child(3) {
+    background: #455442;
+  }
+  .identity__swatches i:nth-child(4) {
+    background: #101a18;
+  }
+  .service-art:hover .identity__paper,
+  .service-art:hover .identity__stamp {
+    transform: rotate(0);
+  }
+  .service-art--3 {
+    --art-ground: #d7e2e3;
+    color: #28494d;
+  }
+  .advisory {
+    position: absolute;
+    inset: 65px 0 20px;
+    display: grid;
+    align-items: center;
+  }
+  .advisory svg {
+    width: 100%;
+    overflow: visible;
+  }
+  .advisory__noise {
+    opacity: 0.12;
+    transition: opacity 0.7s;
+  }
+  .advisory__routes {
+    stroke-dasharray: 500;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1.4s ease;
+  }
+  .advisory__note {
+    position: absolute;
+    font-size: 14px;
+    letter-spacing: -0.02em;
+  }
+  .advisory__note--a {
+    left: 26px;
+    top: 18px;
+    opacity: 0.5;
+  }
+  .advisory__note--b {
+    right: 26px;
+    bottom: 15px;
+  }
+  .service-art:hover .advisory__noise {
+    opacity: 0;
+  }
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .assembly,
+      .prototype,
+      .identity,
+      .advisory {
+        animation: art-arrive linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 90%;
+      }
+      @keyframes art-arrive {
+        from {
+          opacity: 0.5;
+          translate: 0 30px;
+        }
+        to {
+          opacity: 1;
+          translate: 0 0;
+        }
+      }
+    }
+  }
+  @media (max-width: 800px) {
+    .service-art {
+      height: 380px;
+      min-height: 380px;
+    }
+    .prototype__product {
+      padding: 18px;
+    }
+    .product-top {
+      margin-bottom: 18px;
+    }
+    .product-chart {
+      height: 45px;
+    }
+    .product-bottom {
+      margin-top: 8px;
+    }
+    .prototype__product strong {
+      font-size: 24px;
+    }
+    .identity__paper strong {
+      font-size: 60px;
+    }
+  }
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .service-art {
+        view-timeline-name: --art-stage;
+      }
+      .assembly__plane {
+        animation: assemble linear both;
+        animation-timeline: --art-stage;
+        animation-range: entry 15% entry 100%;
+      }
+      .prototype__product {
+        animation: resolve-product linear both;
+        animation-timeline: --art-stage;
+        animation-range: entry 15% entry 100%;
+      }
+      .advisory__routes {
+        animation: trace-route linear both;
+        animation-timeline: --art-stage;
+        animation-range: entry 15% entry 100%;
+      }
+      .advisory__noise {
+        animation: clear-noise linear both;
+        animation-timeline: --art-stage;
+        animation-range: entry 15% entry 100%;
+      }
+      @keyframes assemble {
+        to {
+          transform: rotateX(0) rotateY(0) rotateZ(0);
+        }
+      }
+      @keyframes resolve-product {
+        from {
+          opacity: 0.2;
+          transform: translateX(50px) rotate(12deg);
+        }
+        to {
+          opacity: 1;
+          transform: rotate(0);
+        }
+      }
+      @keyframes trace-route {
+        from {
+          stroke-dashoffset: 500;
+        }
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+      @keyframes clear-noise {
+        from {
+          opacity: 0.5;
+        }
+        to {
+          opacity: 0.06;
+        }
+      }
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+</style>

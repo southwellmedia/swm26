@@ -9,6 +9,10 @@
 - Shorter pinned sequence: 100vh desktop, 55svh mobile, with a 1.1s reel-to-work link.
 - Texas Trinkets & Treasures enters the homepage after Reap Capital, with a dedicated responsive story.
 
+## Services art direction
+
+The service cards pair readable copy with four HTML/CSS/SVG compositions: a layered real Texas Trinkets capture, a clearly labelled fictional product concept, a Southwell typography study, and an abstract diagnostic diagram. Scroll-linked assembly/reveal effects progressively enhance static layouts; reduced-motion visitors see the finished compositions. Mobile places artwork above copy. No additional WebGL renderer or animation dependency is used.
+
 ## Content decisions
 
 Texas Trinkets' launch and Southwell's design/build role were provided by the owner. The website captures and descriptions reflect https://www.handmadetexastrinkets.com as inspected on September 27, 2026 (America/Chicago). No conversion results, sales claims or client quotation were invented.
