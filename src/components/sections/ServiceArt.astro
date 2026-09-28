@@ -8,6 +8,16 @@ const { index } = Astro.props;
 ---
 
 <div class:list={['service-art', `service-art--${index}`]} aria-hidden="true">
+  {
+    index === 0 && (
+      <div class="tension-field" data-tension-field>
+        <>
+          <canvas aria-hidden="true" />
+          <span>Explore the surface ↗</span>
+        </>
+      </div>
+    )
+  }
   <Image
     src={sculpture}
     alt=""
@@ -71,6 +81,60 @@ const { index } = Astro.props;
       width: 150%;
       max-width: none;
       margin-left: -50%;
+    }
+  }
+</style>
+
+<script>
+  import { mountTension } from '@/scripts/service-tension';
+  const init = () =>
+    document.querySelectorAll<HTMLElement>('[data-tension-field]').forEach((host) => {
+      if (host.dataset.mounted) return;
+      host.dataset.mounted = 'true';
+      mountTension(host);
+    });
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+<style>
+  .service-art--0:has([data-ready='true']) :global(img) {
+    opacity: 0;
+  }
+  .service-art--0 {
+    animation: none;
+  }
+  .tension-field {
+    position: absolute;
+    inset: 0 0 0 40%;
+    z-index: 1;
+  }
+  .tension-field canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .tension-field span {
+    position: absolute;
+    right: 30px;
+    bottom: 24px;
+    font: 10px var(--font-mono);
+    color: #626b75;
+    opacity: 0;
+  }
+  .tension-field[data-ready='true'] span {
+    opacity: 1;
+  }
+  @media (max-width: 800px) {
+    .tension-field {
+      inset: 0;
+    }
+    .tension-field span {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tension-field span {
+      display: none;
     }
   }
 </style>
