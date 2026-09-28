@@ -24,7 +24,15 @@ export default [
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', '.astro/', 'public/pagefind/'],
+    ignores: [
+      'dist/',
+      'node_modules/',
+      '.astro/',
+      'public/pagefind/',
+      '.vercel/',
+      'test-results/',
+      'playwright-report/',
+    ],
   },
   {
     rules: {

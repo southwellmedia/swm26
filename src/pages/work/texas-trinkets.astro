@@ -1,0 +1,547 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import '@fontsource/instrument-serif/400.css';
+import SiteLayout from '@/layouts/SiteLayout.astro';
+import Cta from '@/components/sections/Cta.astro';
+import materials from '@/assets/work/texas-trinkets/material-study.webp';
+import desktop from '@/assets/work/texas-trinkets/desktop.webp';
+import mobile from '@/assets/work/texas-trinkets/mobile.webp';
+import custom from '@/assets/work/texas-trinkets/custom.webp';
+import jewelry from '@/assets/work/texas-trinkets/jewelry.webp';
+import cover from '@/assets/work/texas-trinkets/cover.webp';
+
+const projects = (await getCollection('work', ({ data }) => !data.draft && !data.parent)).sort(
+  (a, b) => a.data.order - b.data.order
+);
+const index = projects.findIndex((p) => p.id === 'texas-trinkets');
+const project = projects[index];
+const next = projects[(index + 1) % projects.length];
+---
+
+<SiteLayout
+  title={project.data.title}
+  description={project.data.description}
+  image={cover.src}
+  imageAlt={project.data.coverAlt}
+  navContext="texas trinkets"
+  navTone="light"
+>
+  <article class="trinkets">
+    <header class="tt-head shell">
+      <div class="tt-eyebrow label-mono">
+        <span>CLIENT STORY / 2026</span><span class="tt-live">JUST LAUNCHED</span>
+      </div>
+      <h1>Small batch.<br /><em>Big character.</em></h1>
+      <div class="tt-intro">
+        <p class="tt-client">Texas Trinkets<br />&amp; Treasures</p>
+        <p>
+          A digital home with the same warmth as the work inside it. We designed and built a
+          storefront for Salem Shields’ handmade western jewelry, where discovering a piece leads
+          naturally to a conversation with its maker.
+        </p>
+        <a
+          class="tt-link"
+          href="https://handmadetexastrinkets.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Visit the live site <span aria-hidden="true">↗</span><span class="sr-only">
+            (opens in a new tab)</span
+          ></a
+        >
+      </div>
+    </header>
+
+    <figure class="tt-stage">
+      <Image
+        src={materials}
+        alt=""
+        widths={[960, 1600, 2200]}
+        sizes="100vw"
+        class="tt-material"
+        loading="eager"
+      />
+      <div class="tt-browser">
+        <div class="tt-chrome" aria-hidden="true">
+          <span>● ● ●</span><span>handmadetexastrinkets.com</span><span>↗</span>
+        </div>
+        <Image
+          src={desktop}
+          alt="The live website: handmade western jewelry, turquoise and silver product photography, and paths to browse or request a custom piece"
+          widths={[800, 1200, 1600]}
+          sizes="(max-width: 700px) 90vw, 76vw"
+          loading="eager"
+          fetchpriority="high"
+        />
+      </div>
+      <figcaption>
+        THE LIVE WEBSITE / Supporting material study created for this presentation
+      </figcaption>
+    </figure>
+
+    <section class="tt-brief shell" aria-labelledby="brief-title">
+      <p class="label-mono">01 / THE IDEA</p>
+      <div>
+        <h2 id="brief-title">Keep the<br /><em>human touch.</em></h2>
+        <p>
+          Small-batch work needs room for its individual character. The site brings together a
+          browsable collection, the maker’s story, and an easy way to ask about a piece.
+        </p>
+        <p>
+          Ordering stays personal: customers explore what they like, then confirm availability,
+          pricing and details with Salem. The website makes that next conversation easy to start.
+        </p>
+      </div>
+      <dl class="tt-facts">
+        <div><dt>OUR ROLE</dt><dd>Website design &amp; development</dd></div><div>
+          <dt>THE EXPERIENCE</dt><dd>
+            Collection browsing<br />Custom-order inquiry<br />Maker storytelling
+          </dd>
+        </div><div><dt>STATUS</dt><dd>Launched · 2026</dd></div>
+      </dl>
+    </section>
+
+    <section class="tt-detail" aria-labelledby="detail-title">
+      <div class="shell tt-detail-grid">
+        <div class="tt-detail-copy">
+          <p class="label-mono">02 / MADE PERSONAL</p>
+          <h2 id="detail-title">A little western.<br /><em>Entirely her own.</em></h2>
+          <p>
+            Turquoise, silver and warm paper tones give the collection a setting of its own. Large
+            photographs let the details do the talking. Clear paths to browse and inquire keep the
+            experience useful on a phone, too.
+          </p>
+          <div class="tt-palette" aria-label="Presentation palette">
+            <span style="--swatch:#176c68">Turquoise</span><span style="--swatch:#b1a38d"
+              >Silver</span
+            ><span style="--swatch:#eee2ce">Paper</span>
+          </div>
+        </div>
+        <figure class="tt-phone">
+          <Image
+            src={mobile}
+            alt="The launched Texas Trinkets homepage on a narrow mobile screen"
+            widths={[390, 780]}
+            sizes="(max-width: 700px) 70vw, 340px"
+          /><figcaption>MOBILE / THE LIVE SITE</figcaption>
+        </figure>
+        <figure class="tt-jewelry">
+          <Image
+            src={jewelry}
+            alt="Texas Trinkets’ turquoise and silver necklaces displayed on velvet and a wood slice"
+            widths={[600, 1000]}
+            sizes="(max-width: 700px) 85vw, 40vw"
+          /><figcaption>THE CLIENT’S OWN PRODUCT PHOTOGRAPHY</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="tt-custom shell" aria-labelledby="custom-title">
+      <div class="tt-custom-head">
+        <p class="label-mono">03 / FROM BROWSING TO A CONVERSATION</p><h2 id="custom-title">
+          Make it<br /><em>yours.</em>
+        </h2><p>
+          A stone. A charm. A preferred length. The custom-order section helps visitors describe
+          what they have in mind before they get in touch.
+        </p>
+      </div>
+      <figure class="tt-custom-frame">
+        <Image
+          src={custom}
+          alt="The live custom-order section with stone, charm and chain-length choices"
+          widths={[800, 1400, 1800]}
+          sizes="(max-width: 1440px) 90vw, 1344px"
+        /><figcaption>LIVE WEBSITE CAPTURE / CUSTOM ORDER EXPERIENCE</figcaption>
+      </figure>
+      <div class="tt-close">
+        <p>A new home for<br /><em>one-of-a-kind work.</em></p><a
+          class="tt-link"
+          href="https://handmadetexastrinkets.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Explore Texas Trinkets <span aria-hidden="true">↗</span><span class="sr-only">
+            (opens in a new tab)</span
+          ></a
+        >
+      </div>
+    </section>
+    <a href={'/work/' + next.id} class="tt-next shell"
+      ><span class="label-mono">NEXT PROJECT</span><span>{next.data.title}</span><span
+        aria-hidden="true">↗</span
+      ></a
+    >
+  </article>
+  <Cta />
+</SiteLayout>
+<style>
+  .trinkets {
+    --tt-paper: #f3ecdf;
+    --tt-ink: #193e3b;
+    background: var(--tt-paper);
+    color: var(--tt-ink);
+  }
+  .tt-head {
+    padding-top: 150px;
+    padding-bottom: 74px;
+  }
+  .tt-eyebrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+  }
+  .tt-live {
+    border: 1px solid #193e3b44;
+    padding: 10px 14px;
+    border-radius: 99px;
+  }
+  .trinkets h1,
+  .trinkets h2,
+  .tt-close p {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.045em;
+    line-height: 0.94;
+  }
+  .trinkets em {
+    font-style: normal;
+    color: #38837d;
+  }
+  .trinkets h1 {
+    font-size: clamp(76px, 11vw, 172px);
+    margin: 48px 0;
+  }
+  .tt-intro {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr 1fr;
+    align-items: end;
+    gap: 50px;
+  }
+  .tt-intro p {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.65;
+  }
+  .tt-intro .tt-client {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.035em;
+  }
+  .tt-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    color: inherit;
+    border-bottom: 1px solid currentColor;
+    padding: 14px 0;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .tt-link span[aria-hidden] {
+    font-size: 24px;
+  }
+  .tt-stage {
+    margin: 0;
+    padding: 100px 12% 32px;
+    position: relative;
+    overflow: hidden;
+    background: #c3b296;
+  }
+  .tt-material {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .tt-browser {
+    position: relative;
+    transform: rotate(-2deg);
+    border: 7px solid #ece9e2;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 35px 65px #142b2a55;
+  }
+  .tt-browser img {
+    width: 100%;
+    height: auto;
+  }
+  .tt-chrome {
+    padding: 12px 16px;
+    background: #ece9e2;
+    color: #63645f;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-family: var(--font-mono);
+  }
+  .tt-stage figcaption {
+    position: relative;
+    margin-top: 65px;
+    color: #173a38;
+    background: #f3ecdfeb;
+    padding: 10px;
+    display: inline-block;
+  }
+  .trinkets figcaption {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.5;
+    letter-spacing: 0.025em;
+  }
+  .tt-brief {
+    padding-block: 120px;
+    display: grid;
+    grid-template-columns: 0.65fr 1.5fr 0.8fr;
+    gap: 60px;
+  }
+  .trinkets h2 {
+    font-size: clamp(54px, 6vw, 94px);
+    margin: 0 0 30px;
+  }
+  .tt-brief p:not(.label-mono),
+  .tt-detail-copy > p:not(.label-mono),
+  .tt-custom-head > p:not(.label-mono) {
+    max-width: 48ch;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .tt-facts {
+    margin: 0;
+    border-top: 1px solid #193e3b33;
+  }
+  .tt-facts div {
+    padding: 23px 0;
+    border-bottom: 1px solid #193e3b33;
+  }
+  .tt-facts dt {
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .tt-facts dd {
+    margin: 12px 0 0;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .tt-detail {
+    background: #163d3b;
+    color: #f3ecdf;
+    padding-block: 100px;
+    overflow: hidden;
+  }
+  .tt-detail-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 70px;
+    align-items: start;
+  }
+  .tt-detail em {
+    color: #97c3ba;
+  }
+  .tt-detail-copy {
+    padding-top: 30px;
+  }
+  .tt-detail .label-mono {
+    margin-bottom: 35px;
+  }
+  .tt-phone {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    width: min(100%, 340px);
+    margin: 0 auto;
+    padding: 10px;
+    border-radius: 44px;
+    background: #091c1b;
+    box-shadow: 0 35px 60px #0005;
+    transform: rotate(4deg);
+  }
+  .tt-phone img {
+    width: 100%;
+    height: auto;
+    border-radius: 34px;
+  }
+  .tt-phone figcaption {
+    padding: 18px 5px 8px;
+    text-align: center;
+  }
+  .tt-jewelry {
+    margin: 0;
+  }
+  .tt-jewelry img {
+    width: 100%;
+    aspect-ratio: 1.3;
+    object-fit: cover;
+  }
+  .tt-jewelry figcaption {
+    margin-top: 14px;
+    color: #c2d8d3;
+  }
+  .tt-palette {
+    display: flex;
+    gap: 26px;
+    margin-top: 40px;
+  }
+  .tt-palette span {
+    font: 11px var(--font-mono);
+  }
+  .tt-palette span::before {
+    content: '';
+    display: block;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--swatch);
+    border: 1px solid #ffffff44;
+    margin-bottom: 12px;
+  }
+  .tt-custom {
+    padding-block: 110px 80px;
+  }
+  .tt-custom-head {
+    display: grid;
+    grid-template-columns: 0.8fr 1fr 1fr;
+    align-items: center;
+    gap: 50px;
+    margin-bottom: 50px;
+  }
+  .tt-custom-head h2 {
+    margin: 0;
+  }
+  .tt-custom-frame {
+    margin: 0;
+  }
+  .tt-custom-frame img {
+    width: 100%;
+    height: auto;
+    border: 1px solid #193e3b33;
+  }
+  .tt-custom-frame figcaption {
+    margin-top: 15px;
+  }
+  .tt-close {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+    margin-top: 90px;
+  }
+  .tt-close p {
+    margin: 0;
+    font-size: clamp(44px, 5vw, 74px);
+  }
+  .tt-next {
+    display: grid;
+    grid-template-columns: 0.65fr 2fr auto;
+    gap: 30px;
+    align-items: center;
+    padding-block: 55px;
+    border-top: 1px solid #193e3b33;
+    color: inherit;
+    text-decoration: none;
+  }
+  .tt-next > span:nth-child(2) {
+    font-size: clamp(28px, 4vw, 56px);
+    letter-spacing: -0.04em;
+  }
+  .tt-next > span:last-child {
+    font-size: 48px;
+  }
+  @media (max-width: 900px) {
+    .tt-intro {
+      grid-template-columns: 1fr 2fr;
+      gap: 30px;
+    }
+    .tt-intro .tt-link {
+      grid-column: 2;
+    }
+    .tt-brief {
+      grid-template-columns: 1fr 2fr;
+      gap: 30px;
+    }
+    .tt-facts {
+      grid-column: 2;
+    }
+    .tt-custom-head {
+      grid-template-columns: 1fr 1fr;
+    }
+    .tt-custom-head .label-mono {
+      grid-column: 1/-1;
+    }
+  }
+  @media (max-width: 600px) {
+    .tt-head {
+      padding-top: 115px;
+      padding-bottom: 50px;
+    }
+    .tt-eyebrow {
+      font-size: 10px;
+    }
+    .tt-intro,
+    .tt-brief,
+    .tt-custom-head {
+      grid-template-columns: 1fr;
+      gap: 25px;
+    }
+    .tt-intro .tt-link,
+    .tt-facts {
+      grid-column: auto;
+    }
+    .tt-intro .tt-client {
+      font-size: 20px;
+    }
+    .trinkets h1 {
+      margin-block: 35px;
+    }
+    .tt-stage {
+      padding: 50px 5% 20px;
+    }
+    .tt-browser {
+      border-width: 4px;
+      border-radius: 8px;
+    }
+    .tt-chrome {
+      font-size: 7px;
+      padding: 7px;
+    }
+    .tt-stage figcaption {
+      margin-top: 35px;
+      font-size: 8px;
+    }
+    .tt-brief {
+      padding-block: 65px;
+    }
+    .tt-detail {
+      padding-block: 60px;
+    }
+    .tt-detail-grid {
+      grid-template-columns: 1fr;
+      gap: 45px;
+    }
+    .tt-phone {
+      grid-column: 1;
+      grid-row: auto;
+      width: 78%;
+      transform: rotate(2deg);
+    }
+    .tt-jewelry {
+      grid-row: 3;
+    }
+    .tt-custom {
+      padding-block: 60px;
+    }
+    .tt-close {
+      flex-direction: column;
+      align-items: flex-start;
+      margin-top: 55px;
+    }
+    .tt-next {
+      grid-template-columns: 1fr auto;
+    }
+    .tt-next .label-mono {
+      grid-column: 1/-1;
+    }
+  }
+</style>

@@ -1,0 +1,38 @@
+---
+import { particlePosition, accentWeight } from '@/scripts/particle-layout';
+interface Props { index: number }
+const { index } = Astro.props;
+const dots = Array.from({ length: 160 }, (_, i) => {
+  const u = (i * .61803398875) % 1;
+  const spread = Math.sin(i * 12.9898) * Math.cos(i * 4.1414);
+  const accent = i % 5 === 0;
+  const depth = (i * .41421356237) % 1;
+  const point = particlePosition(u, spread, depth, i, 0, 0, index, accent);
+  const weight = accentWeight((i * .754877666) % 1);
+  return { x: point.x * 720, y: point.y * 400, r: accent ? weight.radius : .8 + depth, accent, opacity: accent ? weight.opacity : .25 };
+});
+---
+<div class="service-art" data-particle-field data-particle-variant={index} aria-hidden="true">
+  <svg viewBox="0 0 720 400" preserveAspectRatio="xMidYMid slice">
+    {dots.map(dot => <circle cx={dot.x} cy={dot.y} r={dot.r} fill={dot.accent ? 'var(--signature-color, #ff542e)' : 'currentColor'} opacity={dot.opacity} />)}
+  </svg>
+  <canvas></canvas>
+</div>
+<script>
+  import { mountParticles } from '@/scripts/service-particles';
+  const init = () => document.querySelectorAll<HTMLElement>('[data-particle-field]').forEach(host => {
+    if (host.dataset.mounted) return;
+    host.dataset.mounted = 'true';
+    mountParticles(host);
+  });
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+<style>
+.service-art { position:absolute; inset:0 0 0 43%; overflow:hidden; color:var(--card-fg); pointer-events:none; mask-image:linear-gradient(90deg,transparent,#000 18%); }
+.service-art canvas,.service-art svg { position:absolute; width:100%;height:100%;inset:0; }
+.service-art canvas { opacity:0; }
+.service-art[data-ready=true] canvas { opacity:1; }
+.service-art[data-ready=true] svg { opacity:0; }
+@media(max-width:800px) { .service-art { position:relative; inset:auto; height:250px; margin:-20px -28px 0; mask-image:linear-gradient(0deg,transparent,#000 16%); } }
+</style>

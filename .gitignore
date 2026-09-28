@@ -64,3 +64,7 @@ southwell-astro-boilerplate-prd.md
 # it is copied verbatim — so the working copies live in src/assets/ and these
 # 4096px originals stay local.
 public/work/
+
+# Browser validation output
+/test-results/
+/playwright-report/

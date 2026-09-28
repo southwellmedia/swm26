@@ -49,9 +49,9 @@ interface Props {
 const {
   src,
   poster,
-  title = 'Bold ideas, built to ship.',
-  blurb = 'Ideas, design and engineering under one roof — from the first sketch to the last deploy.',
-  hold = '160vh',
+  title = 'An idea. Then the real thing.',
+  blurb = 'We connect the design to the build. One team, accountable for how it looks and how it works.',
+  hold = '100vh',
   class: className,
 } = Astro.props;
 
@@ -130,7 +130,7 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
       <PillButton
         href="#work"
         data-scroll-target="[data-work-grid] .card[data-deliver]"
-        data-scroll-duration="2.6"
+        data-scroll-duration="1.1"
         class="reel__cta px-7 py-3.5"
       >
         View our work
@@ -146,13 +146,13 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
     /* The prop arrives as an inline --reel-hold-set. Resolving it here, in
        the stylesheet, is what lets the static mode below zero it: an inline
        --reel-hold would beat any rule. */
-    --reel-hold: var(--reel-hold-set, 160vh);
+    --reel-hold: var(--reel-hold-set, 100vh);
   }
 
   .reel__runway {
     /* The stage plus the pinned budget. */
-    height: calc(100vh + var(--reel-hold, 160vh));
-    height: calc(100svh + var(--reel-hold, 160vh));
+    height: calc(100vh + var(--reel-hold, 100vh));
+    height: calc(100svh + var(--reel-hold, 100vh));
   }
 
   .reel__stage {
@@ -186,7 +186,7 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
      the ball's landing also relies on being one. 94px is the largest size
      the line fits at in the capped shell (924px next to the blurb). */
   .reel__head h2 {
-    font-size: clamp(46px, 4.2vw + 24px, 94px);
+    font-size: clamp(42px, 3.6vw + 18px, 76px);
   }
 
   /* The empty slot the picture starts in. 5/12 of the shell, like the lead
@@ -395,6 +395,9 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
   }
 
   @media (max-width: 800px) {
+    .reel {
+      --reel-hold: 55svh;
+    }
     .reel__copy {
       padding-top: 90px;
     }
@@ -467,7 +470,8 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
       return;
     }
 
-    root.dataset.reelMode = 'live';
+    // Reserve the pinned geometry while the chunk loads; only hide the fallback once ready.
+    root.dataset.reelMode = 'loading';
     if (lead && runway.getBoundingClientRect().bottom < 0) lead.classList.add('is-in');
 
     observer = new IntersectionObserver(
@@ -475,38 +479,48 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
         if (!entry.isIntersecting) return;
         observer?.disconnect();
         observer = null;
-        const { createReelMorph } = await import('@/scripts/reel/morph');
-        // The page may have swapped while three was loading.
-        if (!root.isConnected) return;
-        const lenis = window.__lenis;
-        engine = createReelMorph({
-          canvas,
-          root,
-          stage,
-          runway,
-          thumb,
-          full,
-          copy: copy ?? undefined,
-          // The hero: where the droplet emerges, what it lands on, and where
-          // the --hero-* palette hooks live.
-          heroPanel: document.querySelector<HTMLElement>('.hero__render'),
-          heroFloor: document.querySelector<HTMLElement>('.hero__foot'),
-          heroBaseline: document.querySelector<HTMLElement>('.hero__baseline'),
-          heroHead: document.querySelector<HTMLElement>('.hero__headline'),
-          reelHead: root.querySelector<HTMLElement>('[data-reel-head]'),
-          paletteScope: document.querySelector<HTMLElement>('.hero'),
-          // The words on the open frame.
-          overlay: root.querySelector<HTMLElement>('[data-reel-overlay]'),
-          // Where the ball ends up: bouncing on the Work heading into the
-          // card the grid marked for delivery.
-          workHead: document.querySelector<HTMLElement>('#work'),
-          leadCard: document.querySelector<HTMLElement>('[data-work-grid] .card[data-deliver]'),
-          radius: parseFloat(getComputedStyle(full).borderRadius) || 16,
-          // Lenis's velocity is the value the page is drawn at, so the bend
-          // can never disagree with the scroll. Falls back to a scroll delta.
-          velocity: lenis ? () => Math.max(-1, Math.min(1, lenis.velocity / 42)) : undefined,
-        });
-        engine.start();
+        try {
+          const { createReelMorph } = await import('@/scripts/reel/morph');
+          // The page may have swapped while three was loading.
+          if (!root.isConnected) return;
+          root.dataset.reelMode = 'live';
+          const lenis = window.__lenis;
+          engine = createReelMorph({
+            canvas,
+            root,
+            stage,
+            runway,
+            thumb,
+            full,
+            copy: copy ?? undefined,
+            // The hero: where the droplet emerges, what it lands on, and where
+            // the --hero-* palette hooks live.
+            heroPanel: document.querySelector<HTMLElement>('.hero__render'),
+            heroFloor: document.querySelector<HTMLElement>('.hero__foot'),
+            heroBaseline: document.querySelector<HTMLElement>('.hero__baseline'),
+            heroHead: document.querySelector<HTMLElement>('.hero__headline'),
+            reelHead: root.querySelector<HTMLElement>('[data-reel-head]'),
+            paletteScope: document.querySelector<HTMLElement>('.hero'),
+            // The words on the open frame.
+            overlay: root.querySelector<HTMLElement>('[data-reel-overlay]'),
+            // Where the ball ends up: bouncing on the Work heading into the
+            // card the grid marked for delivery.
+            workHead: document.querySelector<HTMLElement>('#work'),
+            leadCard: document.querySelector<HTMLElement>('[data-work-grid] .card[data-deliver]'),
+            radius: parseFloat(getComputedStyle(full).borderRadius) || 16,
+            // Lenis's velocity is the value the page is drawn at, so the bend
+            // can never disagree with the scroll. Falls back to a scroll delta.
+            velocity: lenis ? () => Math.max(-1, Math.min(1, lenis.velocity / 42)) : undefined,
+          });
+          engine.start();
+        } catch (error) {
+          engine?.destroy();
+          engine = null;
+          root.dataset.reelMode = 'static';
+          root.removeAttribute('data-reel-open');
+          lead?.classList.add('is-in');
+          console.warn('Reel unavailable; using the static presentation.', error);
+        }
       },
       { rootMargin: '100% 0px' }
     );

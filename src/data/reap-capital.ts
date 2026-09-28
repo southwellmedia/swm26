@@ -59,17 +59,12 @@ export const hero = {
 };
 
 // TODO: confirm every figure with Reap before launch.
-export const stats: Stat[] = [
-  { value: '+212%', label: 'Qualified investor inquiries, year over year' },
-  { value: '3.4×', label: 'Tour requests across property sites' },
-  { value: '16', label: 'Deals published as a living track record' },
-  { value: '$325M', label: 'AUM represented on one platform' },
-];
+export const stats: Stat[] = []; // Publish measured results only after client confirmation.
 
 export const flagship = {
   url: 'https://reapcapital.com',
   intro:
-    'A 34% average realized IRR deserved better than a template. We rebuilt the firm’s front door as an investment platform: sixteen deals as a living track record, a founder’s editorial voice, and an invest flow that qualifies before it converts.',
+    'An investment firm needs a clear front door. We brought the track record, company story and investment writing into one platform, with a direct path for prospective investors to get in touch.',
   /** The three detail shots under the cover: device mockups of the live site. */
   shots: [
     {
@@ -88,7 +83,7 @@ export const flagship = {
       label: 'ANSWER',
       text: 'Track record as database, perspectives as editorial system, qualifying invest flow to IR.',
     },
-    { label: 'STACK', text: 'Astro · React · Tailwind · MDX · Vercel · 38 days to launch.' },
+    { label: 'STACK', text: 'Astro · React · Tailwind · MDX · Vercel.' },
   ],
 };
 
@@ -112,11 +107,7 @@ export const properties: Property[] = [
       'Under new ownership, mid-renovation. Honest photography, hourly availability, a Spanish mirror and an offer published from LucidOS.',
     shot: fortunaShot,
     shotAlt: 'The La Fortuna homepage open on a laptop',
-    stats: [
-      { value: '17', label: 'Live units synced' },
-      { value: '3.9×', label: 'Tour requests' },
-      { value: '1.2s', label: 'LCP' },
-    ],
+    stats: [],
   },
   {
     // landryliving.com still resolves to the old template — the domain hasn't
@@ -130,11 +121,7 @@ export const properties: Property[] = [
       'Written as one day, morning to night, with a virtual tour path for renters relocating to North Arlington.',
     shot: landryShot,
     shotAlt: 'The Landry homepage open on a laptop',
-    stats: [
-      { value: '288', label: 'Homes, five plans' },
-      { value: '2.8×', label: 'Tour requests' },
-      { value: '41%', label: 'Leads via virtual tour' },
-    ],
+    stats: [],
   },
 ];
 
