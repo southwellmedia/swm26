@@ -1149,6 +1149,14 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
 
   measure();
 
+  // Build both programs now, while the page is still at the top, instead of
+  // on the frames that first draw them: the ball's on the first scroll, the
+  // scene's as the reel pins. Built there, each one stalled the page for
+  // 75–275 ms waiting on the GPU. compileAsync lets the driver compile in
+  // parallel where it can, and the frames that draw later just use them.
+  void renderer.compileAsync(scene, camera);
+  void droplets.compile(renderer);
+
   return {
     get progress() {
       return progress;

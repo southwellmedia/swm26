@@ -383,16 +383,28 @@
 /* -------------------------------------------------------------------------
    Film grain
 
-   An feTurbulence tile as a data URI — no network request, and it tiles
-   seamlessly via stitchTiles. Laid over a gradient at low opacity it does two
-   jobs: gives the surface a printed tactility, and breaks up the banding that
-   wide, low-contrast gradients show on 8-bit displays.
+   A 180px noise tile. Laid over a gradient at low opacity it does two jobs:
+   gives the surface a printed tactility, and breaks up the banding that wide,
+   low-contrast gradients show on 8-bit displays.
 
-   The `#` in url(#n) has to stay percent-encoded as %23 or the data URI is
-   truncated at that point.
+   A PNG, not an feTurbulence SVG: the browser rasterises an SVG filter on
+   the GPU the first time each surface scrolls into view, and under the
+   services stack that cost a 170–225 ms frame. The PNGs are that same SVG
+   as Chrome draws it, captured at 1x and 2x and quantised to 256 colours,
+   which composites within a level of the original. The source, should the
+   tile ever need regenerating at another size or frequency:
+
+     <svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'>
+       <filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.82'
+         numOctaves='3' stitchTiles='stitch'/></filter>
+       <rect width='180' height='180' filter='url(#n)'/>
+     </svg>
+
+   Every use sets background-size: 180px, so the 2x tile is drawn at the same
+   size, only sharper.
    ------------------------------------------------------------------------- */
 :root {
-  --sw-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  --sw-grain: image-set(url('/textures/grain.png') 1x, url('/textures/grain@2x.png') 2x);
 }
 
 /* -------------------------------------------------------------------------

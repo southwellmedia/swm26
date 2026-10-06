@@ -615,6 +615,17 @@ export class DropletScene {
     }
   }
 
+  /** Compile the raymarcher now rather than on the first frame that draws it.
+   *  three keys a program on the render target bound when it is built, so the
+   *  target is bound for the build, exactly as render() binds it. */
+  compile(renderer: WebGLRenderer) {
+    const previous = renderer.getRenderTarget();
+    renderer.setRenderTarget(this.target);
+    const ready = renderer.compileAsync(this.scene, this.camera);
+    renderer.setRenderTarget(previous);
+    return ready;
+  }
+
   render(renderer: WebGLRenderer) {
     renderer.setRenderTarget(this.target);
     renderer.render(this.scene, this.camera);
