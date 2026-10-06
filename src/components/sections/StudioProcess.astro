@@ -1,0 +1,200 @@
+---
+const steps = [
+  {
+    title: 'Start with a conversation.',
+    short: 'Talk',
+    word: 'Understand.',
+    you: 'Your idea. Your business. Your questions.',
+    me: 'A fresh perspective and a lot of listening.',
+    result: 'A shared starting point',
+    text: 'Tell me what you’re working toward and what is getting in the way. We’ll talk about the people using it, what already exists, and what would make this worth doing.',
+    takeaway: 'Bring the context. We’ll find the right questions together.',
+  },
+  {
+    title: 'Find the shape of it.',
+    short: 'Shape',
+    word: 'Make it clear.',
+    you: 'What matters most and what feels right.',
+    me: 'Structure, design, and a way forward.',
+    result: 'A direction we believe in',
+    text: 'We turn that conversation into a direction: what we’re building, what belongs in it, and how it should feel. You’re part of the decisions as the idea starts to become something you can see.',
+    takeaway: 'Your feedback shapes the work while it’s taking shape.',
+  },
+  {
+    title: 'Make it work in the real world.',
+    short: 'Build',
+    word: 'Bring it to life.',
+    you: 'Feedback from your side of the business.',
+    me: 'Hands-on design and development.',
+    result: 'Something ready to use',
+    text: 'This is where the pieces come together. I work through the design and development, with you involved as it becomes a working website or application. We look at how it feels to use, as well as how it looks.',
+    takeaway: 'The person designing it is also building it.',
+  },
+  {
+    title: 'Keep the conversation going.',
+    short: 'Grow',
+    word: 'Stay involved.',
+    you: 'New ideas and what you’re learning.',
+    me: 'The person who knows how it was built.',
+    result: 'A relationship that keeps growing',
+    text: 'Launch is a milestone in our relationship. As people use what we’ve built, we can learn from it, improve it, and figure out what comes next. You still know who to call.',
+    takeaway: 'A familiar face for the next chapter, too.',
+  },
+];
+---
+
+<section class="studio-process" id="the-approach" aria-labelledby="approach-title">
+  <div class="shell studio-section">
+    <div class="studio-section-heading">
+      <p class="studio-kicker">03 / THE APPROACH</p>
+      <h2 id="approach-title" class="studio-heading" data-reveal>
+        We work<br /><em>through it. Together.</em>
+      </h2>
+      <p class="studio-section-heading__aside">
+        You know your business.<br />I bring the experience to build with you.
+      </p>
+    </div>
+    <studio-process class="studio-process__body">
+      <div class="studio-process__sticky">
+        <div class="studio-workbench" aria-hidden="true">
+          <div class="studio-workbench__top">
+            <span>YOU + ME</span><span>THE WORK BETWEEN US</span>
+          </div>
+          {
+            steps.map((step, i) => (
+              <div class:list={['studio-workbench__scene', i === 0 && 'is-active']} data-scene={i}>
+                <span class="studio-workbench__number">
+                  0{i + 1}
+                  <span>/ 04</span>
+                </span>
+                <span class="studio-workbench__word">{step.word}</span>
+                <div class="studio-workbench__inputs">
+                  <>
+                    <div>
+                      <>
+                        <strong>You bring</strong>
+                        <span>{step.you}</span>
+                      </>
+                    </div>
+                    <div>
+                      <>
+                        <strong>I bring</strong>
+                        <span>{step.me}</span>
+                      </>
+                    </div>
+                  </>
+                </div>
+                <svg class="studio-workbench__connector" viewBox="0 0 400 70" fill="none">
+                  <>
+                    <path
+                      d="M100 0V20Q100 35 115 35H185Q200 35 200 50V70M300 0V20Q300 35 285 35H215Q200 35 200 50"
+                      stroke="currentColor"
+                    />
+                    <circle cx="200" cy="64" r="4" fill="currentColor" />
+                  </>
+                </svg>
+                <span class="studio-workbench__result">{step.result}</span>
+              </div>
+            ))
+          }
+        </div>
+        <nav class="studio-process__nav" aria-label="Steps in working together">
+          {
+            steps.map((step, i) => (
+              <a href={'#studio-step-' + i} data-step-link={i}>
+                <span>0{i + 1}</span>
+                {step.short}
+              </a>
+            ))
+          }
+        </nav>
+      </div>
+      <div class="studio-process__steps">
+        {
+          steps.map((step, i) => (
+            <article class="studio-process__step" id={'studio-step-' + i} data-step={i}>
+              <span class="studio-kicker">
+                0{i + 1} / {step.short.toUpperCase()}
+              </span>
+              <h3>{step.title}</h3>
+              <p>{step.text}</p>
+              <p class="studio-process__takeaway">{step.takeaway}</p>
+            </article>
+          ))
+        }
+      </div>
+    </studio-process>
+  </div>
+</section>
+
+<script>
+  class StudioProcess extends HTMLElement {
+    private cleanup?: () => void;
+
+    connectedCallback() {
+      const steps = Array.from(this.querySelectorAll<HTMLElement>('[data-step]'));
+      const scenes = Array.from(this.querySelectorAll<HTMLElement>('[data-scene]'));
+      const links = Array.from(this.querySelectorAll<HTMLAnchorElement>('[data-step-link]'));
+      const desktop = window.matchMedia('(min-width: 821px)');
+      const controller = new AbortController();
+      let frame = 0;
+      let active = -1;
+
+      const activate = (index: number) => {
+        if (active === index) return;
+        active = index;
+        scenes.forEach((scene, i) => scene.classList.toggle('is-active', i === index));
+        links.forEach((link, i) => {
+          if (i === index) link.setAttribute('aria-current', 'step');
+          else link.removeAttribute('aria-current');
+        });
+      };
+
+      const update = () => {
+        frame = 0;
+        if (!desktop.matches) {
+          links.forEach((link) => link.removeAttribute('aria-current'));
+          active = -1;
+          return;
+        }
+        const readingLine = window.innerHeight * 0.55;
+        let index = 0;
+        steps.forEach((step, i) => {
+          if (step.getBoundingClientRect().top <= readingLine) index = i;
+        });
+        activate(index);
+      };
+      const schedule = () => {
+        if (!frame) frame = requestAnimationFrame(update);
+      };
+      // Only measure while this section is nearby; release all listeners on navigation.
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          window.removeEventListener('scroll', schedule);
+          if (entry.isIntersecting) {
+            window.addEventListener('scroll', schedule, {
+              passive: true,
+              signal: controller.signal,
+            });
+            schedule();
+          }
+        },
+        { rootMargin: '100px' }
+      );
+      observer.observe(this);
+      desktop.addEventListener('change', schedule, { signal: controller.signal });
+      window.addEventListener('resize', schedule, { passive: true, signal: controller.signal });
+      update();
+      this.cleanup = () => {
+        observer.disconnect();
+        controller.abort();
+        cancelAnimationFrame(frame);
+      };
+    }
+
+    disconnectedCallback() {
+      this.cleanup?.();
+    }
+  }
+  if (!customElements.get('studio-process')) customElements.define('studio-process', StudioProcess);
+</script>

@@ -1,73 +1,255 @@
 ---
-/**
- * Studio page
- * URL: /studio
- *
- * Replaces Velocity's demo /about. The hero lede and the four service cards
- * are drawn from material that already existed; the founder section is
- * Michael's own story. The marked section still needs real writing.
- */
-import SiteLayout from '@/layouts/SiteLayout.astro';
-import SectionHead from '@/components/sections/SectionHead.astro';
-import Founder from '@/components/sections/Founder.astro';
-import Services from '@/components/sections/Services.astro';
-import Cta from '@/components/sections/Cta.astro';
 import { Image } from 'astro:assets';
+import SiteLayout from '@/layouts/SiteLayout.astro';
+import ArrowFillButton from '@/components/site/ArrowFillButton.astro';
+import FounderRelight from '@/components/site/FounderRelight.tsx';
+import StudioProcess from '@/components/sections/StudioProcess.astro';
+import portrait from '@/assets/authors/MichaelFroseth-relight.webp';
+import depth from '@/assets/authors/MichaelFroseth-relight-depth.webp';
+import reap from '@/assets/work/reap-capital/feature.webp';
+import akh from '@/assets/work/akh-digital/hero.webp';
 import siteConfig from '@/config/site.config';
-import studioPhoto from '@/assets/studio/michael-froseth.jpg';
+import '@/styles/studio.css';
+
+const questions = [
+  {
+    question: 'Who will I be working with?',
+    answer:
+      'Me—Michael. We talk through the project together, and I stay hands-on with the design and development. You have a direct line to the person doing the work, from our first conversation onward.',
+  },
+  {
+    question: 'Do I need a finished brief?',
+    answer:
+      'Bring what you have. An idea, an existing website, a list of things that are getting in the way. We can work through what matters and figure out a useful starting point together.',
+  },
+  {
+    question: 'Can you work alongside our agency or team?',
+    answer:
+      'Yes. Agency partnerships are a big part of Southwell. We can talk through where you need support, how your team works, and how I can fit into the project. The AKH Digital story shows what that can look like.',
+    href: '/work/akh-digital',
+    label: 'Explore the AKH partnership',
+  },
+  {
+    question: 'What about budget and timing?',
+    answer:
+      'Those depend on what we are building and what is already in place. Tell me what you need, any deadline you are working toward, and the budget you have in mind. That gives us a starting point for a realistic conversation about scope.',
+  },
+  {
+    question: 'What happens after launch?',
+    answer:
+      'I stay in the conversation. As your business grows, we can keep improving what we built and work through what comes next. We will discuss the support you need as part of planning the project.',
+  },
+];
 ---
 
 <SiteLayout
-  title="Studio"
-  description={siteConfig.description}
+  title="The Studio — Work Directly with Michael Froseth"
+  description="Meet Michael Froseth, the person behind Southwell Media. Twenty years of experience, hands-on websites and applications, and lasting relationships with businesses, founders and agencies."
+  image={portrait.src}
+  imageAlt="Michael Froseth, founder of Southwell Media"
   includeOrgSchema
 >
-  <header class="shell pt-[180px] max-[800px]:pt-[130px]">
-    <SectionHead
-      title="Studio"
-      blurb="A diligent little studio in Dallas, obsessed with turning ideas into digital realities."
-    />
-  </header>
+  <div class="studio-page">
+    <header class="studio-hero shell founder" aria-labelledby="studio-title">
+      <div class="studio-hero__copy">
+        <p class="studio-kicker">THE STUDIO / DALLAS, TEXAS</p>
+        <h1 id="studio-title" class="studio-title">Less handoff.<br /><em>More hands-on.</em></h1>
+        <div class="studio-hero__intro">
+          <p class="studio-lead">Hey, I’m Michael.<br />The person behind Southwell Media.</p>
+          <p>
+            I build high-quality websites and applications for businesses, founders, and agencies.
+            You work directly with me—from figuring out the idea to building it, launching it, and
+            seeing what comes next.
+          </p>
+          <ArrowFillButton href="/contact" data-chat-open="">Let’s talk</ArrowFillButton>
+        </div>
+      </div>
+      <figure class="studio-portrait">
+        <div class="studio-portrait__image">
+          <Image
+            src={portrait}
+            alt="Michael Froseth, founder of Southwell Media"
+            widths={[480, 768, 1024]}
+            sizes="(max-width: 820px) calc(100vw - 48px), 42vw"
+            loading="eager"
+            fetchpriority="high"
+          />
+          <FounderRelight
+            client:visible
+            src={portrait.src}
+            depthSrc={depth.src}
+            showControls={false}
+          />
+        </div>
+        <figcaption>
+          <span>MICHAEL FROSETH</span><span>FOUNDER & YOUR POINT PERSON</span>
+        </figcaption>
+      </figure>
+      <nav class="studio-chapters" aria-label="On this page">
+        <a href="#the-person"><span>01</span> The person</a>
+        <a href="#working-together"><span>02</span> Working together</a>
+        <a href="#the-approach"><span>03</span> The approach</a>
+        <a href="#good-questions"><span>04</span> Good questions</a>
+      </nav>
+    </header>
 
-  <div class="mt-16 shell max-[800px]:mt-10">
-    <Image
-      src={studioPhoto}
-      alt="Michael Froseth, founder of Southwell Media"
-      layout="none"
-      widths={[768, 1280, 1920]}
-      sizes="(max-width: 1440px) 100vw, 1440px"
-      class="h-[52vh] w-full rounded-[14px] object-cover object-top max-[800px]:h-[38vh]"
-    />
+    <section
+      class="studio-story studio-section shell"
+      id="the-person"
+      aria-labelledby="person-title"
+    >
+      <div class="studio-section__label">
+        <span class="studio-kicker">01 / THE PERSON</span><span
+          class="studio-story__years"
+          aria-hidden="true">20<span>years<br />in the making</span></span>
+      </div>
+      <div>
+        <h2 id="person-title" class="studio-heading" data-reveal>
+          A lot of experience.<br /><em>A very direct line.</em>
+        </h2>
+        <div class="studio-story__body">
+          <p class="studio-lead">
+            Twenty years across design, development, marketing, and creative direction. These days,
+            I bring all of that to the same table.
+          </p>
+          <p>
+            I started Southwell to work closely with the people I’m building for. I want to
+            understand your business, hear the half-formed idea, and help work out what it could
+            become.
+          </p>
+          <p>
+            My experience helps me connect the pieces: how something looks, how it works, and how it
+            fits into your day. I’m involved in those decisions with you, and I’m still around after
+            launch.
+          </p>
+          <a class="studio-text-link" href="/blog/ai-cant-replace-experience"
+            >A little more on how I think <span aria-hidden="true">↗</span></a
+          >
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="studio-partners studio-section shell"
+      id="working-together"
+      aria-labelledby="together-title"
+    >
+      <div class="studio-section-heading">
+        <p class="studio-kicker">02 / WORKING TOGETHER</p>
+        <h2 id="together-title" class="studio-heading" data-reveal>
+          Your business.<br />Your agency.<br /><em>I’m in your corner.</em>
+        </h2>
+        <p class="studio-section-heading__aside">
+          Two ways to work together.<br />The same personal commitment.
+        </p>
+      </div>
+      <div class="studio-partners__grid">
+        <article class="studio-partner">
+          <span class="studio-kicker">FOR BUSINESSES & FOUNDERS</span>
+          <h3>Let’s build<br />your next chapter.</h3>
+          <p>
+            A website that does your business justice. An application that brings an idea to life.
+            We’ll work through it together, with design and development in the same hands.
+          </p>
+          <a class="studio-project" href="/work/reap-capital">
+            <div class="studio-project__image">
+              <Image
+                src={reap}
+                alt="Website design for Reap Capital"
+                widths={[480, 768, 1024]}
+                sizes="(max-width: 820px) calc(100vw - 48px), 45vw"
+                loading="lazy"
+              />
+            </div>
+            <div class="studio-project__caption">
+              <span
+                ><strong>Reap Capital</strong><small>A continuing client relationship</small></span
+              ><span class="studio-project__arrow" aria-hidden="true">↗</span>
+            </div>
+          </a>
+        </article>
+        <article class="studio-partner">
+          <span class="studio-kicker">FOR AGENCIES & CREATIVE TEAMS</span>
+          <h3>Your team.<br />Another pair of hands.</h3>
+          <p>
+            Bring me into the work. I partner with agencies on websites and custom applications,
+            working closely with your team to turn the direction into something ready to use.
+          </p>
+          <a class="studio-project" href="/work/akh-digital">
+            <div class="studio-project__image">
+              <Image
+                src={akh}
+                alt="Selected work from Southwell’s partnership with AKH Digital"
+                widths={[480, 768, 1024]}
+                sizes="(max-width: 820px) calc(100vw - 48px), 45vw"
+                loading="lazy"
+              />
+            </div>
+            <div class="studio-project__caption">
+              <span><strong>AKH Digital</strong><small>An ongoing agency partnership</small></span
+              ><span class="studio-project__arrow" aria-hidden="true">↗</span>
+            </div>
+          </a>
+        </article>
+      </div>
+    </section>
+
+    <StudioProcess />
+
+    <section
+      class="studio-questions studio-section shell"
+      id="good-questions"
+      aria-labelledby="questions-title"
+    >
+      <div class="studio-questions__intro">
+        <p class="studio-kicker">04 / GOOD QUESTIONS</p>
+        <h2 id="questions-title" class="studio-heading" data-reveal>
+          Before we<br /><em>say hello.</em>
+        </h2>
+        <p>A few things you might be wondering.<br />Anything else? Just ask.</p>
+        <a class="studio-text-link" href={'mailto:' + siteConfig.email}
+          >{siteConfig.email} <span aria-hidden="true">↗</span></a
+        >
+      </div>
+      <div class="studio-faq">
+        {
+          questions.map((item) => (
+            <details>
+              <summary>
+                {item.question}
+                <span class="studio-faq__plus" aria-hidden="true" />
+              </summary>
+              <div class="studio-faq__answer">
+                <p>{item.answer}</p>
+                {item.href && (
+                  <a class="studio-text-link" href={item.href}>
+                    {item.label} <span aria-hidden="true">↗</span>
+                  </a>
+                )}
+              </div>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="studio-signoff shell" aria-labelledby="hello-title">
+      <p class="studio-kicker">A CONVERSATION IS A GOOD START.</p>
+      <h2 class="studio-title" id="hello-title" data-reveal>
+        What do you<br /><em>have in mind?</em>
+      </h2>
+      <div class="studio-signoff__foot">
+        <p>
+          An early idea, an overdue rebuild, or a project your team could use a hand with. Tell me
+          where you are.
+        </p><div class="studio-signoff__actions">
+          <ArrowFillButton href="/contact" data-chat-open="">Talk to Michael</ArrowFillButton><a
+            class="studio-text-link"
+            href="https://calendly.com/michael-southwellmedia/30min"
+            target="_blank"
+            rel="noopener noreferrer">Or book a call <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
   </div>
-
-  <section class="mt-20 shell max-[800px]:mt-12" data-reveal>
-    <p class="max-w-[760px] text-[clamp(1.375rem,2.4vw,2rem)] leading-[1.35] tracking-[-0.02em]">
-      {siteConfig.description}
-    </p>
-
-    <dl class="mt-16 grid grid-cols-3 gap-10 border-t border-border pt-10 max-[800px]:grid-cols-1">
-      <div>
-        <dt class="label-mono text-foreground-muted">BASED IN</dt>
-        <dd class="mt-3 ml-0 text-[17px]">{siteConfig.location}</dd>
-      </div>
-      <div>
-        <dt class="label-mono text-foreground-muted">WORKING</dt>
-        <dd class="mt-3 ml-0 text-[17px]">With clients across the globe</dd>
-      </div>
-      <div>
-        <dt class="label-mono text-foreground-muted">SAY HI</dt>
-        <dd class="mt-3 ml-0 text-[17px]">
-          <a href={'mailto:' + siteConfig.email}>{siteConfig.email}</a>
-        </dd>
-      </div>
-    </dl>
-  </section>
-
-  {/* TODO: the process still needs writing. Left out rather than filled with
-      placeholder prose. */}
-
-  <Services />
-
-  <Founder />
-  <Cta />
 </SiteLayout>

@@ -463,9 +463,11 @@ interface Props {
   src: string;
   /** Its depth map, white near, black far. */
   depthSrc: string;
+  /** Hide the technical explainer when the portrait accompanies studio copy. */
+  showControls?: boolean;
 }
 
-export default function FounderRelight({ src, depthSrc }: Props) {
+export default function FounderRelight({ src, depthSrc, showControls = true }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<RelightEngine | null>(null);
@@ -590,7 +592,8 @@ export default function FounderRelight({ src, depthSrc }: Props) {
       {/* The explainer and the view switch live on the card, not in the
           figure: the figure's edges fade into the ground, and a control
           must not fade with them. */}
-      {host &&
+      {showControls &&
+        host &&
         createPortal(
           <div className="founder-relight__ui" ref={panelRef}>
             <button

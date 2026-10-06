@@ -129,14 +129,14 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   inert
 >
   {
-    /* The sheet's colour lives on this layer, not on the sheet itself. The
-      liquid edge's canvas hangs below the sheet's box, which stretches the
-      sheet's compositor layer down over it; while the menu links' hover
-      transitions relayout the sheet, the compositor fills tiles it has not
-      rastered yet with the layer's own background colour — a flat band of
-      sheet under the wave, over the scrim, that comes and goes with the
-      cursor. A transparent sheet has no colour to fill with. */
+    /* The sheet's colour lives on these two layers, not on the sheet itself.
+      Both hang --edge-hang below the sheet's box; the edge script clips each
+      to the liquid edge every frame, the gloss a few pixels lower than the
+      fill so it shows as a rim (src/scripts/menu-edge.ts). No canvas: the
+      earlier WebGL strip was transparent below the edge, and Chrome would
+      paint that half solid once a link's hover transition had ended. */
   }
+  <div class="sw-menu__gloss" aria-hidden="true"></div>
   <div class="sw-menu__fill" aria-hidden="true"></div>
   <div class="sw-menu__inner shell">
     <nav class="sw-menu__nav" aria-label="Main">
@@ -183,8 +183,6 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       </div>
     </aside>
   </div>
-
-  <canvas class="sw-menu__edge" id="sw-menu-edge" aria-hidden="true"></canvas>
 </div>
 
 <style>
@@ -439,11 +437,10 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
 
   /* A card of ink poured from the top. As tall as what is in it, capped so
      the page keeps showing beneath; no fade — ink arrives, it does not
-     appear. --edge-overlap is how far the liquid edge's canvas reaches back
-     up over the sheet so the join is under ink. */
+     appear. --edge-hang is how far the colour layers reach below the box,
+     which is as low as the liquid edge can ever dip. */
   .sw-menu {
-    --edge-overlap: 44px;
-    --edge-height: 130px;
+    --edge-hang: 86px;
     position: fixed;
     inset: 0 0 auto;
     z-index: 55;
@@ -472,10 +469,16 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     will-change: transform;
   }
 
-  .sw-menu__fill {
+  .sw-menu__fill,
+  .sw-menu__gloss {
     position: absolute;
-    inset: 0;
+    inset: 0 0 calc(-1 * var(--edge-hang));
     background: var(--color-background);
+  }
+
+  /* The gloss colour is set by the edge script, from the fill's. */
+  .sw-menu__gloss {
+    background: transparent;
   }
 
   /* The words come up once, together, just behind the sheet. */
@@ -620,18 +623,13 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     color: var(--color-foreground-muted);
   }
 
-  .sw-menu__edge {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: calc(100% - var(--edge-overlap));
-    width: 100%;
-    height: var(--edge-height);
-    pointer-events: none;
+  /* Without the engine: the fill stops at the box and the stylesheet draws
+     a still, gently scalloped edge under it. */
+  .sw-menu[data-edge='static'] .sw-menu__fill {
+    bottom: 0;
   }
 
-  /* Without the engine: a still, gently scalloped edge. */
-  .sw-menu[data-edge='static'] .sw-menu__edge {
+  .sw-menu[data-edge='static'] .sw-menu__gloss {
     display: none;
   }
 
@@ -726,17 +724,18 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     let open = false;
     let scrolled = false;
 
-    // The liquid underside. Reduced motion or no WebGL gets the stylesheet's
-    // still edge instead.
-    const edgeCanvas = document.getElementById('sw-menu-edge');
+    // The liquid underside. Reduced motion gets the stylesheet's still edge
+    // instead.
+    const fill = menu.querySelector<HTMLElement>('.sw-menu__fill');
+    const gloss = menu.querySelector<HTMLElement>('.sw-menu__gloss');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const edge =
-      edgeCanvas instanceof HTMLCanvasElement && !reduced
+      fill && gloss && !reduced
         ? createMenuEdge({
-            canvas: edgeCanvas,
             sheet: menu,
-            paint: menu.querySelector<HTMLElement>('.sw-menu__fill'),
-            overlap: parseFloat(getComputedStyle(menu).getPropertyValue('--edge-overlap')) || 44,
+            fill,
+            gloss,
+            hang: parseFloat(getComputedStyle(menu).getPropertyValue('--edge-hang')) || 86,
           })
         : null;
     if (!edge?.supported) menu.dataset.edge = 'static';

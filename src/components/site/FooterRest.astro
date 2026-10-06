@@ -1,0 +1,103 @@
+---
+/**
+ * FooterRest
+ *
+ * The strip at the foot of the footer where the hero's sculpture surfaces
+ * one last time: a large cluster of ink, graphite and chrome droplets,
+ * centred, rising out of the bottom edge and churning on its own. Drawn on
+ * a transparent canvas by src/scripts/footer-rest.ts, so nothing but the
+ * form is ever painted and the slab shows through everywhere else.
+ *
+ * Without WebGL the strip collapses; with reduced motion it draws one frame.
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={['rest', className]} data-footer-rest aria-hidden="true">
+  <canvas class="rest__canvas" data-footer-rest-canvas></canvas>
+</div>
+
+<style>
+  .rest {
+    overflow: hidden;
+    /* Presentation only: the copy over it stays clickable. */
+    pointer-events: none;
+  }
+
+  .rest__canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .rest[data-mode='static'] {
+    display: none;
+  }
+</style>
+
+<script>
+  import { createFooterRest } from '@/scripts/footer-rest';
+
+  function initFooterRest() {
+    const root = document.querySelector<HTMLElement>('[data-footer-rest]');
+    const canvas = root?.querySelector<HTMLCanvasElement>('[data-footer-rest-canvas]');
+    if (!root || !canvas) return;
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // The palette comes from the hero's own section when there is one, so
+    // the droplets here are the droplets there; never from the slab, whose
+    // tokens are inverted.
+    const rest = createFooterRest({
+      canvas,
+      paletteScope: document.querySelector<HTMLElement>('.hero') ?? document.body,
+    });
+    if (!rest.supported) {
+      root.dataset.mode = 'static';
+      return;
+    }
+    root.dataset.mode = 'live';
+
+    if (import.meta.env.DEV) {
+      // For looking at the frame from outside a visible tab.
+      (window as unknown as { __footerRest?: unknown }).__footerRest = rest;
+    }
+
+    // The ball rests still under reduced motion: one frame, then nothing.
+    if (reduced) {
+      rest.renderOnce();
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) rest.start();
+        else rest.stop();
+      },
+      { rootMargin: '10% 0px' }
+    );
+    io.observe(root);
+
+    const onPointerMove = (event: PointerEvent) => rest.setPointer(event.clientX, event.clientY);
+    const onPointerLeave = () => rest.setPointer(null, null);
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    document.addEventListener('mouseleave', onPointerLeave);
+
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        io.disconnect();
+        window.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('mouseleave', onPointerLeave);
+        rest.destroy();
+      },
+      { once: true }
+    );
+  }
+
+  initFooterRest();
+  document.addEventListener('astro:after-swap', initFooterRest);
+</script>
