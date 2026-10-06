@@ -102,8 +102,8 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
   {
     showHead && (
       <SectionHead
-        title="Latest work"
-        blurb="A diligent little studio, obsessed with turning ideas into digital realities."
+        title="Selected work"
+        blurb="Different businesses. Different challenges. Every detail built around the work it needs to do."
         id="work"
       />
     )
@@ -174,9 +174,11 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
 
             <div class="card__caption">
               <span class="card__name">{project.data.title}</span>
+              <span class="card__summary">{project.data.description}</span>
             </div>
 
             <span class="card__meta label-mono">{project.data.discipline}</span>
+            {project.data.badge && <span class="card__badge label-mono">{project.data.badge}</span>}
           </a>
         );
       })
@@ -395,13 +397,31 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
     left: 0;
     padding: 24px 26px;
     pointer-events: none;
-    background: linear-gradient(to top, rgb(12 16 22 / 0.6), transparent);
+    background: linear-gradient(to top, rgb(12 16 22 / 0.88), rgb(12 16 22 / 0.05));
     /* Motion moves this against the picture under the pointer. The
        opposition is the whole effect — same direction would just look like
        sliding. A layer of its own for the same reason as the media. */
     will-change: transform;
   }
 
+  .card__summary {
+    display: block;
+    max-width: 48ch;
+    margin-top: 10px;
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+  .card__badge {
+    position: absolute;
+    top: 20px;
+    left: 22px;
+    padding: 7px 12px;
+    color: #0c1016;
+    background: #eef2f4;
+    border-radius: 999px;
+  }
   .card__name {
     display: block;
     font-family: var(--font-display);

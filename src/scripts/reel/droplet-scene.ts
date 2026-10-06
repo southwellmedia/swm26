@@ -43,6 +43,7 @@ const FLOOR_Y = -0.9;
 const FOCAL = 1.9;
 
 export interface ScenePalette {
+  signature: Color;
   ink: Color;
   mid: Color;
   silver: Color;
@@ -112,6 +113,7 @@ uniform vec4  uBlobs[${NBLOB}];
 uniform float uBlobTint[${NBLOB}];
 uniform float uK;
 uniform vec3  uInk, uMid, uSilver, uBg, uBg2, uWarm, uCool;
+uniform vec3 uSignature;
 
 in vec2 vUv;
 out vec4 fragColor;
@@ -157,6 +159,19 @@ float tintAt(vec3 p) {
   return wsum > 0.0 ? tsum / wsum : 0.5;
 }
 
+  // Only the final stray carries the signature pigment. Nearby surfaces stay neutral.
+  float signatureAt(vec3 p) {
+    float total = 0.0, accent = 0.0;
+    for (int i = 0; i < uBlobCount; i++) {
+      float d = length(p - uBlobs[i].xyz) - uBlobs[i].w;
+      float weight = exp(-12.0 * max(d, 0.0));
+      total += weight;
+      if (i == ${NBLOB - 1}) accent = weight;
+    }
+    return smoothstep(0.25, 0.75, accent / max(total, 0.0001));
+  }
+
+
 vec3 calcNormal(vec3 p, float eps) {
   vec2 e = vec2(eps, -eps);
   return normalize(
@@ -194,7 +209,7 @@ vec3 shade(vec3 p, vec3 n, vec3 rd, float tint) {
   float sh = softShadow(p + n * 0.03, L, uShadowSteps);
   float ndl = max(dot(n, L), 0.0);
   float fres = pow(1.0 - max(dot(n, v), 0.0), 5.0);
-  vec3 albedo = dropletColor(tint);
+  vec3 albedo = mix(dropletColor(tint), uSignature, signatureAt(p));
   float bounce = smoothstep(0.2, -1.0, n.y) * smoothstep(1.5, FLOOR_Y, p.y);
   vec3 diffuse = albedo * ((0.22 + 0.62 * ndl * sh) * ao + bounce * 0.35 * uBg);
   float gloss = mix(0.7, 1.0, tint);
@@ -321,6 +336,7 @@ export class DropletScene {
     uUp: { value: new Vector3() },
   };
   private colors = {
+    uSignature: { value: new Color() },
     uInk: { value: new Color() },
     uMid: { value: new Color() },
     uSilver: { value: new Color() },
@@ -367,6 +383,7 @@ export class DropletScene {
   }
 
   setPalette(p: ScenePalette) {
+    this.colors.uSignature.value.copy(p.signature);
     this.colors.uInk.value.copy(p.ink);
     this.colors.uMid.value.copy(p.mid);
     this.colors.uSilver.value.copy(p.silver);

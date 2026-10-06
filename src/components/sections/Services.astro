@@ -18,6 +18,7 @@
  *             depth from translateZ and nothing else.
  */
 import SectionHead from './SectionHead.astro';
+import ServiceArt from './ServiceArt.astro';
 import { services } from '@/config/services.config';
 
 const last = services.length - 1;
@@ -32,7 +33,7 @@ const timelineScope = services
   <div class="shell mb-14">
     <SectionHead
       title="Services"
-      blurb="An unusual studio, focused on transforming your vision into a captivating digital experience."
+      blurb="Bring us a new idea, a growing business, or something that needs to work better."
       id="services"
     />
   </div>
@@ -54,36 +55,39 @@ const timelineScope = services
           data-theme={service.theme}
           style={i < last ? `animation-timeline: --svc-${i + 1}` : undefined}
         >
-          <div class="service__lead">
-            <span class="service__num label-mono" data-reveal>
-              {service.num}
-            </span>
-            <h3 class="service__title display-service m-0">
-              <span class="rv-mask">
-                <span data-reveal="rise" data-reveal-delay="0.08">
-                  {service.title[0]}
-                </span>
+          <div class="service__copy">
+            <div class="service__lead">
+              <span class="service__num label-mono" data-reveal>
+                {service.num}
               </span>
-              <span class="rv-mask">
-                <span data-reveal="rise" data-reveal-delay="0.16">
-                  {service.title[1]}
+              <h3 class="service__title display-service m-0">
+                <span class="rv-mask">
+                  <span data-reveal="rise" data-reveal-delay="0.08">
+                    {service.title[0]}
+                  </span>
                 </span>
-              </span>
-            </h3>
-          </div>
-
-          <div class="service__detail">
-            <div class="service__tags">
-              {service.tags.map((tag, j) => (
-                <span class="service__tag" data-reveal data-reveal-delay={0.38 + j * 0.06}>
-                  {tag}
+                <span class="rv-mask">
+                  <span data-reveal="rise" data-reveal-delay="0.16">
+                    {service.title[1]}
+                  </span>
                 </span>
-              ))}
+              </h3>
             </div>
-            <p class="service__desc" data-reveal data-reveal-delay="0.54">
-              {service.desc}
-            </p>
+
+            <div class="service__detail">
+              <div class="service__tags">
+                {service.tags.map((tag, j) => (
+                  <span class="service__tag" data-reveal data-reveal-delay={0.38 + j * 0.06}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <p class="service__desc" data-reveal data-reveal-delay="0.54">
+                {service.desc}
+              </p>
+            </div>
           </div>
+          <ServiceArt index={i} />
         </article>
       </div>
     ))
@@ -109,10 +113,11 @@ const timelineScope = services
     /* Keeps the grain's blend mode working the card and nothing behind it. */
     isolation: isolate;
     display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 60px;
+    grid-template-columns: 1fr 1.1fr;
+    overflow: hidden;
+    gap: 40px;
     min-height: 62vh;
-    padding: 56px 60px;
+    padding: 48px;
     border: 1px solid var(--color-card-border);
     border-radius: var(--radius-xl);
     box-shadow: 0 -12px 40px rgb(12 16 22 / 0.1);
@@ -216,6 +221,22 @@ const timelineScope = services
     --card-grain: var(--service-shade-grain);
   }
 
+  .service__copy {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 36px;
+    padding: 24px 0;
+    min-width: 0;
+  }
+  .service__title {
+    font-size: clamp(34px, 4.4vw, 68px);
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+
   .service__lead {
     display: flex;
     flex-direction: column;
@@ -242,11 +263,12 @@ const timelineScope = services
   }
 
   .service__tag {
-    padding: 8px 16px;
-    border: 1.5px solid var(--card-chip);
+    padding: 0;
+    border: 0;
     border-radius: var(--radius-full);
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.65;
   }
 
   .service__desc {
@@ -282,6 +304,17 @@ const timelineScope = services
       padding: 36px 28px;
     }
 
+    .service__copy {
+      padding: 0;
+      gap: 28px;
+    }
+    .service__title {
+      font-size: clamp(38px, 8vw, 60px);
+    }
+    .service :global(.service-art) {
+      grid-row: 1;
+    }
+
     .service::after {
       display: none;
     }
@@ -294,4 +327,22 @@ const timelineScope = services
       font-size: 16px;
     }
   }
+</style>
+
+<style>
+  .service[data-theme='ink'] {
+    color: #eef2f4;
+  }
+  @media (max-width: 800px) {
+    .service {
+      background: #edf1f4;
+    }
+    .service[data-theme='ink'] {
+      background: #121619;
+    }
+  }
+</style>
+
+<style>
+@media (prefers-reduced-motion: reduce) { .service { animation: none; } }
 </style>

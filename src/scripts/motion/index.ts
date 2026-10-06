@@ -25,7 +25,21 @@ let teardown: VoidFunction[] = [];
 function setup() {
   document.documentElement.classList.add('js');
   const reduced = reducedQuery.matches;
-  teardown = [initReveal(reduced), initHero(reduced), initWork(reduced), initFlow(reduced)];
+  try {
+    for (const init of [initReveal, initHero, initWork, initFlow]) teardown.push(init(reduced));
+  } catch (error) {
+    cleanup();
+    document.documentElement.classList.remove('js');
+    document
+      .querySelectorAll<HTMLElement>(
+        '[data-reveal], .card, .hero__word, .hero__render, .hero__foot'
+      )
+      .forEach((el) => {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      });
+    console.warn('Motion unavailable; showing the static page.', error);
+  }
 }
 
 function cleanup() {

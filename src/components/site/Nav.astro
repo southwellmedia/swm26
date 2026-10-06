@@ -33,7 +33,7 @@ interface Props {
    * The page itself is on ink (a client story), so once the bar frosts it
    * must frost to ink rather than the page ground, in either colour scheme.
    */
-  tone?: 'dark';
+  tone?: 'dark' | 'light';
   /**
    * The menu's own colour. Ink pours a dark sheet over the page in either
    * scheme; light lays a sheet of the page ground over a dimmed page.
@@ -231,6 +231,15 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     --color-foreground: var(--ice-100);
     --color-border: var(--border-invert);
     --nav-context: var(--nav-context-on-media);
+  }
+
+  /* Light editorial stories keep a legible bar even under a dark OS theme.
+     The open menu still uses the site's own theme colors. */
+  .sw-nav[data-tone='light']:not([data-menu-open='true']) {
+    --color-background: #f3ecdf;
+    --color-foreground: #193e3b;
+    --color-border: rgb(25 62 59 / 0.16);
+    --nav-context: #176c68;
   }
 
   .sw-nav.is-scrolled {
