@@ -145,6 +145,10 @@ const timelineScope = services
     opacity: var(--card-grain, 0.5);
     mix-blend-mode: soft-light;
     pointer-events: none;
+    /* A layer of its own, rastered once: as the stack recedes, the cards'
+       scroll-driven transforms otherwise re-rastered this tiled image across
+       the whole card every frame, which was most of the GPU's scroll work. */
+    will-change: transform;
   }
 
   /* Content rides above the grain. */

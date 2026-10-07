@@ -1,21 +1,104 @@
 import { particlePosition, accentWeight } from './particle-layout';
 
-/** Opacity steps the particles are batched into; fine enough to read as continuous. */
-const ALPHA_STEPS = 24;
-/** Below this radius (device px) a dot is drawn as a square of the same area:
- *  at that size the two are indistinguishable, and a square costs far less. */
-const SQUARE_BELOW = 1.25;
-/** Half-side of a square with the area of a unit circle: √π / 2. */
-const SQUARE_HALF = Math.sqrt(Math.PI) / 2;
+const COUNT = 1600;
+/** Floats per particle in the vertex buffer: x, y, radius, alpha, colored. */
+const STRIDE = 5;
+
+// Every particle is one GL point: a quad the size of its dot plus a pixel of
+// antialiased rim, coloured and composited in order, premultiplied, exactly as
+// a 2D canvas fill would be. The positions are worked out on the CPU (they
+// carry damped pointer state) and uploaded once a frame; the GPU then draws all
+// 1600 in a single call. The 2D canvas this replaces rasterised every dot on
+// every frame, and at large windows that alone held the section near 80 fps.
+const VERT = `
+attribute vec2 aPos;
+attribute float aRadius;
+attribute float aAlpha;
+attribute float aColored;
+uniform vec2 uRes;
+varying float vRadius;
+varying float vAlpha;
+varying float vColored;
+void main() {
+  vec2 clip = aPos / uRes * 2.0 - 1.0;
+  gl_Position = vec4(clip.x, -clip.y, 0.0, 1.0);
+  // Dots under a pixel are drawn at a pixel and dimmed by their real area, so
+  // the dust keeps its weight instead of flickering in and out of the grid.
+  float r = max(aRadius, 1.0);
+  gl_PointSize = 2.0 * r + 2.0;
+  vRadius = r;
+  vAlpha = aAlpha * min(1.0, aRadius * aRadius);
+  vColored = aColored;
+}`;
+
+const FRAG = `
+precision mediump float;
+uniform vec3 uInk;
+uniform vec3 uAccent;
+varying float vRadius;
+varying float vAlpha;
+varying float vColored;
+void main() {
+  float d = length(gl_PointCoord - 0.5) * (2.0 * vRadius + 2.0);
+  float a = clamp(vRadius + 0.5 - d, 0.0, 1.0) * vAlpha;
+  if (a <= 0.0) discard;
+  gl_FragColor = vec4(mix(uInk, uAccent, vColored) * a, a);
+}`;
+
+/** Any CSS colour, as 0–1 RGB, by letting the browser paint it. */
+function toRgb(color: string): [number, number, number] {
+  const probe = document.createElement('canvas');
+  probe.width = probe.height = 1;
+  const g = probe.getContext('2d', { willReadFrequently: true });
+  if (!g) return [0, 0, 0];
+  g.fillStyle = '#000';
+  g.fillStyle = color;
+  g.fillRect(0, 0, 1, 1);
+  const [r, gr, b] = g.getImageData(0, 0, 1, 1).data;
+  return [r / 255, gr / 255, b / 255];
+}
+
+function compile(gl: WebGLRenderingContext, type: number, source: string) {
+  const shader = gl.createShader(type);
+  if (!shader) return null;
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  return shader;
+}
 
 /** A lightweight particle study; particles have depth, drift and damped pointer displacement. */
 export function mountParticles(host: HTMLElement) {
   const canvas = host.querySelector('canvas');
   const card = host.closest<HTMLElement>('.service');
   if (!canvas || !card) return;
-  const context = canvas.getContext('2d');
-  if (!context) return;
-  const ctx = context;
+  const context = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false });
+  if (!context) return; // the static SVG stays
+  const gl = context;
+  const vert = compile(gl, gl.VERTEX_SHADER, VERT);
+  const frag = compile(gl, gl.FRAGMENT_SHADER, FRAG);
+  const program = gl.createProgram();
+  if (!vert || !frag || !program) return;
+  gl.attachShader(program, vert);
+  gl.attachShader(program, frag);
+  gl.linkProgram(program);
+  gl.useProgram(program);
+  const data = new Float32Array(COUNT * STRIDE);
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, data.byteLength, gl.DYNAMIC_DRAW);
+  const bytes = Float32Array.BYTES_PER_ELEMENT;
+  ([['aPos', 2, 0], ['aRadius', 1, 2], ['aAlpha', 1, 3], ['aColored', 1, 4]] as const).forEach(([name, size, offset]) => {
+    const at = gl.getAttribLocation(program, name);
+    gl.enableVertexAttribArray(at);
+    gl.vertexAttribPointer(at, size, gl.FLOAT, false, STRIDE * bytes, offset * bytes);
+  });
+  const uRes = gl.getUniformLocation(program, 'uRes');
+  const uInk = gl.getUniformLocation(program, 'uInk');
+  const uAccent = gl.getUniformLocation(program, 'uAccent');
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  gl.clearColor(0, 0, 0, 0);
+
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   // Matches the stylesheet's stacked layout, where the art sits under the copy
   // and fades out downward instead of to the left.
@@ -24,11 +107,11 @@ export function mountParticles(host: HTMLElement) {
   let width = 1, height = 1, pixelRatio = 1;
   let frame = 0, visible = false, disposed = false, previous = 0, time = 0;
   let pointerX = -1000, pointerY = -1000, active = false, scroll = 0;
-  let ink = '#343d48', accent = '#ff542e';
+  let ink = '', accent = '';
   const variant = Number(host.dataset.particleVariant || 0);
   let seed = 26 + variant * 7919;
   const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
-  const particles = Array.from({ length: 1600 }, () => ({
+  const particles = Array.from({ length: COUNT }, () => ({
     u: random(), v: (random() + random() + random() - 1.5),
     depth: random(), phase: random() * Math.PI * 2,
     size: .5 + random() * 1.1, colored: random() < .23, weight: accentWeight(random()),
@@ -41,6 +124,8 @@ export function mountParticles(host: HTMLElement) {
     if (nextInk === ink && nextAccent === accent) return;
     ink = nextInk;
     accent = nextAccent;
+    gl.uniform3fv(uInk, toRgb(ink));
+    gl.uniform3fv(uAccent, toRgb(accent));
   };
   const draw = (now: number) => {
     frame = 0;
@@ -58,14 +143,9 @@ export function mountParticles(host: HTMLElement) {
     }
     const desired = reduced.matches ? 0 : Math.max(-1, Math.min(1, (innerHeight * .5 - rect.top - rect.height * .5) / innerHeight));
     scroll += (desired - scroll) * .06;
-    // Device pixels throughout, so the square cutoff is in real pixels.
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
     const damp = reduced.matches ? 1 : 1 - Math.exp(-5 * dt);
-    // One path per colour and opacity step, filled once each, rather than a
-    // fill per particle: under fifty fills a frame instead of 1600.
-    const paths: Array<Path2D | undefined> = [];
     const stacked = stackedQuery.matches;
+    let count = 0;
     for (const p of particles) {
       const u = (p.u + time * (.009 + p.depth * .007)) % 1;
       const point = particlePosition(u, p.v, p.depth, p.phase, time, scroll, variant, p.colored);
@@ -87,26 +167,16 @@ export function mountParticles(host: HTMLElement) {
       const alpha = fade * edge * (p.colored ? p.weight.opacity * (.7 + p.depth * .3) : .13 + p.depth * .4);
       if (alpha <= .004) continue;
       const size = p.colored ? p.weight.radius * (.75 + p.depth * .4) : p.size * (.55 + p.depth * .95);
-      const step = Math.max(1, Math.round(alpha * ALPHA_STEPS));
-      const key = (p.colored ? ALPHA_STEPS + 1 : 0) + step;
-      const path = (paths[key] ??= new Path2D());
-      const r = size * pixelRatio, cx = px * pixelRatio, cy = py * pixelRatio;
-      if (r < SQUARE_BELOW) {
-        const h = r * SQUARE_HALF;
-        path.rect(cx - h, cy - h, h * 2, h * 2);
-      } else {
-        path.moveTo(cx + r, cy);
-        path.arc(cx, cy, r, 0, Math.PI * 2);
-      }
+      const o = count++ * STRIDE;
+      data[o] = px * pixelRatio;
+      data[o + 1] = py * pixelRatio;
+      data[o + 2] = size * pixelRatio;
+      data[o + 3] = alpha;
+      data[o + 4] = p.colored ? 1 : 0;
     }
-    paths.forEach((path, key) => {
-      if (!path) return;
-      const colored = key > ALPHA_STEPS;
-      ctx.globalAlpha = (key - (colored ? ALPHA_STEPS + 1 : 0)) / ALPHA_STEPS;
-      ctx.fillStyle = colored ? accent : ink;
-      ctx.fill(path);
-    });
-    ctx.globalAlpha = 1;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, data.subarray(0, count * STRIDE));
+    gl.drawArrays(gl.POINTS, 0, count);
     host.dataset.ready = 'true';
     host.dataset.interacting = active && !reduced.matches ? 'true' : 'false';
     if (visible && !document.hidden && !reduced.matches) frame = requestAnimationFrame(draw);
@@ -120,9 +190,10 @@ export function mountParticles(host: HTMLElement) {
   const resize = () => {
     const box = host.getBoundingClientRect();
     width = Math.max(1, box.width); height = Math.max(1, box.height);
-    const nextRatio = Math.min(devicePixelRatio, 1.5);
-    pixelRatio = nextRatio;
+    pixelRatio = Math.min(devicePixelRatio, 1.5);
     canvas.width = Math.round(width * pixelRatio); canvas.height = Math.round(height * pixelRatio);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
     readColors(); wake();
   };
   const move = (event: PointerEvent) => {
@@ -132,6 +203,14 @@ export function mountParticles(host: HTMLElement) {
     wake();
   };
   const leave = () => { active = false; wake(); };
+  // A lost context (driver reset, too many contexts) falls back to the SVG.
+  const onLost = (event: Event) => {
+    event.preventDefault();
+    cancelAnimationFrame(frame); frame = 0;
+    disposed = true;
+    delete host.dataset.ready;
+  };
+  canvas.addEventListener('webglcontextlost', onLost);
   const observer = new IntersectionObserver(([entry]) => {
     visible = entry.isIntersecting;
     if (!visible && frame) { cancelAnimationFrame(frame); frame = 0; }
@@ -146,9 +225,11 @@ export function mountParticles(host: HTMLElement) {
   const cleanup = () => {
     disposed = true; cancelAnimationFrame(frame);
     observer.disconnect(); resizeObserver.disconnect(); paletteObserver.disconnect();
+    canvas.removeEventListener('webglcontextlost', onLost);
     card.removeEventListener('pointermove', move); card.removeEventListener('pointerleave', leave);
     reduced.removeEventListener('change', wake); document.removeEventListener('visibilitychange', wake);
     document.removeEventListener('astro:before-swap', cleanup);
+    gl.deleteBuffer(buffer); gl.deleteProgram(program); gl.deleteShader(vert); gl.deleteShader(frag);
   };
   document.addEventListener('astro:before-swap', cleanup, { once: true });
   resize();
