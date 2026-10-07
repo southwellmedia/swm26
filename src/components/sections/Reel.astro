@@ -49,8 +49,8 @@ interface Props {
 const {
   src,
   poster,
-  title = 'An idea. Then the real thing.',
-  blurb = 'I design it, and I build it. That means fewer handoffs, clearer decisions, and someone who understands your business as well as the work.',
+  title = 'You don’t need all the answers yet.',
+  blurb = 'Bring the business context, the unfinished idea or the process that’s causing trouble. I’ll help define the work, test the assumptions and build what you need.',
   hold = '100vh',
   class: className,
 } = Astro.props;
@@ -63,7 +63,7 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
     <div class="reel__stage shell" data-reel-stage>
       <div class="reel__copy" data-reel-copy>
         <header class="reel__head" data-reveal>
-          <h2 class="display-section m-0" data-reel-head>{title}</h2>
+          <h2 class="display-section m-0 text-balance" data-reel-head>{title}</h2>
           <p
             class="text-foreground-secondary m-0 max-w-[380px] text-[18px] leading-[1.55] max-[800px]:text-base"
           >

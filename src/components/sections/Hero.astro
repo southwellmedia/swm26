@@ -41,11 +41,12 @@ import HeroScene from '@/components/site/HeroScene.tsx';
   </HeroVisual>
 
   <h1 class="hero__headline display-hero">
-    <span class="hero__line"><span class="hero__word hero__word--1">Original by design.</span></span
+    <span class="hero__line"
+      ><span class="hero__word hero__word--1">You know what needs to change.</span></span
     >
     <span class="hero__line"
       ><span class="hero__word hero__word--2"
-        ><em>Built to earn its keep.</em>{
+        ><em>Let’s work out how.</em>{
           /* A zero-size inline-block sat on the baseline: the reel's droplet
             lands on this line, and reads where the baseline is from here. */
         }<span class="hero__baseline" aria-hidden="true"></span></span
@@ -55,9 +56,8 @@ import HeroScene from '@/components/site/HeroScene.tsx';
 
   <div class="hero__foot mt-9 flex items-end justify-between gap-10">
     <p class="text-foreground-secondary m-0 max-w-[440px] text-[17px] leading-[1.6]">
-      Custom websites, applications and brands, designed and built in Dallas for businesses that
-      have outgrown off&#8209;the&#8209;shelf. Work directly with me, Michael, from the first idea
-      through design, development and launch.
+      Websites, applications, brands and early&#8209;stage products. I&nbsp;bring design,
+      development and technical advice together to help your business move forward.
     </p>
 
     <div class="hero__scroll" aria-hidden="true">
@@ -116,8 +116,11 @@ import HeroScene from '@/components/site/HeroScene.tsx';
        has no descenders, so the space under it reads as a gap. One token in
        themes/southwell.css. */
     line-height: var(--hero-leading, 0.88);
-    /* Desktop stays editorial; mobile below has its own wrapping composition. */
-    font-size: 9.4cqi;
+    /* Desktop stays editorial: one row per line, so the longer first line
+       sets the size. "You know what needs to change." in the bold weight is
+       about 13.4em, and 7.2cqi puts it at roughly 97% of the shell. Mobile
+       below has its own wrapping composition. */
+    font-size: 7.2cqi;
   }
 
   /* Each line masks its word so it rises out from behind the line above.
