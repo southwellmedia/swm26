@@ -1,5 +1,13 @@
 import { particlePosition, accentWeight } from './particle-layout';
 
+/** Opacity steps the particles are batched into; fine enough to read as continuous. */
+const ALPHA_STEPS = 24;
+/** Below this radius (device px) a dot is drawn as a square of the same area:
+ *  at that size the two are indistinguishable, and a square costs far less. */
+const SQUARE_BELOW = 1.25;
+/** Half-side of a square with the area of a unit circle: √π / 2. */
+const SQUARE_HALF = Math.sqrt(Math.PI) / 2;
+
 /** A lightweight particle study; particles have depth, drift and damped pointer displacement. */
 export function mountParticles(host: HTMLElement) {
   const canvas = host.querySelector('canvas');
@@ -9,6 +17,10 @@ export function mountParticles(host: HTMLElement) {
   if (!context) return;
   const ctx = context;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  // Matches the stylesheet's stacked layout, where the art sits under the copy
+  // and fades out downward instead of to the left.
+  const stackedQuery = matchMedia('(max-width: 800px)');
+  const next = card.parentElement?.nextElementSibling?.querySelector<HTMLElement>('.service') ?? null;
   let width = 1, height = 1, pixelRatio = 1;
   let frame = 0, visible = false, disposed = false, previous = 0, time = 0;
   let pointerX = -1000, pointerY = -1000, active = false, scroll = 0;
@@ -24,8 +36,11 @@ export function mountParticles(host: HTMLElement) {
   }));
   const readColors = () => {
     const styles = getComputedStyle(card);
-    ink = styles.color || '#343d48';
-    accent = styles.getPropertyValue('--signature-color').trim() || '#ff542e';
+    const nextInk = styles.color || '#343d48';
+    const nextAccent = styles.getPropertyValue('--signature-color').trim() || '#ff542e';
+    if (nextInk === ink && nextAccent === accent) return;
+    ink = nextInk;
+    accent = nextAccent;
   };
   const draw = (now: number) => {
     frame = 0;
@@ -34,11 +49,23 @@ export function mountParticles(host: HTMLElement) {
     previous = now;
     if (!reduced.matches) time += dt;
     const rect = card.getBoundingClientRect();
+    // The stack slides the next card over this one; once it is covered, the
+    // last frame stays and nothing is drawn under it.
+    const nextTop = next?.getBoundingClientRect().top ?? Infinity;
+    if (!reduced.matches && nextTop < rect.top + rect.height * .15) {
+      if (visible && !document.hidden) frame = requestAnimationFrame(draw);
+      return;
+    }
     const desired = reduced.matches ? 0 : Math.max(-1, Math.min(1, (innerHeight * .5 - rect.top - rect.height * .5) / innerHeight));
     scroll += (desired - scroll) * .06;
-    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    ctx.clearRect(0, 0, width, height);
+    // Device pixels throughout, so the square cutoff is in real pixels.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     const damp = reduced.matches ? 1 : 1 - Math.exp(-5 * dt);
+    // One path per colour and opacity step, filled once each, rather than a
+    // fill per particle: under fifty fills a frame instead of 1600.
+    const paths: Array<Path2D | undefined> = [];
+    const stacked = stackedQuery.matches;
     for (const p of particles) {
       const u = (p.u + time * (.009 + p.depth * .007)) % 1;
       const point = particlePosition(u, p.v, p.depth, p.phase, time, scroll, variant, p.colored);
@@ -53,13 +80,32 @@ export function mountParticles(host: HTMLElement) {
       p.x += (targetX - p.x) * damp;
       p.y += (targetY - p.y) * damp;
       const fade = Math.min(1, u * 10, (1 - u) * 10);
-      ctx.globalAlpha = fade * (p.colored ? p.weight.opacity * (.7 + p.depth * .3) : .13 + p.depth * .4);
-      ctx.fillStyle = p.colored ? accent : ink;
+      const px = x + p.x, py = y + p.y;
+      // The fade into the copy, drawn here rather than as a CSS mask: a mask
+      // over a live canvas is recomposited every frame.
+      const edge = stacked ? Math.min(1, (height - py) / (height * .16)) : Math.min(1, px / (width * .18));
+      const alpha = fade * edge * (p.colored ? p.weight.opacity * (.7 + p.depth * .3) : .13 + p.depth * .4);
+      if (alpha <= .004) continue;
       const size = p.colored ? p.weight.radius * (.75 + p.depth * .4) : p.size * (.55 + p.depth * .95);
-      ctx.beginPath();
-      ctx.arc(x + p.x, y + p.y, size, 0, Math.PI * 2);
-      ctx.fill();
+      const step = Math.max(1, Math.round(alpha * ALPHA_STEPS));
+      const key = (p.colored ? ALPHA_STEPS + 1 : 0) + step;
+      const path = (paths[key] ??= new Path2D());
+      const r = size * pixelRatio, cx = px * pixelRatio, cy = py * pixelRatio;
+      if (r < SQUARE_BELOW) {
+        const h = r * SQUARE_HALF;
+        path.rect(cx - h, cy - h, h * 2, h * 2);
+      } else {
+        path.moveTo(cx + r, cy);
+        path.arc(cx, cy, r, 0, Math.PI * 2);
+      }
     }
+    paths.forEach((path, key) => {
+      if (!path) return;
+      const colored = key > ALPHA_STEPS;
+      ctx.globalAlpha = (key - (colored ? ALPHA_STEPS + 1 : 0)) / ALPHA_STEPS;
+      ctx.fillStyle = colored ? accent : ink;
+      ctx.fill(path);
+    });
     ctx.globalAlpha = 1;
     host.dataset.ready = 'true';
     host.dataset.interacting = active && !reduced.matches ? 'true' : 'false';
@@ -74,7 +120,8 @@ export function mountParticles(host: HTMLElement) {
   const resize = () => {
     const box = host.getBoundingClientRect();
     width = Math.max(1, box.width); height = Math.max(1, box.height);
-    pixelRatio = Math.min(devicePixelRatio, 1.5);
+    const nextRatio = Math.min(devicePixelRatio, 1.5);
+    pixelRatio = nextRatio;
     canvas.width = Math.round(width * pixelRatio); canvas.height = Math.round(height * pixelRatio);
     readColors(); wake();
   };

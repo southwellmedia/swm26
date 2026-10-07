@@ -29,10 +29,14 @@ const dots = Array.from({ length: 160 }, (_, i) => {
   document.addEventListener('astro:page-load', init);
 </script>
 <style>
-.service-art { position:absolute; inset:0 0 0 43%; overflow:hidden; color:var(--card-fg); pointer-events:none; mask-image:linear-gradient(90deg,transparent,#000 18%); }
+/* The fade into the copy is a mask on the static SVG only; the live canvas
+   draws the same fade itself (service-particles.ts), since a mask over a
+   canvas is recomposited every frame. */
+.service-art { position:absolute; inset:0 0 0 43%; overflow:hidden; color:var(--card-fg); pointer-events:none; }
 .service-art canvas,.service-art svg { position:absolute; width:100%;height:100%;inset:0; }
+.service-art svg { mask-image:linear-gradient(90deg,transparent,#000 18%); }
 .service-art canvas { opacity:0; }
 .service-art[data-ready=true] canvas { opacity:1; }
 .service-art[data-ready=true] svg { opacity:0; }
-@media(max-width:800px) { .service-art { position:relative; inset:auto; height:250px; margin:-20px -28px 0; mask-image:linear-gradient(0deg,transparent,#000 16%); } }
+@media(max-width:800px) { .service-art { position:relative; inset:auto; height:250px; margin:-20px -28px 0; } .service-art svg { mask-image:linear-gradient(0deg,transparent,#000 16%); } }
 </style>
