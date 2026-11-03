@@ -14,7 +14,7 @@
  * from PATTERN, a repeating run whose every segment completes whole rows. The
  * grid cannot develop a hole, whatever the project count.
  */
-import { getCollection } from 'astro:content';
+import { getOrderedWork } from '@/lib/work';
 import { Image } from 'astro:assets';
 import { Icon } from 'astro-icon/components';
 import SectionHead from './SectionHead.astro';
@@ -43,10 +43,9 @@ const {
   class: className,
 } = Astro.props;
 
-// Projects told inside a story page (`parent`) are left to that page.
-const projects = (await getCollection('work', ({ data }) => !data.draft && !data.parent)).sort(
-  (a, b) => a.data.order - b.data.order
-);
+// The public portfolio: no drafts, nothing told inside another story.
+// The rule lives in src/lib/work.ts, shared with the case-study pages.
+const projects = await getOrderedWork();
 
 const shown = typeof count === 'number' ? projects.slice(0, count) : projects;
 const remaining = projects.length - shown.length;

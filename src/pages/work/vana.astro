@@ -16,9 +16,11 @@
  * Content lives in @/data/vana.ts. The app is in development, so a lot of it
  * is draft copy and every striped box is a slot for a capture still to come.
  */
-import { getCollection, getEntry } from 'astro:content';
+import { getEntry } from 'astro:content';
 import { Image } from 'astro:assets';
 import SiteLayout from '@/layouts/SiteLayout.astro';
+import NextProject from '@/components/site/NextProject.astro';
+import { getStoryProject } from '@/lib/work';
 import Placeholder from '@/components/site/Placeholder.astro';
 import Cta from '@/components/sections/Cta.astro';
 import {
@@ -45,20 +47,8 @@ import cover from '@/assets/work/vana/cover.webp';
 const entry = await getEntry('work', 'vana');
 if (import.meta.env.PROD && entry?.data.draft) return Astro.redirect('/work', 302);
 
-// Same ordering as the generic template, so "next" agrees with the grid.
-const projects = (
-  await getCollection(
-    'work',
-    ({ data }) => (import.meta.env.PROD ? data.draft !== true : true) && !data.parent
-  )
-).sort((a, b) => a.data.order - b.data.order);
-
-const index = projects.findIndex((project) => project.id === 'vana');
-if (index === -1) throw new Error('vana is missing from src/content/work');
-
-const project = projects[index];
-const next = projects[(index + 1) % projects.length];
-const nextImage = next.data.feature ?? next.data.cover;
+// Where the door at the end leads: see src/lib/work.ts.
+const { project, next } = await getStoryProject('vana');
 
 const journeyPct = Math.round((journey.day / journey.days) * 100);
 ---
@@ -489,25 +479,7 @@ const journeyPct = Math.round((journey.day / journey.days) * 100);
       </div>
     </section>
 
-    {/* --- next project: the same full-bleed door the template uses -------- */}
-    <a class="nextup" href={'/work/' + next.id} data-card>
-      {
-        nextImage && (
-          <Image
-            src={nextImage}
-            alt=""
-            layout="none"
-            widths={[768, 1280, 1920]}
-            sizes="100vw"
-            class="nextup__img"
-          />
-        )
-      }
-      <div class="nextup__body shell">
-        <span class="label-mono">NEXT PROJECT</span>
-        <span class="nextup__title">{next.data.title}</span>
-      </div>
-    </a>
+    <NextProject next={next} />
   </article>
 
   <Cta />
@@ -1616,61 +1588,6 @@ const journeyPct = Math.round((journey.day / journey.days) * 100);
     color: var(--vana-ink);
   }
 
-  /* --- next project — mirrors the door on /work/[...slug] ----------------- */
-
-  .nextup {
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    min-height: 52svh;
-    overflow: hidden;
-    border-top: var(--hairline);
-    background: var(--ink-950);
-    isolation: isolate;
-  }
-
-  .nextup__img {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.5;
-    filter: grayscale(1);
-    transition:
-      transform 0.9s var(--ease-sw),
-      opacity 0.5s ease,
-      filter 0.5s ease;
-  }
-
-  .nextup:hover .nextup__img,
-  .nextup:focus-visible .nextup__img {
-    transform: scale(1.04);
-    opacity: 0.75;
-    filter: grayscale(0);
-  }
-
-  .nextup__body {
-    padding-block: 56px;
-    color: var(--ice-100);
-  }
-
-  .nextup__body .label-mono {
-    opacity: 0.7;
-  }
-
-  .nextup__title {
-    display: block;
-    margin-top: 14px;
-    font-family: var(--font-display);
-    font-weight: var(--display-weight);
-    text-transform: var(--display-case);
-    font-size: min(8vw, 104px);
-    line-height: 1;
-    letter-spacing: var(--display-tracking);
-  }
-
   /* --- responsive --------------------------------------------------------- */
 
   @media (max-width: 1000px) {
@@ -1867,8 +1784,5 @@ const journeyPct = Math.round((journey.day / journey.days) * 100);
       right: 0;
     }
 
-    .nextup__title {
-      font-size: 13vw;
-    }
   }
 </style>

@@ -1,8 +1,9 @@
 ---
 import { Image } from 'astro:assets';
-import { getCollection } from 'astro:content';
 import '@fontsource/instrument-serif/400.css';
 import SiteLayout from '@/layouts/SiteLayout.astro';
+import NextProject from '@/components/site/NextProject.astro';
+import { getStoryProject } from '@/lib/work';
 import Cta from '@/components/sections/Cta.astro';
 import materials from '@/assets/work/texas-trinkets/material-study.webp';
 import desktop from '@/assets/work/texas-trinkets/desktop.webp';
@@ -11,12 +12,8 @@ import custom from '@/assets/work/texas-trinkets/custom.webp';
 import jewelry from '@/assets/work/texas-trinkets/jewelry.webp';
 import cover from '@/assets/work/texas-trinkets/cover.webp';
 
-const projects = (await getCollection('work', ({ data }) => !data.draft && !data.parent)).sort(
-  (a, b) => a.data.order - b.data.order
-);
-const index = projects.findIndex((p) => p.id === 'texas-trinkets');
-const project = projects[index];
-const next = projects[(index + 1) % projects.length];
+// Where the door at the end leads: see src/lib/work.ts.
+const { project, next } = await getStoryProject('texas-trinkets');
 ---
 
 <SiteLayout
@@ -165,11 +162,7 @@ const next = projects[(index + 1) % projects.length];
         >
       </div>
     </section>
-    <a href={'/work/' + next.id} class="tt-next shell"
-      ><span class="label-mono">NEXT PROJECT</span><span>{next.data.title}</span><span
-        aria-hidden="true">↗</span
-      ></a
-    >
+    <NextProject next={next} />
   </article>
   <Cta />
 </SiteLayout>
@@ -432,23 +425,6 @@ const next = projects[(index + 1) % projects.length];
     margin: 0;
     font-size: clamp(44px, 5vw, 74px);
   }
-  .tt-next {
-    display: grid;
-    grid-template-columns: 0.65fr 2fr auto;
-    gap: 30px;
-    align-items: center;
-    padding-block: 55px;
-    border-top: 1px solid #193e3b33;
-    color: inherit;
-    text-decoration: none;
-  }
-  .tt-next > span:nth-child(2) {
-    font-size: clamp(28px, 4vw, 56px);
-    letter-spacing: -0.04em;
-  }
-  .tt-next > span:last-child {
-    font-size: 48px;
-  }
   @media (max-width: 900px) {
     .tt-intro {
       grid-template-columns: 1fr 2fr;
@@ -536,12 +512,6 @@ const next = projects[(index + 1) % projects.length];
       flex-direction: column;
       align-items: flex-start;
       margin-top: 55px;
-    }
-    .tt-next {
-      grid-template-columns: 1fr auto;
-    }
-    .tt-next .label-mono {
-      grid-column: 1/-1;
     }
   }
 </style>

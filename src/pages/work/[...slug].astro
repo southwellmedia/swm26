@@ -11,38 +11,28 @@
  * it, then the next band pushes it out. That ties a caption to the pictures it
  * belongs to without repeating it above every one.
  */
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
 import { Image } from 'astro:assets';
 import { Icon } from 'astro-icon/components';
 import SiteLayout from '@/layouts/SiteLayout.astro';
 import Placeholder from '@/components/site/Placeholder.astro';
 import PillButton from '@/components/site/PillButton.astro';
 import Cta from '@/components/sections/Cta.astro';
+import NextProject from '@/components/site/NextProject.astro';
+import { getOrderedWork, nextProject } from '@/lib/work';
 
 export async function getStaticPaths() {
-  const projects = await getCollection('work', ({ data }) =>
-    import.meta.env.PROD ? data.draft !== true : true
-  );
-
-  const ordered = [...projects].sort((a, b) => a.data.order - b.data.order);
-
-  // "Next project" walks the portfolio as the grids show it: projects told
-  // inside a story page (`parent`) are skipped, and from one of those the
-  // door leads back to the story it belongs to.
-  const ring = ordered.filter((project) => !project.data.parent);
-
-  // A project with `story: true` has its own page file beside this one, and
-  // Astro would otherwise build both to the same path. It stays in the ring so
-  // "next project" still walks the whole portfolio.
+  const ordered = await getOrderedWork();
+  // Only listed projects get a page (src/lib/work.ts). One with `story: true`
+  // has its own page file beside this one, and Astro would otherwise build
+  // both to the same path; it stays in the ordering, so "next project" still
+  // walks the whole portfolio.
   return ordered
-    .map((project) => {
-      const parent = project.data.parent
-        ? ordered.find((candidate) => candidate.id === project.data.parent)
-        : undefined;
-      const next = parent ?? ring[(ring.indexOf(project) + 1) % ring.length];
-      return { params: { slug: project.id }, props: { project, next } };
-    })
-    .filter(({ props }) => !props.project.data.story);
+    .filter((project) => !project.data.story)
+    .map((project) => ({
+      params: { slug: project.id },
+      props: { project, next: nextProject(ordered, project) },
+    }));
 }
 
 const { project, next } = Astro.props;
@@ -93,7 +83,6 @@ const bands = [
 ].filter((band) => band.prose || band.shots.length > 0);
 
 const hasBuild = technologies.length > 0 || features.length > 0;
-const nextImage = next.data.feature ?? next.data.cover;
 ---
 
 <SiteLayout
@@ -228,25 +217,7 @@ const nextImage = next.data.feature ?? next.data.cover;
       )
     }
 
-    {/* --- next project: a full-bleed door out --------------------------- */}
-    <a class="nextup" href={'/work/' + next.id} data-card>
-      {
-        nextImage && (
-          <Image
-            src={nextImage}
-            alt=""
-            layout="none"
-            widths={[768, 1280, 1920]}
-            sizes="100vw"
-            class="nextup__img"
-          />
-        )
-      }
-      <div class="nextup__body shell">
-        <span class="label-mono">NEXT PROJECT</span>
-        <span class="nextup__title">{next.data.title}</span>
-      </div>
-    </a>
+    <NextProject next={next} />
   </article>
 
   <Cta />
@@ -495,60 +466,6 @@ const nextImage = next.data.feature ?? next.data.cover;
     padding-block: 40px 96px;
   }
 
-  /* --- next project ----------------------------------------------------- */
-
-  .nextup {
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    min-height: 52svh;
-    overflow: hidden;
-    background: var(--ink-950);
-    isolation: isolate;
-  }
-
-  .nextup__img {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.5;
-    filter: grayscale(1);
-    transition:
-      transform 0.9s var(--ease-sw),
-      opacity 0.5s ease,
-      filter 0.5s ease;
-  }
-
-  .nextup:hover .nextup__img,
-  .nextup:focus-visible .nextup__img {
-    transform: scale(1.04);
-    opacity: 0.75;
-    filter: grayscale(0);
-  }
-
-  .nextup__body {
-    padding-block: 56px;
-    color: var(--ice-100);
-  }
-
-  .nextup__body .label-mono {
-    opacity: 0.7;
-  }
-
-  .nextup__title {
-    display: block;
-    margin-top: 14px;
-    font-family: var(--font-display);
-    font-weight: var(--display-weight);
-    text-transform: var(--display-case);
-    font-size: min(8vw, 104px);
-    line-height: 1;
-    letter-spacing: var(--display-tracking);
-  }
-
   @media (max-width: 1000px) {
     .band__inner {
       grid-template-columns: minmax(0, 1fr);
@@ -589,8 +506,5 @@ const nextImage = next.data.feature ?? next.data.cover;
       gap: 40px;
     }
 
-    .nextup__title {
-      font-size: 13vw;
-    }
   }
 </style>

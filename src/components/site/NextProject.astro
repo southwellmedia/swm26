@@ -1,0 +1,127 @@
+---
+/**
+ * NextProject: the door out of every case study.
+ *
+ * A full-bleed ink panel with the next project's picture, greyed and dimmed
+ * until hovered, and its name set large. It is also the hand-off: whatever
+ * palette a story page paints itself in ends here, and everything after the
+ * door — the Cta and the footer — is Southwell's own ground. Ink is the one
+ * surface that sits cleanly against any client palette above it and the
+ * site's ice below, so every work page ends the same way.
+ *
+ * Used by /work/[...slug] and every hand-built story page. Where the door
+ * leads is decided in src/lib/work.ts.
+ */
+import { Image } from 'astro:assets';
+import type { Project } from '@/lib/work';
+
+interface Props {
+  next: Project;
+}
+
+const { next } = Astro.props;
+const image = next.data.feature ?? next.data.cover;
+---
+
+<a class="nextup" href={'/work/' + next.id} data-card>
+  {
+    image && (
+      <Image
+        src={image}
+        alt=""
+        layout="none"
+        widths={[768, 1280, 1920]}
+        sizes="100vw"
+        class="nextup__img"
+      />
+    )
+  }
+  <div class="nextup__body shell">
+    <span class="label-mono">NEXT PROJECT</span>
+    <span class="nextup__title">{next.data.title}</span>
+    <span class="nextup__arrow" aria-hidden="true">↗</span>
+  </div>
+</a>
+
+<style>
+  .nextup {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 52svh;
+    overflow: hidden;
+    background: var(--ink-950);
+    color: var(--ice-100);
+    text-decoration: none;
+    isolation: isolate;
+  }
+
+  .nextup__img {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.5;
+    filter: grayscale(1);
+    transition:
+      transform 0.9s var(--ease-sw),
+      opacity 0.5s ease,
+      filter 0.5s ease;
+  }
+
+  .nextup:hover .nextup__img,
+  .nextup:focus-visible .nextup__img {
+    transform: scale(1.04);
+    opacity: 0.75;
+    filter: grayscale(0);
+  }
+
+  .nextup__body {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    width: 100%;
+    padding-block: 56px;
+  }
+
+  .nextup__body .label-mono {
+    grid-column: 1 / -1;
+    opacity: 0.7;
+  }
+
+  .nextup__title {
+    margin-top: 14px;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    text-transform: var(--display-case);
+    font-size: min(8vw, 104px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+  }
+
+  .nextup__arrow {
+    font-size: clamp(32px, 4vw, 56px);
+    line-height: 1;
+    transition: transform 0.35s var(--ease-sw);
+  }
+
+  .nextup:hover .nextup__arrow,
+  .nextup:focus-visible .nextup__arrow {
+    transform: translate(6px, -6px);
+  }
+
+  @media (max-width: 800px) {
+    .nextup__title {
+      font-size: 13vw;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nextup__img,
+    .nextup__arrow {
+      transition: none;
+    }
+  }
+</style>
