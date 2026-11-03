@@ -4,6 +4,7 @@ description: "The barrier to entry has collapsed. But the gap between what gets 
 publishedAt: 2026-01-26
 tags: ["AI", "Vibe Coding", "Experience", "Quality"]
 category: "insights"
+coverWord: "experience"
 featured: true
 author: "michael-froseth"
 draft: false

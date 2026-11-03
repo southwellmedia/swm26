@@ -1,66 +1,107 @@
 ---
-import BlogCard from './BlogCard.astro';
-import { getCollection } from 'astro:content';
+/**
+ * RelatedPosts: three more notes under an article, in the same cards as the
+ * Lab index. Posts sharing the most tags come first; if fewer than three
+ * share any, the newest others fill the row, so it is never half empty.
+ */
+import LabCard from './LabCard.astro';
+import { getLabPosts } from '@/lib/lab';
 
 interface Props {
-  currentSlug: string;
+  /** The current post's collection id, e.g. `en/astro-6-stable-release`. */
+  currentId: string;
   tags: string[];
-  locale?: string;
   maxPosts?: number;
 }
 
-const { currentSlug, tags, locale = 'en', maxPosts = 3 } = Astro.props;
+const { currentId, tags, maxPosts = 3 } = Astro.props;
 
-// Get all published posts in the same locale
-const allPosts = await getCollection('blog', ({ data }) => {
-  return data.locale === locale && (import.meta.env.PROD ? data.draft !== true : true);
-});
+const posts = await getLabPosts();
+const numberOf = new Map(posts.map((post, i) => [post.id, posts.length - i]));
+const others = posts.filter((post) => post.id !== currentId);
+const shared = (tags: string[]) => tags.filter((tag) => Astro.props.tags.includes(tag)).length;
 
-// Filter to find posts with matching tags
-const relatedPosts = allPosts
-  .filter((post) => {
-    // Exclude current post
-    if (post.id === currentSlug || post.id.endsWith(`/${currentSlug}`)) return false;
-
-    // Must have at least one matching tag
-    if (!tags.length) return false;
-    return post.data.tags.some((tag) => tags.includes(tag));
-  })
-  // Sort by number of matching tags, then by date
-  .sort((a, b) => {
-    const aMatches = a.data.tags.filter((tag) => tags.includes(tag)).length;
-    const bMatches = b.data.tags.filter((tag) => tags.includes(tag)).length;
-
-    if (bMatches !== aMatches) return bMatches - aMatches;
-    return b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf();
-  })
+const related = [
+  ...others
+    .filter((post) => tags.length > 0 && shared(post.data.tags) > 0)
+    .sort((a, b) => shared(b.data.tags) - shared(a.data.tags)),
+  ...others,
+]
+  .filter((post, i, list) => list.indexOf(post) === i)
   .slice(0, maxPosts);
-
-// Generate URLs for each post (remove locale prefix from id)
-const getPostUrl = (postId: string) => {
-  const slug = postId.replace(`${locale}/`, '');
-  return `/blog/${slug}`;
-};
 ---
 
-{relatedPosts.length > 0 && (
-  <section class="border-t border-border pt-[var(--space-section-header)] mt-[var(--space-section-header)]">
-    <h2 class="font-display text-2xl font-bold text-foreground mb-[var(--space-stack-lg)]">
-      Related Posts
-    </h2>
+{
+  related.length > 0 && (
+    <section class="related shell" aria-labelledby="related-title">
+      <div class="related__head">
+        <h2 id="related-title">
+          More from <em>the Lab.</em>
+        </h2>
+        <a href="/blog">
+          All notes <span aria-hidden="true">→</span>
+        </a>
+      </div>
+      <ul>
+        {related.map((post) => (
+          <li>
+            <LabCard post={post} number={numberOf.get(post.id)} as="h3" />
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
 
-    <div class="grid gap-[var(--space-stack-lg)] md:grid-cols-2 lg:grid-cols-3">
-      {relatedPosts.map((post) => (
-        <BlogCard
-          title={post.data.title}
-          description={post.data.description}
-          href={getPostUrl(post.id)}
-          publishedAt={post.data.publishedAt}
-          tags={post.data.tags}
-          author={post.data.author}
-          image={post.data.image}
-        />
-      ))}
-    </div>
-  </section>
-)}
+<style>
+  .related {
+    padding-block: clamp(80px, 8vw, 128px);
+  }
+  .related__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px 32px;
+    padding-top: 28px;
+    border-top: 1px solid var(--color-border);
+  }
+  .related h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: clamp(32px, 3.6vw, 56px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+    text-transform: var(--display-case);
+  }
+  .related h2 em {
+    font-style: var(--display-em-style);
+    font-weight: var(--display-em-weight);
+    letter-spacing: var(--display-em-tracking);
+  }
+  .related__head a {
+    font-size: 16px;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-decoration-color: var(--color-border-strong);
+  }
+  .related ul {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 56px 32px;
+    margin: 48px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  @media (max-width: 1100px) {
+    .related ul {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 640px) {
+    .related ul {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

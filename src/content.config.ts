@@ -17,6 +17,9 @@ const blog = defineCollection({
       tags: z.array(z.string()).default([]),
       /** Editorial grouping carried over from the previous site. */
       category: z.string().optional(),
+      /** The short word set large on the post's cover (src/lib/lab.ts).
+       *  Falls back to the first tag. */
+      coverWord: z.string().max(24).optional(),
       draft: z.boolean().default(false),
       featured: z.boolean().default(false),
       locale: z.enum(['en', 'es', 'fr']).default('en'),
@@ -111,9 +114,9 @@ const work = defineCollection({
       story: z.boolean().default(false),
       /**
        * The id of the story page this project is told inside of, e.g. the six
-       * AKH builds inside `akh-digital`. A project with a parent keeps its own
-       * case-study page but leaves the grids, and its "next" door leads back
-       * to the parent.
+       * AKH builds inside `akh-digital`. A project with a parent is told only
+       * on that page: it has no card and no case-study page of its own (see
+       * src/lib/work.ts).
        */
       parent: z.string().optional(),
       /** Lower sorts first — the homepage grid takes the first several. */

@@ -1,12 +1,30 @@
 ---
-import type { ImageMetadata } from 'astro';
+/**
+ * BlogLayout: a Lab post.
+ *
+ * The hero (ArticleHero) runs the full shell. Under it the shell splits:
+ * a sticky sidebar on the left — the post's sections, lit as you read them,
+ * and the ways to share it — and the text in a reading column beside it,
+ * held to a comfortable measure. The sidebar's left edge is the hero
+ * title's, so the page reads down one line. Under 1000px the sidebar goes
+ * and the column runs full width.
+ *
+ * The body's typography is set here (.post-body), in the site's faces, so
+ * Markdown needs no classes. The breadcrumb survives as structured data
+ * only; the hero's "← The Lab" is the visible way back.
+ */
+import type { ImageMetadata, MarkdownHeading } from 'astro';
+import { getEntry } from 'astro:content';
+import { Image } from 'astro:assets';
 import BaseLayout from './BaseLayout.astro';
 import Nav from '@/components/site/Nav.astro';
 import Footer from '@/components/site/Footer.astro';
-import Breadcrumbs from '@/components/seo/Breadcrumbs.astro';
+import JsonLd from '@/components/seo/JsonLd.astro';
 import ArticleHero from '@/components/blog/ArticleHero.astro';
-import ShareButtons from '@/components/blog/ShareButtons.astro';
 import RelatedPosts from '@/components/blog/RelatedPosts.astro';
+import ArrowFillButton from '@/components/site/ArrowFillButton.astro';
+import { createBreadcrumbSchema } from '@/lib/schema';
+import siteConfig from '@/config/site.config';
 
 interface Props {
   title: string;
@@ -17,7 +35,9 @@ interface Props {
   image?: ImageMetadata;
   imageAlt?: string;
   tags?: string[];
+  /** The post's collection id, e.g. `en/astro-6-stable-release`. */
   slug?: string;
+  headings?: MarkdownHeading[];
 }
 
 const {
@@ -30,18 +50,27 @@ const {
   imageAlt,
   tags = [],
   slug = '',
+  headings = [],
 } = Astro.props;
 
 const ogImage = image?.src || `/og${Astro.url.pathname}.png`;
-
-const breadcrumbs = [
-  { label: 'Home', href: '/' },
-  { label: 'Blog', href: '/blog' },
-  { label: title },
-];
-
-// Get full URL for sharing
 const fullUrl = new URL(Astro.url.pathname, Astro.site).toString();
+
+const breadcrumbs = createBreadcrumbSchema([
+  { name: 'Home', url: siteConfig.url },
+  { name: 'Lab', url: new URL('/blog', siteConfig.url).toString() },
+  { name: title, url: fullUrl },
+]);
+
+// The contents list: the post's sections (h2). Sub-sections stay in the text.
+const sections = headings.filter((heading) => heading.depth === 2);
+
+const share = {
+  linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(fullUrl)}`,
+  x: `https://x.com/intent/post?url=${encodeURIComponent(fullUrl)}&text=${encodeURIComponent(title)}`,
+};
+
+const writer = await getEntry('authors', author);
 ---
 
 <BaseLayout
@@ -57,69 +86,448 @@ const fullUrl = new URL(Astro.url.pathname, Astro.site).toString();
   }}
 >
   <Nav slot="header" />
+  <JsonLd schema={breadcrumbs} />
 
-  <!-- Article Hero -->
-  <ArticleHero
-    title={title}
-    description={description}
-    publishedAt={publishedAt}
-    updatedAt={updatedAt}
-    author={author}
-    tags={tags}
-    image={image}
-    imageAlt={imageAlt}
-  />
+  <ArticleHero id={slug} />
 
-  <article class={`py-12 ${image ? 'pt-24' : ''}`}>
-    <div class="mx-auto max-w-4xl px-6">
-      <!-- Breadcrumbs -->
-      <Breadcrumbs items={breadcrumbs} class="mb-8" />
+  <div class="post shell">
+    <aside class="post__aside">
+      <div class="post__sticky">
+        {
+          sections.length > 1 && (
+            <nav class="post-toc" aria-label="On this page">
+              <p class="post__label">On this page</p>
+              <ol>
+                {sections.map((section, i) => (
+                  <li>
+                    <a href={'#' + section.slug} data-toc-link={section.slug}>
+                      <span aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                      {section.text}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )
+        }
+        <div class="post-share">
+          <p class="post__label">Share</p>
+          <div class="post-share__links">
+            <a href={share.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <a href={share.x} target="_blank" rel="noopener noreferrer">X</a>
+            <button type="button" data-copy-link={fullUrl}>Copy link</button>
+          </div>
+        </div>
+      </div>
+    </aside>
 
-      <!-- Article Content -->
-      <div
-        data-pagefind-body
-        class="prose prose-lg prose-headings:font-display prose-headings:font-bold prose-a:text-brand-600 hover:prose-a:text-brand-500 prose-code:text-brand-600 prose-code:bg-brand-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-background-secondary prose-pre:border prose-pre:border-border dark:prose-invert dark:prose-a:text-brand-400 dark:hover:prose-a:text-brand-300 dark:prose-code:text-brand-400 dark:prose-code:bg-brand-900/30 max-w-none"
-      >
+    <article class="post__main">
+      <div class="post-body" data-pagefind-body>
         <slot />
       </div>
 
-      <!-- Article Footer -->
-      <footer class="border-border mt-12 border-t pt-8">
-        <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <!-- Back link -->
-          <a
-            href="/blog"
-            class="text-brand-600 hover:text-brand-500 dark:text-brand-400 dark:hover:text-brand-300 inline-flex items-center gap-2 text-sm font-medium transition-colors"
-          >
-            <svg
-              class="h-4 w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              ></path>
-            </svg>
-            Back to Blog
+      <footer class="post-end">
+        {
+          writer && (
+            <div class="post-end__author">
+              {writer.data.avatar && (
+                <Image
+                  src={writer.data.avatar}
+                  alt=""
+                  width={128}
+                  widths={[64, 128]}
+                  sizes="64px"
+                  loading="lazy"
+                />
+              )}
+              <div>
+                <p class="post__label">Written by</p>
+                <p class="post-end__name">{writer.data.name}</p>
+                <p class="post-end__bio">{writer.data.bio}</p>
+              </div>
+            </div>
+          )
+        }
+        <div class="post-end__actions">
+          <ArrowFillButton href="/contact" data-chat-open="">Talk to Michael</ArrowFillButton>
+          <a class="post-end__back" href="/blog">
+            <span aria-hidden="true">←</span> Back to the Lab
           </a>
-
-          <!-- Share buttons -->
-          <ShareButtons title={title} url={fullUrl} />
         </div>
       </footer>
-    </div>
-  </article>
+    </article>
+  </div>
 
-  <!-- Related Posts -->
-  {
-    tags.length > 0 && (
-      <div class="mx-auto max-w-6xl px-6 pb-16">
-        <RelatedPosts currentSlug={slug} tags={tags} locale="en" maxPosts={3} />
-      </div>
-    )
-  }
+  <RelatedPosts currentId={slug} tags={tags} />
 
   <Footer slot="footer" />
 </BaseLayout>
+
+<style>
+  /* --- the split ------------------------------------------------------------ */
+  .post {
+    display: grid;
+    grid-template-columns: minmax(200px, 3fr) minmax(0, 7fr) minmax(0, 2fr);
+    gap: 0 clamp(32px, 4vw, 64px);
+    padding-top: clamp(56px, 6vw, 96px);
+  }
+  .post__aside {
+    grid-column: 1;
+  }
+  .post__main {
+    grid-column: 2;
+    min-width: 0;
+    max-width: 700px;
+  }
+  .post__sticky {
+    position: sticky;
+    top: 120px;
+    display: grid;
+    gap: 40px;
+  }
+  .post__label {
+    margin: 0 0 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-foreground-muted);
+  }
+
+  /* --- contents ------------------------------------------------------------- */
+  .post-toc ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-left: 1px solid var(--color-border);
+  }
+  .post-toc a {
+    position: relative;
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 4px;
+    padding: 9px 0 9px 16px;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--color-foreground-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  .post-toc a span {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.9;
+  }
+  .post-toc a::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--color-foreground);
+    transform: scaleY(0);
+    transition: transform 0.3s var(--ease-sw);
+  }
+  .post-toc a:hover {
+    color: var(--color-foreground);
+    opacity: 1;
+  }
+  .post-toc a[aria-current='true'] {
+    color: var(--color-foreground);
+  }
+  .post-toc a[aria-current='true']::before {
+    transform: scaleY(1);
+  }
+
+  /* --- share ---------------------------------------------------------------- */
+  .post-share__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .post-share__links :is(a, button) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-foreground);
+    font: inherit;
+    font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .post-share__links :is(a, button):hover {
+    background: var(--color-foreground);
+    border-color: var(--color-foreground);
+    color: var(--color-background);
+    opacity: 1;
+  }
+
+  /* --- the text ------------------------------------------------------------- */
+  .post-body {
+    font-size: clamp(18px, 1.3vw, 19px);
+    line-height: 1.75;
+    color: var(--color-foreground);
+  }
+  /* A heading that repeats the title above it. */
+  .post-body > :global(h1:first-child) {
+    display: none;
+  }
+  .post-body :global(:is(p, ul, ol, table, pre)) {
+    margin: 0 0 1.4em;
+  }
+  .post-body > :global(*:first-child),
+  .post-body > :global(h1:first-child + *) {
+    margin-top: 0;
+  }
+  /* The opening paragraph, a step up. */
+  .post-body > :global(p:first-child),
+  .post-body > :global(h1:first-child + p) {
+    font-size: 1.18em;
+    line-height: 1.6;
+  }
+  .post-body :global(h2) {
+    margin: 2.4em 0 0.7em;
+    scroll-margin-top: 120px;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: clamp(28px, 2.4vw, 38px);
+    line-height: 1.1;
+    letter-spacing: var(--display-tracking);
+    text-transform: var(--display-case);
+    text-wrap: balance;
+  }
+  .post-body :global(h3) {
+    margin: 2em 0 0.6em;
+    scroll-margin-top: 120px;
+    font-size: 1.15em;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+  }
+  .post-body :global(hr) {
+    margin: 3em 0;
+    border: 0;
+    border-top: 1px solid var(--color-border);
+  }
+  /* A divider straight before a section heading would double the pause. */
+  .post-body :global(hr + h2) {
+    margin-top: 0;
+  }
+  .post-body :global(a) {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    text-decoration-color: var(--color-border-strong);
+    transition: text-decoration-color 0.2s ease;
+  }
+  .post-body :global(a:hover) {
+    text-decoration-color: var(--signature-color);
+    opacity: 1;
+  }
+  .post-body :global(strong) {
+    font-weight: 600;
+  }
+  .post-body :global(:is(ul, ol)) {
+    padding-left: 1.2em;
+  }
+  .post-body :global(li) {
+    margin: 0.4em 0;
+    padding-left: 0.3em;
+  }
+  .post-body :global(li::marker) {
+    color: var(--color-foreground-muted);
+  }
+  .post-body :global(blockquote) {
+    margin: 2em 0;
+    padding-left: 24px;
+    border-left: 2px solid var(--signature-color);
+    font-family: var(--font-display);
+    font-size: 1.3em;
+    line-height: 1.35;
+  }
+  .post-body :global(:not(pre) > code) {
+    padding: 0.12em 0.4em;
+    border-radius: 6px;
+    background: var(--color-background-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+  }
+  .post-body :global(pre) {
+    margin: 1.8em 0;
+    padding: 22px 24px;
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+    font-size: 14.5px;
+    line-height: 1.65;
+  }
+  .post-body :global(pre code) {
+    font-family: var(--font-mono);
+  }
+  .post-body :global(table) {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .post-body :global(:is(th, td)) {
+    padding: 12px 16px 12px 0;
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    vertical-align: top;
+  }
+  .post-body :global(th) {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-foreground-muted);
+    border-bottom-color: var(--color-foreground);
+  }
+  .post-body :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-lg);
+  }
+
+  /* --- the end of the post --------------------------------------------------- */
+  .post-end {
+    margin-top: clamp(56px, 6vw, 88px);
+    padding-top: 32px;
+    border-top: 1px solid var(--color-foreground);
+  }
+  .post-end__author {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .post-end__author :global(img) {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 50% 22%;
+  }
+  .post-end__author .post__label {
+    margin-bottom: 6px;
+  }
+  .post-end__name {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: 26px;
+    line-height: 1.1;
+    letter-spacing: var(--display-tracking);
+  }
+  .post-end__bio {
+    max-width: 52ch;
+    margin: 8px 0 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--color-foreground-secondary);
+  }
+  .post-end__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 28px;
+    margin-top: 32px;
+  }
+  .post-end__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    font-size: 16px;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-decoration-color: var(--color-border-strong);
+  }
+
+  /* --- narrow: one column -------------------------------------------------- */
+  @media (max-width: 1000px) {
+    .post {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .post__main {
+      grid-column: 1;
+      max-width: 700px;
+    }
+    .post__aside {
+      grid-row: 2;
+      max-width: 700px;
+      margin-top: 48px;
+    }
+    .post__sticky {
+      position: static;
+    }
+    /* The contents are for finding your place on a wide screen; on a phone
+       the text is the page. Share stays, under the sign-off. */
+    .post-toc {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  /* The contents list lights the section being read: the last heading that
+     has passed the upper third of the screen. Copy-link copies the post's
+     address. */
+  function initPost() {
+    const links = document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]');
+    const targets = Array.from(links)
+      .map((link) => document.getElementById(link.dataset.tocLink ?? ''))
+      .filter((el): el is HTMLElement => el !== null);
+
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const line = window.innerHeight * 0.3;
+      let current: string | undefined;
+      for (const target of targets) {
+        if (target.getBoundingClientRect().top <= line) current = target.id;
+      }
+      links.forEach((link) =>
+        link.setAttribute('aria-current', String(link.dataset.tocLink === current))
+      );
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    if (targets.length) {
+      window.addEventListener('scroll', onScroll, { passive: true });
+      update();
+      document.addEventListener(
+        'astro:before-swap',
+        () => window.removeEventListener('scroll', onScroll),
+        { once: true }
+      );
+    }
+
+    document.querySelectorAll<HTMLButtonElement>('[data-copy-link]').forEach((button) =>
+      button.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(button.dataset.copyLink ?? location.href);
+          button.textContent = 'Copied';
+          setTimeout(() => (button.textContent = 'Copy link'), 1600);
+        } catch {
+          /* Clipboard blocked: the address bar still has it. */
+        }
+      })
+    );
+  }
+  document.addEventListener('astro:page-load', initPost);
+</script>

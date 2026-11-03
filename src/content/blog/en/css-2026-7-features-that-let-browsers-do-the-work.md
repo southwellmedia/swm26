@@ -4,6 +4,7 @@ description: "Anchor positioning. Scroll-driven animations. Sibling functions. A
 publishedAt: 2026-01-28
 tags: ["CSS", "JavaScript", "Performance", "Web Development"]
 category: "development"
+coverWord: "css 2026"
 featured: true
 author: "michael-froseth"
 draft: false

@@ -4,6 +4,7 @@ description: "Cloudflare announced the Astro core team is joining them. This for
 publishedAt: 2026-01-17
 tags: ["Astro", "Cloudflare", "Edge Computing", "Web Performance", "Developer Experience"]
 category: "insights"
+coverWord: "edge-native"
 featured: true
 author: "michael-froseth"
 draft: false

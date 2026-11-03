@@ -4,6 +4,7 @@ description: "Astro 6 stable dropped. We've been running the beta in production 
 publishedAt: 2026-03-10
 tags: ["Astro", "Astro 6", "Web Development", "Frontend"]
 category: "development"
+coverWord: "astro 6"
 featured: false
 author: "michael-froseth"
 draft: false

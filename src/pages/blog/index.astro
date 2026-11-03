@@ -6,113 +6,495 @@
  * "Lab" is what the studio calls its writing; the route stays /blog so the
  * RSS feed, sitemap entries and Pagefind index keep their addresses.
  *
- * The listing is an editorial list rather than Velocity's card grid — the
- * identity is built on big type and hairline rules, not cards.
+ * Top to bottom: the heading with the topic filters (and search, once a
+ * Pagefind index exists), the newest note as a lead story, then every other
+ * note as a card. Each post's cover is drawn from its slug (src/lib/lab.ts),
+ * so a new post arrives with one.
+ *
+ * Filtering is a progressive layer: without the script every post shows and
+ * the filter row is hidden. With a topic chosen, the lead story steps aside
+ * and the grid shows that topic's notes, the newest included.
  */
+import { Image } from 'astro:assets';
+import { getEntry } from 'astro:content';
 import SiteLayout from '@/layouts/SiteLayout.astro';
-import SectionHead from '@/components/sections/SectionHead.astro';
 import Cta from '@/components/sections/Cta.astro';
-import { getCollection } from 'astro:content';
-import { formatDate } from '@/lib/utils';
+import LabCover from '@/components/blog/LabCover.astro';
+import LabCard from '@/components/blog/LabCard.astro';
+import {
+  categoryOf,
+  getLabPosts,
+  postUrl,
+  readingTime,
+  shortDate,
+  type Category,
+} from '@/lib/lab';
 
-const posts = (
-  await getCollection('blog', ({ data }) => (import.meta.env.PROD ? data.draft !== true : true))
-)
-  .filter((post) => post.data.locale === 'en')
-  .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+const posts = await getLabPosts();
+const [lead] = posts;
+// Numbered oldest first, so a note keeps its number as new ones arrive.
+const numberOf = (index: number) => posts.length - index;
 
-const postUrl = (id: string) => '/blog/' + id.replace('en/', '');
+// The topics present, in the order they first appear, with their counts.
+const topics = new Map<string, { category: Category; count: number }>();
+for (const post of posts) {
+  const category = categoryOf(post);
+  const entry = topics.get(category.id) ?? { category, count: 0 };
+  entry.count++;
+  topics.set(category.id, entry);
+}
+
+const author = lead ? await getEntry('authors', lead.data.author) : undefined;
 ---
 
 <SiteLayout
   title="Lab"
   description="Notes from the studio — what we are building, and what we learned building it."
 >
-  <header class="shell pt-[180px] max-[800px]:pt-[130px]">
-    <SectionHead
-      title="Lab"
-      blurb="Notes from the studio — what we are building, and what we learned building it."
-    />
-  </header>
+  <div class="lab" data-lab data-filter="all">
+    <header class="lab-head shell">
+      <p class="lab-kicker">The Lab — {posts.length} notes</p>
+      <h1 class="lab-title">The Lab. <em>Notes from the studio.</em></h1>
+      <p class="lab-blurb">What we are building, and what we learned building it.</p>
 
-  <!-- Pagefind search. Hidden until the index is confirmed present, so it
-       never shows up broken in `astro dev`, where no index has been built. -->
-  <div class="mt-16 shell max-[800px]:mt-10" id="lab-search" hidden>
-    <label class="label-mono text-foreground-muted" for="lab-search-input">SEARCH</label>
-    <input
-      id="lab-search-input"
-      type="search"
-      autocomplete="off"
-      placeholder="Search the lab"
-      class="mt-3 w-full max-w-[560px] border-0 border-b border-border bg-transparent pb-4 text-[clamp(1.25rem,2.4vw,1.75rem)] tracking-[-0.03em] outline-none placeholder:text-foreground-subtle focus:border-foreground"
-    />
-  </div>
+      <div class="lab-tools">
+        <div class="lab-filters" role="group" aria-label="Filter notes by topic">
+          <button type="button" data-filter-btn="all" aria-pressed="true">
+            All <span>{posts.length}</span>
+          </button>
+          {
+            [...topics.values()].map(({ category, count }) => (
+              <button
+                type="button"
+                data-filter-btn={category.id}
+                aria-pressed="false"
+                style={`--lab-accent: ${category.accent}`}
+              >
+                <i aria-hidden="true" />
+                {category.label} <span>{count}</span>
+              </button>
+            ))
+          }
+        </div>
 
-  <section class="mt-14 shell max-[800px]:mt-10">
-    <ul class="m-0 list-none p-0" id="lab-results" hidden></ul>
+        {/* Pagefind search. Hidden until the index is confirmed present, so it
+            never shows up broken in `astro dev`, where no index is built. */}
+        <div class="lab-search" id="lab-search" hidden>
+          <label class="sr-only" for="lab-search-input">Search the Lab</label>
+          <input
+            id="lab-search-input"
+            type="search"
+            autocomplete="off"
+            placeholder="Search the Lab"
+          />
+        </div>
+      </div>
+    </header>
 
-    <ul class="m-0 list-none p-0" id="lab-list">
+    <div id="lab-browse">
       {
-        posts.map((post) => (
-          <li class="border-t border-border last:border-b" data-reveal>
-            <a class="group block py-10 max-[800px]:py-7" href={postUrl(post.id)}>
-              <span class="label-mono text-foreground-muted">
-                {formatDate(post.data.publishedAt).toUpperCase()}
-              </span>
-
-              <h2 class="font-display [text-transform:var(--display-case)] mt-4 mb-0 text-[clamp(1.75rem,4.4vw,3.25rem)] leading-[1.05] font-semibold tracking-[var(--display-tracking)] transition-opacity group-hover:opacity-60">
-                {post.data.title}
-              </h2>
-
-              <p class="mt-4 mb-0 max-w-[620px] text-[17px] leading-[1.55] text-foreground-secondary">
-                {post.data.description}
-              </p>
-
-              {post.data.tags.length > 0 && (
-                <div class="mt-5 flex flex-wrap gap-2">
-                  {post.data.tags.map((tag) => (
-                    <span class="rounded-full border border-border px-3.5 py-1.5 text-[13px] font-medium">
-                      {tag}
+        lead && (
+          <section class="lab-lead shell" aria-label="Latest note">
+            <a class="lab-lead__link" href={postUrl(lead)}>
+              <LabCover post={lead} size="lead" number={numberOf(0)} eager />
+              <div class="lab-lead__body">
+                <p class="lab-lead__meta">
+                  <span>Latest</span>
+                  <span aria-hidden="true">·</span>
+                  <time datetime={lead.data.publishedAt.toISOString()}>
+                    {shortDate(lead.data.publishedAt)}
+                  </time>
+                  <span aria-hidden="true">·</span>
+                  <span>{readingTime(lead)} min read</span>
+                </p>
+                <h2 class="lab-lead__title">{lead.data.title}</h2>
+                <p class="lab-lead__desc">{lead.data.description}</p>
+                <div class="lab-lead__foot">
+                  {author && (
+                    <span class="lab-byline">
+                      {author.data.avatar && (
+                        <Image
+                          src={author.data.avatar}
+                          alt=""
+                          width={88}
+                          widths={[44, 88]}
+                          sizes="44px"
+                          loading="eager"
+                        />
+                      )}
+                      <span>{author.data.name}</span>
                     </span>
-                  ))}
+                  )}
+                  <span class="lab-lead__more">
+                    Read the note <span aria-hidden="true">→</span>
+                  </span>
                 </div>
-              )}
+              </div>
             </a>
-          </li>
-        ))
+          </section>
+        )
       }
-    </ul>
 
-    {
-      posts.length === 0 && (
-        <p class="py-10 text-[17px] text-foreground-secondary">Nothing published yet.</p>
-      )
-    }
-  </section>
+      <section class="lab-grid shell" aria-label="All notes">
+        <ul>
+          {
+            posts.map((post, i) => (
+              <li data-category={categoryOf(post).id} data-lead={i === 0 ? '' : undefined}>
+                <LabCard post={post} number={numberOf(i)} />
+              </li>
+            ))
+          }
+        </ul>
+        {posts.length === 0 && <p class="lab-empty">Nothing published yet.</p>}
+      </section>
+    </div>
+
+    <section class="lab-results shell" aria-label="Search results">
+      <ul id="lab-results" hidden></ul>
+    </section>
+  </div>
 
   <Cta />
 </SiteLayout>
+
+<style>
+  .lab {
+    --lab-gap: clamp(56px, 6vw, 96px);
+  }
+
+  /* --- head --------------------------------------------------------------- */
+  .lab-head {
+    padding-top: clamp(140px, 13vw, 200px);
+  }
+  .lab-kicker {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-foreground-muted);
+  }
+  .lab-title {
+    max-width: 14ch;
+    margin: 28px 0 0;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: clamp(56px, 8vw, 128px);
+    line-height: 0.94;
+    letter-spacing: var(--display-tracking);
+    text-transform: var(--display-case);
+    text-wrap: balance;
+  }
+  .lab-title em {
+    display: block;
+    font-style: var(--display-em-style);
+    font-weight: var(--display-em-weight);
+    letter-spacing: var(--display-em-tracking);
+  }
+  .lab-blurb {
+    max-width: 480px;
+    margin: 32px 0 0;
+    font-size: clamp(18px, 1.35vw, 20px);
+    line-height: 1.6;
+    color: var(--color-foreground-secondary);
+  }
+
+  .lab-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px 32px;
+    margin-top: var(--lab-gap);
+    padding-block: 20px;
+    border-block: 1px solid var(--color-border);
+  }
+  :global(html:not(.js)) .lab-filters {
+    display: none;
+  }
+  .lab-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .lab-filters button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-foreground);
+    font: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+  .lab-filters button:hover {
+    border-color: var(--color-foreground);
+  }
+  .lab-filters button[aria-pressed='true'] {
+    background: var(--color-foreground);
+    border-color: var(--color-foreground);
+    color: var(--color-background);
+  }
+  .lab-filters button span {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    opacity: 0.6;
+  }
+  .lab-filters button i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--lab-accent);
+  }
+  .lab-filters button:focus-visible,
+  .lab-search input:focus-visible {
+    outline: 2px solid var(--color-foreground);
+    outline-offset: 3px;
+  }
+
+  .lab-search input {
+    width: min(320px, 70vw);
+    min-height: 44px;
+    padding: 0 18px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 15px;
+  }
+
+  /* --- lead story ----------------------------------------------------------- */
+  .lab-lead {
+    margin-top: var(--lab-gap);
+  }
+  .lab-lead__link {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: 48px 5%;
+    align-items: center;
+    color: inherit;
+    text-decoration: none;
+  }
+  .lab-lead__link:hover {
+    opacity: 1;
+  }
+  .lab-lead__link:hover :global(.lab-cover img),
+  .lab-lead__link:focus-visible :global(.lab-cover img) {
+    transform: scale(1.03);
+  }
+  .lab-lead__link:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 8px;
+    border-radius: var(--radius-lg);
+  }
+  .lab-lead__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-foreground-muted);
+  }
+  .lab-lead__meta span:first-child {
+    color: var(--signature-color);
+  }
+  .lab-lead__title {
+    margin: 20px 0 0;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: clamp(32px, 3.4vw, 54px);
+    line-height: 1.04;
+    letter-spacing: var(--display-tracking);
+    text-transform: var(--display-case);
+    text-wrap: balance;
+  }
+  .lab-lead__desc {
+    margin: 20px 0 0;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--color-foreground-secondary);
+  }
+  .lab-lead__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px 24px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--color-border);
+  }
+  .lab-byline {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .lab-byline :global(img) {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 50% 22%;
+  }
+  .lab-lead__more {
+    font-size: 16px;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-decoration-color: var(--color-border-strong);
+  }
+  .lab-lead__more span {
+    display: inline-block;
+    transition: transform 0.25s var(--ease-sw);
+  }
+  .lab-lead__link:hover .lab-lead__more span {
+    transform: translateX(4px);
+  }
+
+  /* --- grid --------------------------------------------------------------- */
+  .lab-grid {
+    margin-top: var(--lab-gap);
+    padding-bottom: var(--lab-gap);
+  }
+  .lab-grid ul,
+  .lab-results ul {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 64px 32px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  /* The lead story is in the grid too, for when a topic is chosen; with
+     every topic showing it is already at the top, so it steps out. */
+  .lab[data-filter='all'] .lab-grid li[data-lead] {
+    display: none;
+  }
+  .lab:not([data-filter='all']) .lab-lead {
+    display: none;
+  }
+  .lab-empty {
+    font-size: 18px;
+    color: var(--color-foreground-secondary);
+  }
+
+  /* --- search results ------------------------------------------------------ */
+  .lab-results {
+    padding-bottom: var(--lab-gap);
+  }
+  .lab-results ul {
+    display: block;
+    margin-top: 24px;
+  }
+  .lab-results :global(li) {
+    border-bottom: 1px solid var(--color-border);
+  }
+  .lab-results :global(a) {
+    display: block;
+    padding-block: 28px;
+    color: inherit;
+    text-decoration: none;
+  }
+  .lab-results :global(h2) {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: clamp(24px, 2.4vw, 34px);
+    line-height: 1.1;
+    letter-spacing: var(--display-tracking);
+    text-transform: var(--display-case);
+  }
+  .lab-results :global(p) {
+    max-width: 680px;
+    margin: 10px 0 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--color-foreground-secondary);
+  }
+
+  @media (max-width: 1100px) {
+    .lab-grid ul {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 820px) {
+    .lab-lead__link {
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+    .lab-tools {
+      align-items: stretch;
+    }
+    .lab-search,
+    .lab-search input {
+      width: 100%;
+    }
+  }
+  @media (max-width: 640px) {
+    .lab-grid ul {
+      grid-template-columns: 1fr;
+      gap: 56px;
+    }
+  }
+</style>
 
 <script>
   interface PagefindResult {
     data: () => Promise<{ url: string; excerpt: string; meta: { title?: string } }>;
   }
-
   interface PagefindApi {
     init: () => Promise<void>;
     debouncedSearch: (query: string) => Promise<{ results: PagefindResult[] } | null>;
   }
 
-  async function initLabSearch() {
+  /* Topic filters: one pressed at a time; the grid shows that topic's notes.
+     The lead story's visibility follows from data-filter in the stylesheet. */
+  function initFilters() {
+    const root = document.querySelector<HTMLElement>('[data-lab]');
+    if (!root) return;
+    const buttons = root.querySelectorAll<HTMLButtonElement>('[data-filter-btn]');
+    const items = root.querySelectorAll<HTMLElement>('.lab-grid li[data-category]');
+    buttons.forEach((button) =>
+      button.addEventListener('click', () => {
+        const filter = button.dataset.filterBtn ?? 'all';
+        root.dataset.filter = filter;
+        buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+        items.forEach((item) => {
+          item.hidden = filter !== 'all' && item.dataset.category !== filter;
+        });
+      })
+    );
+  }
+
+  const escapeHtml = (value: string) =>
+    value.replace(
+      /[&<>"']/g,
+      (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c
+    );
+
+  async function initSearch() {
     const wrapper = document.getElementById('lab-search');
     const input = document.getElementById('lab-search-input') as HTMLInputElement | null;
     const results = document.getElementById('lab-results');
-    const list = document.getElementById('lab-list');
-
-    if (!wrapper || !input || !results || !list) return;
+    const browse = document.getElementById('lab-browse');
+    if (!wrapper || !input || !results || !browse) return;
 
     let pagefind: PagefindApi;
-
     try {
       // The path is held in a variable so Vite does not try to resolve it at
       // build time — the index only exists in dist/ after `pagefind` runs.
@@ -120,53 +502,38 @@ const postUrl = (id: string) => '/blog/' + id.replace('en/', '');
       pagefind = (await import(/* @vite-ignore */ modulePath)) as PagefindApi;
       await pagefind.init();
     } catch {
-      // No index (dev server, or a build that skipped the pagefind step).
-      return;
+      return; // No index (dev server, or a build that skipped pagefind).
     }
 
     wrapper.hidden = false;
-
     input.addEventListener('input', async () => {
       const query = input.value.trim();
-
       if (query === '') {
         results.hidden = true;
         results.innerHTML = '';
-        list.hidden = false;
+        browse.hidden = false;
         return;
       }
-
       const search = await pagefind.debouncedSearch(query);
       if (!search) return;
-
-      const found = await Promise.all(search.results.slice(0, 8).map((result) => result.data()));
-
-      list.hidden = true;
+      const found = await Promise.all(search.results.slice(0, 8).map((r) => r.data()));
+      browse.hidden = true;
       results.hidden = false;
-      results.innerHTML = found
-        .map(
-          (item) =>
-            '<li class="border-t border-border last:border-b">' +
-            '<a class="group block py-8" href="' +
-            item.url +
-            '">' +
-            '<h2 class="font-display [text-transform:var(--display-case)] m-0 text-[clamp(1.5rem,3.2vw,2.25rem)] leading-[1.1] font-semibold tracking-[var(--display-tracking)] transition-opacity group-hover:opacity-60">' +
-            (item.meta.title ?? 'Untitled') +
-            '</h2>' +
-            '<p class="mt-3 mb-0 max-w-[620px] text-[16px] leading-[1.55] text-foreground-secondary">' +
-            item.excerpt +
-            '</p>' +
-            '</a></li>'
-        )
-        .join('');
-
-      if (found.length === 0) {
-        results.innerHTML =
-          '<li class="py-10 text-[17px] text-foreground-secondary">No matches.</li>';
-      }
+      // Pagefind's excerpt is already HTML (it marks the matched words).
+      results.innerHTML = found.length
+        ? found
+            .map(
+              (item) =>
+                `<li><a href="${escapeHtml(item.url)}"><h2>${escapeHtml(item.meta.title ?? 'Untitled')}</h2><p>${item.excerpt}</p></a></li>`
+            )
+            .join('')
+        : '<li><p>No matches.</p></li>';
     });
   }
 
-  initLabSearch();
-  document.addEventListener('astro:after-swap', initLabSearch);
+  function init() {
+    initFilters();
+    void initSearch();
+  }
+  document.addEventListener('astro:page-load', init);
 </script>

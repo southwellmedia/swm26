@@ -4,6 +4,7 @@ description: "The biggest Astro release in years brings a unified dev server, na
 publishedAt: 2026-02-10
 tags: ["Astro", "Web Development", "Frontend", "Astro 6"]
 category: "development"
+coverWord: "the roadmap"
 featured: true
 author: "michael-froseth"
 draft: false

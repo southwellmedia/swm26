@@ -4,6 +4,7 @@ description: "Velocity is the Astro 6 boilerplate we built for internal use, ref
 publishedAt: 2026-01-30
 tags: ["Astro", "Open Source", "Boilerplate", "i18n", "Tailwind CSS"]
 category: "development"
+coverWord: "velocity"
 featured: true
 image: "../../../assets/blog/velocity_001.webp"
 author: "michael-froseth"
