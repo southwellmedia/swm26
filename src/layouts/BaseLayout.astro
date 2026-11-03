@@ -96,18 +96,14 @@ if (includeOrgSchema) {
     <!-- The motion module opts into hidden entrance states only after loading.
          A blocked bundle must never hide the server-rendered page. -->
 
-    <!-- Theme script (runs before render to prevent flash) -->
+    <!-- The studio is one theme: ink on ice. The site used to follow the
+         visitor's OS setting, which turned it dark with no way back; this
+         pins it to light and clears any choice saved by the old toggle. -->
     <script is:inline>
-      (function () {
-        const theme = localStorage.getItem('theme');
-        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-        if (theme === 'dark' || (!theme && systemDark)) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      })();
+      document.documentElement.classList.remove('dark');
+      try {
+        localStorage.removeItem('theme');
+      } catch {}
     </script>
   </head>
 
