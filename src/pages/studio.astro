@@ -50,27 +50,18 @@ const questions = [
   includeOrgSchema
 >
   <div class="studio-page">
-    <header class="studio-hero shell founder" aria-labelledby="studio-title">
-      <div class="studio-hero__copy">
-        <p class="studio-kicker">THE STUDIO / DALLAS, TEXAS</p>
-        <h1 id="studio-title" class="studio-title">Less handoff.<br /><em>More hands-on.</em></h1>
-        <div class="studio-hero__intro">
-          <p class="studio-lead">Hey, I’m Michael.<br />The person behind Southwell Media.</p>
-          <p>
-            I build high-quality websites and applications for businesses, founders, and agencies.
-            You work directly with me—from figuring out the idea to building it, launching it, and
-            seeing what comes next.
-          </p>
-          <ArrowFillButton href="/contact" data-chat-open="">Let’s talk</ArrowFillButton>
-        </div>
-      </div>
-      <figure class="studio-portrait">
-        <div class="studio-portrait__image">
+    <header class="studio-hero shell" aria-labelledby="studio-title">
+      {
+        /* The frame the homepage's reel opens into, carried over: brand ink,
+          with the portrait's own dark backdrop dissolving into it. */
+      }
+      <div class="studio-hero__frame">
+        <figure class="studio-hero__portrait">
           <Image
             src={portrait}
             alt="Michael Froseth, founder of Southwell Media"
-            widths={[480, 768, 1024]}
-            sizes="(max-width: 820px) calc(100vw - 48px), 42vw"
+            widths={[640, 960, 1280]}
+            sizes="(max-width: 820px) 100vw, 56vw"
             loading="eager"
             fetchpriority="high"
           />
@@ -80,11 +71,32 @@ const questions = [
             depthSrc={depth.src}
             showControls={false}
           />
+        </figure>
+        <div class="studio-hero__copy">
+          <p class="studio-kicker">The studio — Dallas, Texas</p>
+          <h1 id="studio-title" class="studio-title">
+            Less handoff.<br /><em>More hands&#8209;on.</em>
+          </h1>
         </div>
-        <figcaption>
-          <span>MICHAEL FROSETH</span><span>FOUNDER & YOUR POINT PERSON</span>
-        </figcaption>
-      </figure>
+        <p class="studio-hero__sig">
+          <strong>Michael Froseth</strong><span>Founder &amp; your point person</span>
+        </p>
+      </div>
+
+      <div class="studio-intro">
+        <p class="studio-intro__hello">
+          Hey, I’m Michael. <em>The person behind Southwell Media.</em>
+        </p>
+        <div class="studio-intro__body">
+          <p>
+            I build high-quality websites and applications for businesses, founders, and agencies.
+            You work directly with me—from figuring out the idea to building it, launching it, and
+            seeing what comes next.
+          </p>
+          <ArrowFillButton href="/contact" data-chat-open="">Let’s talk</ArrowFillButton>
+        </div>
+      </div>
+
       <nav class="studio-chapters" aria-label="On this page">
         <a href="#the-person"><span>01</span> The person</a>
         <a href="#working-together"><span>02</span> Working together</a>
@@ -93,25 +105,25 @@ const questions = [
       </nav>
     </header>
 
-    <section
-      class="studio-story studio-section shell"
-      id="the-person"
-      aria-labelledby="person-title"
-    >
-      <div class="studio-section__label">
-        <span class="studio-kicker">01 / THE PERSON</span><span
-          class="studio-story__years"
-          aria-hidden="true">20<span>years<br />in the making</span></span>
-      </div>
-      <div>
-        <h2 id="person-title" class="studio-heading" data-reveal>
-          A lot of experience.<br /><em>A very direct line.</em>
-        </h2>
-        <div class="studio-story__body">
-          <p class="studio-lead">
-            Twenty years across design, development, marketing, and creative direction. These days,
-            I bring all of that to the same table.
-          </p>
+    <section class="studio-person studio-section shell" id="the-person" aria-labelledby="person-title">
+      <header class="studio-block__head">
+        <p class="studio-kicker">01 / The person</p>
+        <h2 id="person-title" class="studio-statement" data-reveal>
+        Twenty years across design, development, marketing and creative direction.
+        <em>These days, I bring all of it to the same table.</em>
+      </h2>
+      </header>
+
+      <dl class="studio-facts">
+        <div><dt>Experience</dt><dd>20<sup>+</sup> <span>years</span></dd></div>
+        <div><dt>Your point of contact</dt><dd>1 <span>person</span></dd></div>
+        <div><dt>Based in</dt><dd>Dallas<span>, TX</span></dd></div>
+        <div><dt>Southwell, since</dt><dd>2024</dd></div>
+      </dl>
+
+      <div class="studio-person__body">
+        <h3 class="studio-person__aside">A lot of experience. <em>A very direct line.</em></h3>
+        <div class="studio-person__text">
           <p>
             I started Southwell to work closely with the people I’m building for. I want to
             understand your business, hear the half-formed idea, and help work out what it could
@@ -130,67 +142,57 @@ const questions = [
     </section>
 
     <section
-      class="studio-partners studio-section shell"
+      class="studio-ways studio-section shell"
       id="working-together"
       aria-labelledby="together-title"
     >
-      <div class="studio-section-heading">
-        <p class="studio-kicker">02 / WORKING TOGETHER</p>
-        <h2 id="together-title" class="studio-heading" data-reveal>
-          Your business.<br />Your agency.<br /><em>I’m in your corner.</em>
+      <header class="studio-block__head">
+        <p class="studio-kicker">02 / Working together</p>
+        <h2 id="together-title" class="studio-statement" data-reveal>
+          Your business. Your agency. <em>I’m in your corner.</em>
         </h2>
-        <p class="studio-section-heading__aside">
-          Two ways to work together.<br />The same personal commitment.
-        </p>
-      </div>
-      <div class="studio-partners__grid">
-        <article class="studio-partner">
-          <span class="studio-kicker">FOR BUSINESSES & FOUNDERS</span>
-          <h3>Let’s build<br />your next chapter.</h3>
-          <p>
+      </header>
+      <div class="studio-ways__grid">
+        <a class="studio-way" href="/work/reap-capital">
+          <div class="studio-way__image">
+            <Image
+              src={reap}
+              alt="Website design for Reap Capital"
+              widths={[480, 768, 1024]}
+              sizes="(max-width: 820px) calc(100vw - 48px), 45vw"
+              loading="lazy"
+            />
+          </div>
+          <p class="studio-way__label">
+            <span>For businesses &amp; founders</span><span>Reap Capital</span>
+          </p>
+          <h3>Let’s build your next chapter.</h3>
+          <p class="studio-way__text">
             A website that does your business justice. An application that brings an idea to life.
             We’ll work through it together, with design and development in the same hands.
           </p>
-          <a class="studio-project" href="/work/reap-capital">
-            <div class="studio-project__image">
-              <Image
-                src={reap}
-                alt="Website design for Reap Capital"
-                widths={[480, 768, 1024]}
-                sizes="(max-width: 820px) calc(100vw - 48px), 45vw"
-                loading="lazy"
-              />
-            </div>
-            <div class="studio-project__caption">
-              <span
-                ><strong>Reap Capital</strong><small>A continuing client relationship</small></span
-              ><span class="studio-project__arrow" aria-hidden="true">↗</span>
-            </div>
-          </a>
-        </article>
-        <article class="studio-partner">
-          <span class="studio-kicker">FOR AGENCIES & CREATIVE TEAMS</span>
-          <h3>Your team.<br />Another pair of hands.</h3>
-          <p>
+          <span class="studio-way__more">See the Reap Capital work <span aria-hidden="true">↗</span></span>
+        </a>
+        <a class="studio-way" href="/work/akh-digital">
+          <div class="studio-way__image">
+            <Image
+              src={akh}
+              alt="Selected work from Southwell’s partnership with AKH Digital"
+              widths={[480, 768, 1024]}
+              sizes="(max-width: 820px) calc(100vw - 48px), 45vw"
+              loading="lazy"
+            />
+          </div>
+          <p class="studio-way__label">
+            <span>For agencies &amp; creative teams</span><span>AKH Digital</span>
+          </p>
+          <h3>Your team. Another pair of hands.</h3>
+          <p class="studio-way__text">
             Bring me into the work. I partner with agencies on websites and custom applications,
             working closely with your team to turn the direction into something ready to use.
           </p>
-          <a class="studio-project" href="/work/akh-digital">
-            <div class="studio-project__image">
-              <Image
-                src={akh}
-                alt="Selected work from Southwell’s partnership with AKH Digital"
-                widths={[480, 768, 1024]}
-                sizes="(max-width: 820px) calc(100vw - 48px), 45vw"
-                loading="lazy"
-              />
-            </div>
-            <div class="studio-project__caption">
-              <span><strong>AKH Digital</strong><small>An ongoing agency partnership</small></span
-              ><span class="studio-project__arrow" aria-hidden="true">↗</span>
-            </div>
-          </a>
-        </article>
+          <span class="studio-way__more">See the AKH partnership <span aria-hidden="true">↗</span></span>
+        </a>
       </div>
     </section>
 
@@ -201,55 +203,88 @@ const questions = [
       id="good-questions"
       aria-labelledby="questions-title"
     >
-      <div class="studio-questions__intro">
-        <p class="studio-kicker">04 / GOOD QUESTIONS</p>
-        <h2 id="questions-title" class="studio-heading" data-reveal>
-          Before we<br /><em>say hello.</em>
+      <header class="studio-block__head">
+        <p class="studio-kicker">04 / Good questions</p>
+        <h2 id="questions-title" class="studio-statement" data-reveal>
+          Before we say hello. <em>A few things you might be wondering.</em>
         </h2>
-        <p>A few things you might be wondering.<br />Anything else? Just ask.</p>
-        <a class="studio-text-link" href={'mailto:' + siteConfig.email}
-          >{siteConfig.email} <span aria-hidden="true">↗</span></a
-        >
-      </div>
-      <div class="studio-faq">
-        {
-          questions.map((item) => (
-            <details>
-              <summary>
-                {item.question}
-                <span class="studio-faq__plus" aria-hidden="true" />
-              </summary>
-              <div class="studio-faq__answer">
-                <p>{item.answer}</p>
-                {item.href && (
-                  <a class="studio-text-link" href={item.href}>
-                    {item.label} <span aria-hidden="true">↗</span>
-                  </a>
-                )}
-              </div>
-            </details>
-          ))
-        }
+      </header>
+      <div class="studio-questions__grid">
+        <div class="studio-questions__aside">
+          <p>Anything else? Just ask.</p>
+          <a class="studio-text-link" href={'mailto:' + siteConfig.email}
+            >{siteConfig.email} <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        {/* One open at a time: details sharing a name form an exclusive group. */}
+        <div class="studio-faq" data-studio-faq>
+          {
+            questions.map((item) => (
+              <details name="studio-faq">
+                <summary>
+                  {item.question}
+                  <span class="studio-faq__plus" aria-hidden="true" />
+                </summary>
+                <div class="studio-faq__answer">
+                  <p>{item.answer}</p>
+                  {item.href && (
+                    <a class="studio-text-link" href={item.href}>
+                      {item.label} <span aria-hidden="true">↗</span>
+                    </a>
+                  )}
+                </div>
+              </details>
+            ))
+          }
+        </div>
       </div>
     </section>
 
     <section class="studio-signoff shell" aria-labelledby="hello-title">
-      <p class="studio-kicker">A CONVERSATION IS A GOOD START.</p>
+      <p class="studio-kicker">A conversation is a good start</p>
       <h2 class="studio-title" id="hello-title" data-reveal>
         What do you<br /><em>have in mind?</em>
       </h2>
       <div class="studio-signoff__foot">
+        <Image
+          class="studio-signoff__avatar"
+          src={portrait}
+          alt=""
+          width={160}
+          widths={[80, 160]}
+          sizes="80px"
+          loading="eager"
+        />
         <p>
           An early idea, an overdue rebuild, or a project your team could use a hand with. Tell me
           where you are.
-        </p><div class="studio-signoff__actions">
+        </p>
+        <div class="studio-signoff__actions">
           <ArrowFillButton href="/contact" data-chat-open="">Talk to Michael</ArrowFillButton><a
             class="studio-text-link"
             href="https://calendly.com/michael-southwellmedia/30min"
             target="_blank"
-            rel="noopener noreferrer">Or book a call <span aria-hidden="true">↗</span></a>
+            rel="noopener noreferrer">Or book a call <span aria-hidden="true">↗</span></a
+          >
         </div>
       </div>
     </section>
   </div>
 </SiteLayout>
+
+<script>
+  /* Browsers without exclusive <details name> (Safari before 17.2): close
+     the others whenever one opens. Harmless where the attribute works. */
+  function exclusiveFaq() {
+    const items = document.querySelectorAll<HTMLDetailsElement>('[data-studio-faq] details');
+    items.forEach((item) =>
+      item.addEventListener('toggle', () => {
+        if (!item.open) return;
+        items.forEach((other) => {
+          if (other !== item) other.open = false;
+        });
+      })
+    );
+  }
+  document.addEventListener('astro:page-load', exclusiveFaq);
+</script>
