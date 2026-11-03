@@ -30,8 +30,10 @@
  * Fallbacks, in order: no JS — the video sits in the full slot, the thumbnail
  * slot collapses. Reduced motion or no WebGL — same, decided in the script.
  */
-import { Icon } from 'astro-icon/components';
-import PillButton from '@/components/site/PillButton.astro';
+import { getImage } from 'astro:assets';
+import AboutStatement from './about/AboutStatement.astro';
+import AboutLens from './about/AboutLens.astro';
+import portrait from '@/assets/authors/MichaelFrosethColored-2.jpg';
 
 interface Props {
   /** mp4/webm, or a still (jpg, png, webp, avif), for the fallback frame
@@ -51,14 +53,24 @@ const {
   poster,
   title = 'You don’t need all the answers yet.',
   blurb = 'Bring the business context, the unfinished idea or the process that’s causing trouble. I’ll help define the work, test the assumptions and build what you need.',
-  hold = '100vh',
+  // Long enough for the story inside the open frame to play at reading pace.
+  hold = '260vh',
   class: className,
 } = Astro.props;
 
 const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
+
+// The lens concept paints the portrait into the frame's own picture, so the
+// script needs one plain URL, sized for the frame's height on a 2x screen.
+const framePortrait = await getImage({ src: portrait, width: 1200, format: 'webp' });
 ---
 
-<section class:list={['reel', className]} data-reel style={`--reel-hold-set: ${hold}`}>
+<section
+  class:list={['reel', className]}
+  data-reel
+  data-reel-portrait={framePortrait.src}
+  style={`--reel-hold-set: ${hold}`}
+>
   <div class="reel__runway" data-reel-runway>
     <div class="reel__stage shell" data-reel-stage>
       <div class="reel__copy" data-reel-copy>
@@ -108,35 +120,16 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
 
   {
     /* Above the canvas, on the open frame's rectangle (the engine sizes it):
-      the line that follows the scene's state, the one-desk argument, a hint
-      for pointers, and a link down to the work. Hidden until the frame is open,
-      so nothing here is reachable before it can be seen. */
+      who is behind the work, told inside the frame as the page scrolls (the
+      story is driven by src/scripts/reel/about.ts). Two concepts while they
+      are compared; ?about=lens or ?about=statement picks one. Hidden until the
+      frame is open, so nothing here is reachable before it can be seen.
+      Without the engine (no JS, reduced motion, no WebGL) the chosen one is
+      an ordinary block in its finished state. */
   }
   <div class="reel__overlay" data-reel-overlay>
-    <div class="reel__caption">
-      <p class="reel__line reel__line--chaos m-0" aria-hidden="true">Ideas are the easy part.</p>
-      <p class="reel__line reel__line--clear m-0">Building them is mine.</p>
-      <p class="reel__desc m-0">
-        Brand, website, product. Bring me the idea, however rough it is. I'll ask the hard
-        questions, sharpen it, and then build it properly.
-      </p>
-      <p class="reel__hint label-mono m-0" aria-hidden="true">Bring your cursor to the center</p>
-      {
-        /* The hash names the section; the landing is the lead card, sat where
-          the reel's delivery completes (morph.ts: the card's top just under
-          the nav), and the ride is slow enough that the ball is seen to
-          drop and become it on the way. */
-      }
-      <PillButton
-        href="#work"
-        data-scroll-target="[data-work-grid] .card[data-deliver]"
-        data-scroll-duration="1.1"
-        class="reel__cta px-7 py-3.5"
-      >
-        View the work
-        <Icon name="lucide:arrow-down" aria-hidden="true" />
-      </PillButton>
-    </div>
+    <AboutStatement />
+    <AboutLens />
   </div>
 </section>
 
@@ -251,6 +244,8 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
   .reel__overlay {
     position: fixed;
     z-index: 41;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
     pointer-events: none;
     opacity: 0;
     visibility: hidden;
@@ -267,88 +262,10 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
       visibility 0s;
   }
 
-  .reel__caption {
-    position: absolute;
-    left: 36px;
-    bottom: 32px;
-    display: grid;
-    gap: 16px;
-    max-width: 440px;
-  }
-
-  /* The one-desk argument, in the client's terms: what the pieces are and
-     why they fit here. */
-  .reel__desc {
-    grid-area: 2 / 1;
-    max-width: 440px;
-    font-size: 15px;
-    line-height: 1.55;
-    color: rgb(12 16 22 / 0.72);
-  }
-
-  /* How to play, for pointers; gone once the scene has resolved. */
-  .reel__hint {
-    grid-area: 3 / 1;
-    color: rgb(12 16 22 / 0.55);
-    transition: opacity 0.5s var(--ease-sw);
-  }
-
-  .reel[data-reel-clear] .reel__hint {
-    opacity: 0;
-  }
-
-  @media (hover: none) {
-    .reel__hint {
-      display: none;
-    }
-  }
-
-  /* Two lines in one slot; the scene's state picks which shows. */
-  .reel__line {
-    grid-area: 1 / 1;
-    font-family: var(--font-display);
-    font-size: clamp(1.5rem, 2.2vw, 2rem);
-    font-weight: var(--display-weight);
-    line-height: 1.1;
-    letter-spacing: var(--display-tracking);
-    color: var(--ink-950);
-    transition:
-      opacity 0.5s var(--ease-sw),
-      transform 0.5s var(--ease-sw);
-  }
-
-  .reel__line--clear,
-  .reel[data-reel-clear] .reel__line--chaos {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  .reel[data-reel-clear] .reel__line--clear {
-    opacity: 1;
-    transform: none;
-  }
-
-  /* The pill is rendered by a child component, so its class carries no
-     scope attribute: reach it through the caption. */
-  .reel__caption :global(.reel__cta) {
-    grid-area: 4 / 1;
-    margin-top: 6px;
-    justify-self: start;
-    pointer-events: auto;
-  }
-
-  .reel__caption :global(.reel__cta svg) {
-    width: 16px;
-    height: 16px;
-    stroke-width: 2;
-  }
-
-  @media (max-width: 800px) {
-    .reel__caption {
-      left: 20px;
-      bottom: 20px;
-      gap: 12px;
-    }
+  /* One concept at a time; the statement unless the page asked for the lens. */
+  .reel:not([data-about='lens']) .reel__overlay :global([data-about-concept='lens']),
+  .reel[data-about='lens'] .reel__overlay :global([data-about-concept='statement']) {
+    display: none;
   }
 
   /* --- modes ------------------------------------------------------------- */
@@ -394,9 +311,32 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
     padding: 56px 0 0;
   }
 
+  /* Static, the story is an ordinary block under the heading, in its
+     finished state, at the frame's own proportions. The full slot only ever
+     held a stand-in picture, so it goes. */
+  :global(html:not(.js)) .reel__fullwrap,
+  .reel[data-reel-mode='static'] .reel__fullwrap {
+    display: none;
+  }
+  :global(html:not(.js)) .reel__overlay,
+  .reel[data-reel-mode='static'] .reel__overlay {
+    position: relative;
+    width: min(calc(100% - 2 * var(--gutter, 24px)), var(--shell-max, 1440px));
+    aspect-ratio: 16 / 9;
+    margin: 56px auto 0;
+    opacity: 1;
+    visibility: visible;
+  }
+  @media (max-width: 800px) {
+    :global(html:not(.js)) .reel__overlay,
+    .reel[data-reel-mode='static'] .reel__overlay {
+      aspect-ratio: 4 / 5;
+    }
+  }
   @media (max-width: 800px) {
     .reel {
-      --reel-hold: 55svh;
+      /* The story needs its reading time on a phone too. */
+      --reel-hold: 200svh;
     }
     .reel__copy {
       padding-top: 90px;
@@ -435,9 +375,19 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
      One engine per document: built on astro:page-load, torn down before the
      swap so its observers and GL context never outlive their DOM. */
   import type { ReelMorph } from '@/scripts/reel/morph';
+  import {
+    TIMING,
+    createAboutStory,
+    createPanel,
+    pickConcept,
+    pickTone,
+    type AboutStory,
+  } from '@/scripts/reel/about';
 
   let engine: ReelMorph | null = null;
   let observer: IntersectionObserver | null = null;
+  let story: AboutStory | null = null;
+  let panelResize: ResizeObserver | null = null;
 
   const hasWebGL = (canvas: HTMLCanvasElement) => {
     try {
@@ -463,6 +413,11 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
     // no engine to do that, or when the page opens already past the reel,
     // it simply shows; the engine keeps that in step once it runs.
     const lead = document.querySelector<HTMLElement>('[data-work-grid] .card[data-deliver]');
+    // Which story the open frame tells; the static block shows the same one.
+    const concept = pickConcept();
+    root.dataset.about = concept;
+    const tone = pickTone();
+    root.dataset.tone = tone;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced || !hasWebGL(document.createElement('canvas'))) {
       root.dataset.reelMode = 'static';
@@ -485,6 +440,10 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
           if (!root.isConnected) return;
           root.dataset.reelMode = 'live';
           const lenis = window.__lenis;
+          story = createAboutStory(root, concept, {
+            setReveal: (value) => engine?.setReveal(value),
+          });
+          const panel = createPanel(concept, full, root.dataset.reelPortrait, tone);
           engine = createReelMorph({
             canvas,
             root,
@@ -511,8 +470,21 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
             // Lenis's velocity is the value the page is drawn at, so the bend
             // can never disagree with the scroll. Falls back to a scroll delta.
             velocity: lenis ? () => Math.max(-1, Math.min(1, lenis.velocity / 42)) : undefined,
+            // The frame blooms into the story's own surface, holds open long
+            // enough to tell it, and hands every frame's position to it.
+            panel: panel.canvas,
+            // ?open=blend for the plain chrome-to-picture blend, to compare.
+            pixelate: new URLSearchParams(location.search).get('open') !== 'blend',
+            timing: TIMING,
+            onHold: (hold) => story?.update(hold),
           });
           engine.start();
+          void panel.ready.then(() => engine?.refreshPanel());
+          panelResize = new ResizeObserver(() => {
+            panel.draw();
+            engine?.refreshPanel();
+          });
+          panelResize.observe(full);
         } catch (error) {
           engine?.destroy();
           engine = null;
@@ -530,6 +502,10 @@ const isStill = /\.(jpe?g|png|webp|avif|gif)(\?.*)?$/i.test(src);
   function teardown() {
     observer?.disconnect();
     observer = null;
+    story?.destroy();
+    story = null;
+    panelResize?.disconnect();
+    panelResize = null;
     engine?.destroy();
     engine = null;
   }

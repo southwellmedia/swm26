@@ -50,6 +50,7 @@
  * The caller decides whether to run it at all (reduced motion, no WebGL).
  */
 import {
+  CanvasTexture,
   Color,
   Mesh,
   NoColorSpace,
@@ -123,8 +124,22 @@ export interface ReelMorphOptions {
   leadCard?: HTMLElement | null;
   /** Corner radius in CSS px. */
   radius?: number;
+  /** A picture for the open frame, drawn by the caller at the frame's aspect.
+   *  When given it replaces the playable droplet scene: the chrome blooms
+   *  into this instead, and the scene is never built or drawn. Call
+   *  refreshPanel() after redrawing it. */
+  panel?: HTMLCanvasElement | null;
   /** Normalised scroll velocity, -1…1. Defaults to a scroll delta. */
   velocity?: () => number;
+  /** Where in the pinned hold (0…1) the frame is fully open, starts and ends
+   *  folding back into the ball, and drops out. A longer story inside the
+   *  frame wants a longer hold and a wider open stretch. */
+  timing?: { open?: number; closeStart?: number; closeEnd?: number; drop?: number };
+  /** Called every running frame with the hold position (0…1) and the damped
+   *  open amount, for content that plays inside the open frame. */
+  onHold?: (hold: number, open: number) => void;
+  /** Open the frame cell by cell instead of blending the chrome away. */
+  pixelate?: boolean;
 }
 
 export interface ReelMorph {
@@ -135,17 +150,21 @@ export interface ReelMorph {
   readonly progress: number;
   /** Where the droplet is in its journey: 0 in the hero … 1 landed. */
   readonly travel: number;
+  /** Re-upload the panel after the caller has redrawn it. */
+  refreshPanel(): void;
+  /** How much of the frame's picture has surfaced, 0…1 (1 by default). */
+  setReveal(value: number): void;
 }
 
 // --- The timeline before the pin lives in handoff.ts (EXIT_*, FALL_END, REST_END).
 // --- The pinned hold, as fractions of the hold distance -----------------------
 /** The frame is fully open at this point of the hold. */
-const OPEN_SPAN = 0.5;
+const DEFAULT_OPEN_SPAN = 0.5;
 /** It folds back into a ball over this stretch … */
-const CLOSE_START = 0.7;
-const CLOSE_END = 0.88;
+const DEFAULT_CLOSE_START = 0.7;
+const DEFAULT_CLOSE_END = 0.88;
 /** … and drops out from here. */
-const DROP_START = 0.9;
+const DEFAULT_DROP_START = 0.9;
 /** Delivery ends when the lead card's centre reaches this viewport height … */
 const DELIVER_AT = 0.45;
 /** … or, if that comes first, when its top is this far below the fixed nav.
@@ -222,6 +241,8 @@ const FRAG = /* glsl */ `
 precision highp float;
 
 uniform sampler2D uMap;
+uniform float uReveal;   // 0 the picture hidden … 1 fully shown (see setReveal)
+uniform float uPixel;    // 1 = the chrome gives way to the picture cell by cell
 uniform float uTexAspect;
 uniform vec4 uStart;
 uniform vec4 uEnd;
@@ -244,6 +265,19 @@ varying vec2 vUv;
 
 ${STUDIO_GLSL}
 uniform vec3 uSignature;
+
+float hash21(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash21(i), hash21(i + vec2(1.0, 0.0)), f.x),
+             mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), f.x), f.y);
+}
 
 float roundedBox(vec2 q, vec2 b, float r) {
   vec2 d = abs(q) - b + vec2(r);
@@ -310,7 +344,42 @@ void main() {
   if (uMix > 0.001) {
     vec3 pic = texture2D(uMap, tuv).rgb;
     if (uCard > 0.5) pic = cardRest(pic);
-    col = mix(col, pic, uMix);
+    // The picture surfacing out of the dark, scrubbed by the page: an
+    // uneven front that spreads from the right-hand side of the frame (where
+    // a portrait's face sits), lit along its edge in the signature colour,
+    // the same liquid as the droplet that opened the frame.
+    if (uReveal < 0.999 && uCard < 0.5) {
+      vec2 p = vec2((tuv.x - 0.72) * aspect, tuv.y - 0.58);
+      float front = length(p) + (vnoise(tuv * vec2(aspect, 1.0) * 4.0) - 0.5) * 0.2
+                  + (vnoise(tuv * vec2(aspect, 1.0) * 14.0) - 0.5) * 0.04;
+      float reach = uReveal * (aspect + 0.6);
+      float shown = 1.0 - smoothstep(reach - 0.02, reach + 0.02, front);
+      float rim = (1.0 - smoothstep(0.0, 0.012, abs(front - reach))) * step(0.001, uReveal) * step(uReveal, 0.995);
+      pic = mix(vec3(0.045, 0.052, 0.062), pic, shown) + uSignature * rim * 0.75;
+    }
+    if (uPixel > 0.5 && uCard < 0.5) {
+      // A grid sweeps out from where the droplet landed: cells flip to the
+      // picture behind a front, and the band of cells on the front shows a
+      // brand colour first (ink, ice or the signature), so the opening reads
+      // as the frame being built, not faded.
+      float cell = max(14.0, size.x / 42.0);
+      vec2 g = floor((q + size * 0.5) / cell);
+      vec2 cq = (g + 0.5) * cell - size * 0.5;
+      float rnd = hash21(g);
+      float d = length(cq - dc) / length(size);
+      float threshold = d * 0.8 + rnd * 0.2;
+      float front = uMix * 1.25;
+      if (threshold < front - 0.14) {
+        col = pic;
+      } else if (threshold < front) {
+        float pick = hash21(g + 17.0);
+        vec3 ink = vec3(0.047, 0.063, 0.086);
+        vec3 ice = vec3(0.933, 0.949, 0.961);
+        col = pick < 0.45 ? ink : pick < 0.8 ? ice : uSignature;
+      }
+    } else {
+      col = mix(col, pic, uMix);
+    }
   }
 
   // Soft shadow on the page under the floating droplet.
@@ -402,7 +471,15 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     workHead,
     leadCard,
     radius = 16,
+    panel = null,
+    timing = {},
+    onHold,
+    pixelate = false,
   } = options;
+  const OPEN_SPAN = timing.open ?? DEFAULT_OPEN_SPAN;
+  const CLOSE_START = timing.closeStart ?? DEFAULT_CLOSE_START;
+  const CLOSE_END = timing.closeEnd ?? DEFAULT_CLOSE_END;
+  const DROP_START = timing.drop ?? DEFAULT_DROP_START;
 
   const renderer = new WebGLRenderer({
     canvas,
@@ -425,6 +502,9 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
   camera.lookAt(new Vector3(0, 0, 0));
 
   const droplets = new DropletScene();
+  // The caller's picture for the open frame, if any (see options.panel).
+  const panelTexture = panel ? new CanvasTexture(panel) : null;
+  if (panelTexture) panelTexture.colorSpace = NoColorSpace;
 
   const colors = {
     uInk: { value: new Color() },
@@ -472,6 +552,8 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     uCard: { value: 0 },
     uCardRest: { value: new Vector3(1, 1, 1) },
     uCardBg: { value: new Color(0.9, 0.9, 0.9) },
+    uReveal: { value: 1 },
+    uPixel: { value: pixelate ? 1 : 0 },
   };
 
   const material = new ShaderMaterial({
@@ -586,7 +668,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     const dpr = Math.min(window.devicePixelRatio || 1, SCENE_DPR) * SCENE_SCALE;
     const sw = Math.min(1600, Math.round(fullOff.z * dpr));
     const sh = Math.round(sw * (fullOff.w / Math.max(1, fullOff.z)));
-    droplets.setSize(sw, sh);
+    if (!panelTexture) droplets.setSize(sw, sh);
 
     // The overlay sits on the frame's rectangle while the stage is pinned,
     // which is the only time it shows.
@@ -731,6 +813,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     // A damped value only approaches its target; snap the last hair so
     // "fully open" is a state the rest of the frame can test for.
     if (Math.abs(progress - openT) < 1e-3) progress = openT;
+    onHold?.(f, progress * (1 - close));
 
     // --- Where the ball wants to be ---------------------------------------------
     let tx = p.x;
@@ -813,12 +896,15 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       travel = 1;
       opacity = 1;
       geometry = 'frame';
-      const toCentre = smoothstep(0.55, CLOSE_START, f);
+      const toCentre = smoothstep(CLOSE_START - 0.15, CLOSE_START, f);
       tx = lerp(thumbCx, fullCx, toCentre);
       ty = lerp(thumbCy, fullCy, toCentre);
       tr = lerp(landR, closeR, toCentre);
       shape = smoothstep(0, 0.3, progress) * (1 - close);
-      mixAmt = smoothstep(0.08, 0.5, progress) * (1 - close);
+      // Cell by cell reads best once the frame is nearly full size, so the
+      // grid sweeps late; a blend can start almost at once.
+      mixAmt =
+        (pixelate ? smoothstep(0.45, 1, progress) : smoothstep(0.08, 0.5, progress)) * (1 - close);
       float = 1 - shape;
     } else if (leadCard) {
       // Acts 4 and 5.
@@ -992,6 +1078,9 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     if (card && cardTexture) {
       u.uMap.value = cardTexture;
       u.uTexAspect.value = cardAspect;
+    } else if (panelTexture && panel) {
+      u.uMap.value = panelTexture;
+      u.uTexAspect.value = panel.width / Math.max(1, panel.height);
     } else {
       u.uMap.value = droplets.target.texture;
       u.uTexAspect.value = droplets.target.width / Math.max(1, droplets.target.height);
@@ -1001,7 +1090,11 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
 
     // --- The scene inside, the pointer on it, the words around it -------------
     const sceneLive = geometry === 'frame' && mixAmt > 0.001;
-    if (sceneLive) {
+    if (sceneLive && panelTexture) {
+      // A still picture: nothing to play, only the words to show once open.
+      pointer.down = false;
+      setOpen(progress > 0.9 && close < 0.02);
+    } else if (sceneLive) {
       const rx = lerp(thumbV.x, fullV.x, progress);
       const ry = lerp(thumbV.y, fullV.y, progress);
       const rw = lerp(thumbV.z, fullV.z, progress);
@@ -1159,7 +1252,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
   // 75–275 ms waiting on the GPU. compileAsync lets the driver compile in
   // parallel where it can, and the frames that draw later just use them.
   void renderer.compileAsync(scene, camera);
-  void droplets.compile(renderer);
+  if (!panelTexture) void droplets.compile(renderer);
 
   return {
     get progress() {
@@ -1167,6 +1260,15 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     },
     get travel() {
       return travel;
+    },
+    setReveal(value: number) {
+      if (uniforms.uReveal.value === value) return;
+      uniforms.uReveal.value = value;
+      kick();
+    },
+    refreshPanel() {
+      if (panelTexture) panelTexture.needsUpdate = true;
+      kick();
     },
     start() {
       if (running) return;
@@ -1212,6 +1314,7 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
       reelField?.destroy();
       workField?.destroy();
       cardTexture?.dispose();
+      panelTexture?.dispose();
       renderer.dispose();
     },
   };

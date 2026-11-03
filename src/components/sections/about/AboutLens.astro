@@ -1,0 +1,158 @@
+---
+/**
+ * AboutLens: the reel's open frame as a portrait surfacing.
+ *
+ * The frame's own picture is the portrait (painted by about.ts and drawn by
+ * the WebGL engine), surfacing out of the dark along a lit, uneven front as
+ * the page scrolls. Three short statements pass through the open space beside
+ * it, one at a time, each replacing the last; the name and the way on settle
+ * at the end.
+ *
+ * The markup is the finished state. Without the engine (no JS, reduced
+ * motion, no WebGL) the portrait is an ordinary image and the three
+ * statements stand together.
+ */
+import { Image } from 'astro:assets';
+import portrait from '@/assets/authors/MichaelFrosethColored-2.jpg';
+
+const statements = [
+  'Twenty years across design, code and creative direction.',
+  'One person, from the first conversation to launch, and after.',
+  'Still the one fixing it at 10pm.',
+];
+---
+
+<div class="lens" data-about-concept="lens">
+  <Image
+    class="lens__portrait"
+    src={portrait}
+    alt="Michael Froseth"
+    widths={[480, 768, 1024]}
+    sizes="(max-width: 800px) 100vw, 45vw"
+    loading="lazy"
+    decoding="async"
+  />
+  <div class="lens__stack">
+    {
+      statements.map((text) => (
+        <p class="lens__say m-0" data-lens-say>
+          {text}
+        </p>
+      ))
+    }
+  </div>
+  <div class="lens__foot" data-lens-foot>
+    <p class="label-mono m-0">Michael Froseth — Founder · Dallas, TX</p>
+    <a class="lens__link" href="/studio">More about me <span aria-hidden="true">→</span></a>
+  </div>
+</div>
+
+<style>
+  .lens {
+    position: absolute;
+    inset: 0;
+    container-type: size;
+    overflow: hidden;
+    color: var(--ice-100, #eef2f5);
+  }
+
+  /* One slot, three statements: each takes it in turn. */
+  .lens__stack {
+    position: absolute;
+    left: 5cqw;
+    top: 50%;
+    width: 46cqw;
+    translate: 0 -50%;
+    display: grid;
+  }
+  .lens__say {
+    grid-area: 1 / 1;
+    align-self: center;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: 4.3cqw;
+    line-height: 1.02;
+    letter-spacing: var(--display-tracking);
+    text-transform: var(--display-case);
+    text-wrap: balance;
+  }
+
+  .lens__foot {
+    position: absolute;
+    left: 5cqw;
+    bottom: 4.6cqh;
+    display: flex;
+    align-items: baseline;
+    gap: 28px;
+    color: rgb(255 255 255 / 0.55);
+  }
+  .lens__link {
+    white-space: nowrap;
+    color: var(--ice-100, #eef2f5);
+    font-size: 15px;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 5px;
+    pointer-events: auto;
+  }
+  .lens__link:hover {
+    color: var(--signature-color, #ff542e);
+  }
+
+  /* The portrait is the frame's picture while the engine runs. */
+  .lens__portrait {
+    display: none;
+  }
+
+  /* Live: statements wait below their slot, out of sight; the driver brings
+     each through. Static: all three stand, one under the other. */
+  :global(.reel[data-reel-mode='live']) .lens__say {
+    opacity: 0;
+  }
+  :global(.reel:not([data-reel-mode='live'])) .lens {
+    background: #282d2f;
+  }
+  :global(.reel:not([data-reel-mode='live'])) .lens__portrait {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 44%;
+    height: 100%;
+    object-fit: cover;
+    mask-image: linear-gradient(90deg, transparent, #000 35%);
+  }
+  :global(.reel:not([data-reel-mode='live'])) .lens__stack {
+    gap: 0.6em;
+  }
+  :global(.reel:not([data-reel-mode='live'])) .lens__say {
+    grid-area: auto;
+    font-size: 2.6cqw;
+  }
+
+  @media (max-width: 800px) {
+    .lens__stack {
+      top: auto;
+      bottom: 16cqh;
+      width: auto;
+      right: 5cqw;
+      translate: none;
+    }
+    .lens__say {
+      font-size: 8.4cqw;
+    }
+    .lens__foot {
+      right: 5cqw;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    :global(.reel:not([data-reel-mode='live'])) .lens__portrait {
+      width: 100%;
+      height: 55%;
+      mask-image: linear-gradient(0deg, transparent, #000 35%);
+    }
+    :global(.reel:not([data-reel-mode='live'])) .lens__say {
+      font-size: 5.4cqw;
+    }
+  }
+</style>
