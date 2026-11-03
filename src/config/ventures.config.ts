@@ -52,7 +52,7 @@ export const ventures: Venture[] = [
     role: 'Creator · Open source',
     href: 'https://www.deployvelocity.com',
     domain: 'deployvelocity.com',
-    what: 'The open-source Astro 6 starter kit this site is built on.',
+    what: 'The open-source Astro 7 starter kit this site is built on.',
     logo: '/ventures/velocity.svg',
     logoScale: 0.28,
     wordmark: 'Velocity',
