@@ -9,6 +9,7 @@ import depth from '@/assets/authors/MichaelFroseth-relight-depth.webp';
 import reap from '@/assets/work/reap-capital/feature.webp';
 import akh from '@/assets/work/akh-digital/hero.webp';
 import siteConfig from '@/config/site.config';
+import { ventures } from '@/config/ventures.config';
 import '@/styles/studio.css';
 
 const questions = [
@@ -99,9 +100,10 @@ const questions = [
 
       <nav class="studio-chapters" aria-label="On this page">
         <a href="#the-person"><span>01</span> The person</a>
-        <a href="#working-together"><span>02</span> Working together</a>
-        <a href="#the-approach"><span>03</span> The approach</a>
-        <a href="#good-questions"><span>04</span> Good questions</a>
+        <a href="#also-building"><span>02</span> Also building</a>
+        <a href="#working-together"><span>03</span> Working together</a>
+        <a href="#the-approach"><span>04</span> The approach</a>
+        <a href="#good-questions"><span>05</span> Good questions</a>
       </nav>
     </header>
 
@@ -142,12 +144,61 @@ const questions = [
     </section>
 
     <section
+      class="studio-also studio-section shell"
+      id="also-building"
+      aria-labelledby="also-title"
+    >
+      <header class="studio-block__head">
+        <p class="studio-kicker">02 / Also building</p>
+        <h2 id="also-title" class="studio-statement" data-reveal>
+          I build my own products too. <em>It makes me better at building yours.</em>
+        </h2>
+      </header>
+      <ul class="studio-also__list">
+        {
+          ventures.map((venture) => (
+            <li>
+              <a
+                class="studio-venture"
+                href={venture.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={`--venture-accent: ${venture.accent}`}
+              >
+                <h3 class="studio-venture__tile">
+                  <span class="studio-venture__lockup">
+                    <img
+                      src={venture.logo}
+                      alt={venture.wordmark ? '' : venture.name}
+                      style={venture.wordmark ? undefined : `width: ${venture.logoScale * 62}%`}
+                      class:list={[venture.wordmark && 'is-mark']}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    {venture.wordmark && <span>{venture.wordmark}</span>}
+                  </span>
+                </h3>
+                <p class="studio-venture__meta">
+                  <span>{venture.role}</span>
+                  <span class="studio-venture__link">
+                    {venture.domain} <span aria-hidden="true">↗</span>
+                  </span>
+                </p>
+                <p class="studio-venture__what">{venture.what}</p>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section
       class="studio-ways studio-section shell"
       id="working-together"
       aria-labelledby="together-title"
     >
       <header class="studio-block__head">
-        <p class="studio-kicker">02 / Working together</p>
+        <p class="studio-kicker">03 / Working together</p>
         <h2 id="together-title" class="studio-statement" data-reveal>
           Your business. Your agency. <em>I’m in your corner.</em>
         </h2>
@@ -162,6 +213,14 @@ const questions = [
               sizes="(max-width: 820px) calc(100vw - 48px), 45vw"
               loading="lazy"
             />
+            <span class="studio-way__logo">
+              <span
+                class="studio-way__mark studio-way__mark--tall"
+                role="img"
+                aria-label="Reap Capital"
+                style="--logo: url(/clients/reap-capital.svg); --logo-ratio: 356 / 294; --logo-hover: #ccaf79"
+              ></span>
+            </span>
           </div>
           <p class="studio-way__label">
             <span>For businesses &amp; founders</span><span>Reap Capital</span>
@@ -182,6 +241,14 @@ const questions = [
               sizes="(max-width: 820px) calc(100vw - 48px), 45vw"
               loading="lazy"
             />
+            <span class="studio-way__logo">
+              <span
+                class="studio-way__mark"
+                role="img"
+                aria-label="AKH Digital"
+                style="--logo: url(/clients/akh-digital.svg); --logo-ratio: 331 / 52"
+              ></span>
+            </span>
           </div>
           <p class="studio-way__label">
             <span>For agencies &amp; creative teams</span><span>AKH Digital</span>
@@ -204,7 +271,7 @@ const questions = [
       aria-labelledby="questions-title"
     >
       <header class="studio-block__head">
-        <p class="studio-kicker">04 / Good questions</p>
+        <p class="studio-kicker">05 / Good questions</p>
         <h2 id="questions-title" class="studio-statement" data-reveal>
           Before we say hello. <em>A few things you might be wondering.</em>
         </h2>

@@ -1,11 +1,12 @@
 /**
  * Footer link columns
  *
- * The designed footer is three labelled columns, not Velocity's generic
+ * The designed footer is four labelled columns, not Velocity's generic
  * social-icon row — so it carries its own list rather than reusing
  * nav.config.ts, which only describes the overlay menu.
  */
 import siteConfig from './site.config';
+import { ventures } from './ventures.config';
 
 export interface FooterLink {
   label: string;
@@ -47,6 +48,14 @@ export const footerColumns: FooterColumn[] = [
         icon: 'fa6-brands:github',
       },
     ],
+  },
+  {
+    heading: 'ALSO BUILDING',
+    links: ventures.map((venture) => ({
+      label: venture.name,
+      href: venture.href,
+      external: true,
+    })),
   },
   {
     heading: 'SAY HI',
