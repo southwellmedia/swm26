@@ -53,7 +53,7 @@ const {
   headings = [],
 } = Astro.props;
 
-const ogImage = image?.src || `/og${Astro.url.pathname}.png`;
+const ogImage = image?.src || `/og${Astro.url.pathname.replace(/\/$/, '')}.png`;
 const fullUrl = new URL(Astro.url.pathname, Astro.site).toString();
 
 const breadcrumbs = createBreadcrumbSchema([

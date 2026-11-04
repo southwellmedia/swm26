@@ -28,7 +28,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   // Generate paths for blog posts
   const blogPaths = blogPosts.map((post) => ({
-    params: { slug: `blog/${post.id}` },
+    params: { slug: `blog/${post.id.replace(/^en\//, '')}` },
     props: {
       title: post.data.title,
       description: post.data.description,
