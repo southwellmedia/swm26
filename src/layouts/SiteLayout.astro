@@ -12,7 +12,6 @@
 import BaseLayout from './BaseLayout.astro';
 import Nav from '@/components/site/Nav.astro';
 import Footer from '@/components/site/Footer.astro';
-import ChatSheet from '@/components/site/ChatSheet.astro';
 import FontSwitcher from '@/components/dev/FontSwitcher.astro';
 
 interface Props {
@@ -35,7 +34,7 @@ interface Props {
   navOverMedia?: boolean;
   /** The whole page sits on ink, so the frosted bar must frost to ink too. */
   navTone?: 'dark' | 'light';
-  /** A room of its own: no footer, and no chat sheet to rise out of it. */
+  /** A room of its own: no footer. */
   bare?: boolean;
 }
 
@@ -75,8 +74,6 @@ const showFontSwitcher = import.meta.env.DEV;
   <Nav slot="header" context={navContext} overMedia={navOverMedia} tone={navTone} />
   <slot />
   {!bare && <Footer slot="footer" />}
-  {/* "Start a conversation": the sheet that rises from the footer. */}
-  {!bare && <ChatSheet slot="footer" />}
   {showFontSwitcher && <FontSwitcher slot="footer" />}
 </BaseLayout>
 

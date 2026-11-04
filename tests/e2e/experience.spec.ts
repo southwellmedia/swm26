@@ -78,21 +78,36 @@ test('contact failure offers an email fallback without sending a real message', 
       body: JSON.stringify({ success: false }),
     })
   );
-  await page.goto('/work/texas-trinkets');
-  await page.locator('[data-chat-open]').first().click();
-  await page.locator('#sw-chat-message').fill('A new website for our handmade products.');
-  await page.locator('#sw-chat-send').click();
-  await page.locator('#sw-chat-name').fill('Preview reviewer');
-  await page.locator('#sw-chat-email').fill('review@example.com');
-  await page.locator('#sw-chat-send').click();
-  await expect(page.locator('p[data-outcome="failed"]')).toBeVisible();
-  await expect(page.locator('p[data-outcome="failed"] a')).toHaveAttribute(
+  await page.goto('/contact');
+  const brief = page.locator('[data-brief]');
+  const tap = async (label: string, next: string) => {
+    await page.locator('[data-brief-step][data-active] .brief__option', { hasText: label }).click();
+    await expect(brief).toHaveAttribute('data-step', next);
+  };
+  // The count is written by the script, so the steps are live once it reads.
+  await expect(page.locator('[data-brief-count]')).toHaveText('Question 1 of 7');
+  await tap('A new website', 'detail-website');
+  await tap('holding us back', 'stage');
+  await tap('Established', 'timeline');
+  await tap('next 3 months', 'budget');
+  await tap('$25k to $50k', 'blocker');
+  await page.locator('[data-brief-next]').click();
+  await expect(brief).toHaveAttribute('data-step', 'you');
+  await page.locator('[name=name]').fill('Preview reviewer');
+  await page.locator('[name=email]').fill('review@example.com');
+  await page.locator('[data-brief-next]').click();
+  await expect(brief).toHaveAttribute('data-step', 'review');
+  await page.locator('[data-brief-send]').click();
+  await expect(page.locator('[data-brief-fail]')).toBeVisible();
+  await expect(page.locator('[data-brief-fail] a')).toHaveAttribute(
     'href',
     'mailto:hello@southwellmedia.com'
   );
 });
 
 test('live hero and reel initialize without shader errors', async ({ page }) => {
+  // CI has no GPU: the scene renders in software and everything after it crawls.
+  test.setTimeout(90_000);
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {

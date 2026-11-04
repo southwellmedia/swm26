@@ -1,9 +1,8 @@
 /**
  * POST /api/contact
  *
- * Takes a message from the chat sheet (site/ChatSheet.astro) or the brief on
- * /contact and mails it to the studio through Resend's REST API — a single
- * fetch, no SDK. Validation and the honeypot are Velocity's; the email is ours.
+ * Takes the brief from /contact and mails it to the studio through Resend's
+ * REST API — a single fetch, no SDK. Validation and the honeypot are Velocity's; the email is ours.
  * A plain form post (no JavaScript) is redirected rather than answered in JSON.
  *
  * Server-rendered (the one route on the site that is), which is what the
@@ -26,8 +25,8 @@ const contactSchema = z
     email: z.email('Please enter a valid email address'),
     subject: z.string().max(200).optional(),
     message: z.string().max(5000),
-    /** Where it came from: the chat sheet or the brief on /contact. */
-    source: z.enum(['chat', 'brief']).optional(),
+    /** Set by the brief on /contact, where the message is optional. */
+    source: z.literal('brief').optional(),
     honeypot: z.string().max(0), // Anti-spam: must be empty
     // The brief's answers, as the visitor read them.
     company: answer,
@@ -72,11 +71,8 @@ async function sendMail(data: Contact): Promise<void> {
     throw new Error('RESEND_API_KEY is not set');
   }
 
-  const via = data.source === 'chat' ? 'the chat sheet' : 'the brief';
   const who = data.company ? `${data.name}, ${data.company}` : data.name;
-  const subject =
-    data.subject?.trim() ||
-    (data.source === 'brief' ? `New brief: ${who}` : `${data.name} — via ${via}`);
+  const subject = data.subject?.trim() || `New brief: ${who}`;
   const answers = Object.entries({
     Company: data.company,
     'Looking for': data.need,
@@ -87,7 +83,6 @@ async function sendMail(data: Contact): Promise<void> {
   }).flatMap(([label, value]) => (value ? [[label, value] as const] : []));
   const text = [
     `From: ${data.name} <${data.email}>`,
-    `Via: ${via}`,
     '',
     ...answers.map(([label, value]) => `${label}: ${value}`),
     ...(answers.length ? [''] : []),
@@ -102,7 +97,7 @@ async function sendMail(data: Contact): Promise<void> {
     .join('');
   const html = `
     <p><strong>${escapeHtml(data.name)}</strong> &lt;${escapeHtml(data.email)}&gt;<br>
-    <span style="color:#6b7280">via ${via}</span></p>
+    <span style="color:#6b7280">via the brief</span></p>
     ${rows ? `<table style="font-size:16px;line-height:1.5;border-collapse:collapse">${rows}</table>` : ''}
     <p style="white-space:pre-wrap;font-size:16px;line-height:1.5">${escapeHtml(data.message)}</p>
   `;
