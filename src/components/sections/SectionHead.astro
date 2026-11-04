@@ -45,12 +45,15 @@ const Heading = immediate ? 'h1' : 'h2';
 </header>
 
 <style>
-  /* Padded so the mask never shears a descender off the title. */
+  /* Padded so the mask never shears a descender off the title, or the last
+     letter, which tight tracking leaves wider than its box. */
   .sh__mask {
     display: block;
     overflow: clip;
     padding-block: 0.12em;
     margin-block: -0.12em;
+    padding-inline-end: 0.1em;
+    margin-inline-end: -0.1em;
   }
 
   .sh__word {

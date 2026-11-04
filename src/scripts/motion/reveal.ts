@@ -2,7 +2,7 @@
  * [data-reveal] — arrivals for any element, on any page.
  *
  *   data-reveal            lifts in: opacity 0→1, 56px rise on a spring
- *   data-reveal="rise"     masked rise: slides up from 112% inside a parent
+ *   data-reveal="rise"     masked rise: slides up from 150% inside a parent
  *                          that clips overflow (the parent is the mask)
  *   data-reveal-delay      seconds to hold after entering view
  *
@@ -44,8 +44,8 @@ export function initReveal(reduced: boolean): VoidFunction {
           // the class comes off, so nothing paints: muted text stays muted.
           el.classList.add('is-in');
           if (rise) {
-            el.style.transform = 'translateY(112%)';
-            animate(el, { y: ['112%', '0%'] }, { ...RISE, delay });
+            el.style.transform = 'translateY(150%)';
+            animate(el, { y: ['150%', '0%'] }, { ...RISE, delay });
           } else {
             const rest = Number(getComputedStyle(el).opacity);
             el.style.opacity = '0';

@@ -248,10 +248,12 @@
   /* The mask a rise climbs out of: one line of a headline, clipped. The
      small negative inset keeps descenders and the display italics whole.
      clip-path alone does the clipping: overflow: hidden would clip to the
-     line box and cut the descenders the inset is there to spare. */
+     line box and cut the descenders the inset is there to spare. The rise is
+     vertical, so the sides stay open: tight tracking leaves the last glyph
+     wider than its box, which sliced the slash off the footer's sw/. */
   .rv-mask {
     display: block;
-    clip-path: inset(-0.2em 0 -0.3em);
+    clip-path: inset(-0.2em -0.12em -0.3em);
   }
 
   .rv-mask > [data-reveal='rise'] {
@@ -267,10 +269,12 @@ html.js [data-reveal]:not(.is-in) {
   opacity: 0;
 }
 
-/* A masked rise starts below its clipping parent, fully opaque. */
+/* A masked rise starts below its clipping parent, fully opaque. 150% has to
+   clear the mask's padding as well as the line: at 112% the tops of tall
+   letters sat inside the clip, a row of dashes until the word rose. */
 html.js [data-reveal='rise']:not(.is-in) {
   opacity: 1;
-  transform: translateY(112%);
+  transform: translateY(150%);
 }
 
 /* -------------------------------------------------------------------------

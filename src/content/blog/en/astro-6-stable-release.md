@@ -11,8 +11,6 @@ draft: false
 locale: en
 ---
 
-# Astro 6 Is Here. Here's What Actually Changed.
-
 We've been running Astro 6 beta in production since January. Today the stable release is out — and so is the Astro 6 update to Velocity, our open-source starter kit and boilerplate.
 
 If you read our [earlier post on what was coming](/blog/astro-6-whats-coming-2026), this is the follow-up: what made it in, what didn't land the way the team expected, and what the upgrade actually looks like from the inside.

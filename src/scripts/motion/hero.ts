@@ -39,7 +39,7 @@ export function initHero(reduced: boolean): VoidFunction {
   words.forEach((word, i) => {
     sequence.push([
       word,
-      { y: ['112%', '0%'] },
+      { y: ['150%', '0%'] },
       {
         type: 'spring',
         visualDuration: i === 0 ? 0.95 : 0.85,

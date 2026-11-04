@@ -11,8 +11,6 @@ draft: false
 locale: en
 ---
 
-# Astro 6 Is Coming: What It Means for Production Web Projects in 2026
-
 The Astro team shipped the first v6 beta on January 13th. Nine beta releases later, the stable version is weeks away. And this one deserves your attention, whether you build with Astro today or you've been watching from the sidelines.
 
 Astro 6 is not an incremental bump. The core development server has been rebuilt from scratch. Zod has been upgraded to a new major version. Several long-standing APIs have been removed outright. If you maintain an Astro project (or you're about to start one), the migration path matters and the timing is narrow.
