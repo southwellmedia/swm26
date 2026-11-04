@@ -24,15 +24,7 @@ export default [
     },
   },
   {
-    ignores: [
-      'dist/',
-      'node_modules/',
-      '.astro/',
-      'public/pagefind/',
-      '.vercel/',
-      'test-results/',
-      'playwright-report/',
-    ],
+    ignores: ['.velocity-backup/', 'dist/', 'node_modules/', '.astro/', '.vercel/', '.netlify/', 'public/pagefind/', 'test-results/', 'playwright-report/'],
   },
   {
     rules: {
@@ -43,5 +35,10 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
+  },
+  {
+    // Command-line scripts print their results
+    files: ['scripts/**'],
+    rules: { 'no-console': 'off' },
   },
 ];

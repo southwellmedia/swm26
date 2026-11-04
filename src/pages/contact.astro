@@ -39,7 +39,9 @@ const choices: BriefChoice[] = [need, ...details, ...later];
         if (sessionStorage.getItem('sw-brief')) {
           document.currentScript.parentElement.dataset.restoring = '';
         }
-      } catch {}
+      } catch {
+        /* Storage blocked: nothing saved, so nothing to hold for. */
+      }
     </script>
     <div class="brief__glow" aria-hidden="true"></div>
 

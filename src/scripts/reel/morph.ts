@@ -820,8 +820,8 @@ export function createReelMorph(options: ReelMorphOptions): ReelMorph {
     let ty = p.y - sY;
     let tr = p.r;
     let squashT = 1;
-    let opacity = 0;
-    let float = 0;
+    let opacity: number;
+    let float: number;
     let onPage = 1; // 0 = still in the scene's fog: soft edge, no shadow, dimmer
     let heroOn = false; // the ball is on the headline's line
     let heroImpact = 0;

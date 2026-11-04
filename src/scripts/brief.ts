@@ -202,7 +202,7 @@ export function initBrief(root: HTMLElement): VoidFunction {
         return;
       }
     } catch {
-      sent = false;
+      /* Offline or blocked: `sent` stays false and the page says so. */
     }
 
     sending = false;

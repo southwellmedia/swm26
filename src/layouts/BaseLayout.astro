@@ -100,7 +100,7 @@ if (includeOrgSchema) {
          not cleared it in time, the class comes off and the page just shows. -->
     <script is:inline>
       (function () {
-        var root = document.documentElement;
+        const root = document.documentElement;
         root.classList.add('js');
         window.__motionFailsafe = setTimeout(function () {
           root.classList.remove('js');
@@ -115,7 +115,9 @@ if (includeOrgSchema) {
       document.documentElement.classList.remove('dark');
       try {
         localStorage.removeItem('theme');
-      } catch {}
+      } catch {
+        /* Storage blocked: there is no saved choice to clear. */
+      }
     </script>
   </head>
 
