@@ -97,14 +97,19 @@ if (includeOrgSchema) {
          the reel's layout jumps from static to pinned.
          Nothing is hidden for a visitor without JS, and the timer means a
          blocked or crawling bundle can't leave the page blank: if Motion has
-         not cleared it in time, the class comes off and the page just shows. -->
+         not cleared it in time, the class comes off and the page just shows.
+         That page only: Motion takes back over on the next navigation. The dev
+         server compiles on first request, which is slow rather than broken. -->
     <script is:inline>
       (function () {
         const root = document.documentElement;
         root.classList.add('js');
-        window.__motionFailsafe = setTimeout(function () {
-          root.classList.remove('js');
-        }, 3000);
+        window.__motionFailsafe = setTimeout(
+          function () {
+            root.classList.remove('js');
+          },
+          location.hostname === 'localhost' ? 20000 : 3000
+        );
       })();
     </script>
 
