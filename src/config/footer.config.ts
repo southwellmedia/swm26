@@ -26,7 +26,7 @@ export const footerColumns: FooterColumn[] = [
   {
     heading: 'MENU',
     links: [
-      { label: 'Studio', href: '/studio' },
+      { label: 'About', href: '/about' },
       { label: 'Work', href: '/work' },
       { label: 'Lab', href: '/blog' },
       { label: 'Contact', href: '/contact' },

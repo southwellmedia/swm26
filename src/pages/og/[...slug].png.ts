@@ -6,7 +6,7 @@ import siteConfig from '@/config/site.config';
 // Define static pages that need OG images
 const STATIC_PAGES = [
   { slug: 'index', title: siteConfig.name, description: siteConfig.description },
-  { slug: 'studio', title: 'The studio', description: `Meet ${siteConfig.name}` },
+  { slug: 'about', title: 'About', description: `Meet ${siteConfig.name}` },
   {
     slug: 'work',
     title: 'Selected work',

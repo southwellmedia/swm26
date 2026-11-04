@@ -80,6 +80,11 @@ export default defineConfig({
     layout: 'constrained',
   },
 
+  // The about page's old address, kept alive as a permanent redirect.
+  redirects: {
+    '/studio': { status: 301, destination: '/about' },
+  },
+
   // ClientRouter swaps pages client-side; without prefetch every swap is a
   // cold fetch while the old page stays painted. Prefetch on hover by default,
   // for every internal link.

@@ -15,7 +15,7 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  { label: 'Studio', href: '/studio', order: 1 },
+  { label: 'About', href: '/about', order: 1 },
   { label: 'Work', href: '/work', order: 2 },
   // "Lab" is the studio's name for the writing; the route stays /blog so
   // the RSS feed, sitemap entries and Pagefind index keep their addresses.
