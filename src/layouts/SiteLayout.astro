@@ -35,6 +35,8 @@ interface Props {
   navOverMedia?: boolean;
   /** The whole page sits on ink, so the frosted bar must frost to ink too. */
   navTone?: 'dark' | 'light';
+  /** A room of its own: no footer, and no chat sheet to rise out of it. */
+  bare?: boolean;
 }
 
 const {
@@ -49,6 +51,7 @@ const {
   navContext,
   navOverMedia = false,
   navTone,
+  bare = false,
 } = Astro.props;
 
 // Dev-only display-font switcher, rendered below.
@@ -71,9 +74,9 @@ const showFontSwitcher = import.meta.env.DEV;
 >
   <Nav slot="header" context={navContext} overMedia={navOverMedia} tone={navTone} />
   <slot />
-  <Footer slot="footer" />
+  {!bare && <Footer slot="footer" />}
   {/* "Start a conversation": the sheet that rises from the footer. */}
-  <ChatSheet slot="footer" />
+  {!bare && <ChatSheet slot="footer" />}
   {showFontSwitcher && <FontSwitcher slot="footer" />}
 </BaseLayout>
 

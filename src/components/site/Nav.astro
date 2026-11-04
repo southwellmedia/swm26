@@ -249,8 +249,9 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
 
   /* A page on ink: the bar reads its colours from the story, not the page
      ground. The variables are remapped on the bar itself so the existing
-     rules below need no second copy. */
-  .sw-nav[data-tone='dark'] {
+     rules below need no second copy. Not over the open sheet, which brings
+     its own ground: ice on a light sheet would lose the wordmark. */
+  .sw-nav[data-tone='dark']:not([data-menu-open='true']) {
     --color-background: var(--ink-950);
     --color-foreground: var(--ice-100);
     --color-border: var(--border-invert);

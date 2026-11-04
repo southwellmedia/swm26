@@ -1,0 +1,53 @@
+---
+/**
+ * Where the brief lands without JavaScript: /api/contact redirects a plain
+ * form post here. With JavaScript the page confirms in place and this is
+ * never seen.
+ */
+import SiteLayout from '@/layouts/SiteLayout.astro';
+---
+
+<SiteLayout title="Thank You" noindex navTone="dark" bare>
+  <section class="thanks invert-section">
+    <div class="shell">
+      <h1>Got it.</h1>
+      <p>I’ll read this myself and write back soon.</p>
+      <a href="/work">See the work <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+</SiteLayout>
+
+<style>
+  :global(html:has(.thanks)),
+  :global(body:has(.thanks)) {
+    background: var(--ink-950);
+  }
+  :global(html:has(.thanks)) {
+    scrollbar-gutter: auto;
+  }
+  .thanks {
+    display: flex;
+    align-items: center;
+    min-height: 100vh;
+    min-height: 100svh;
+    background: var(--ink-950);
+    color: var(--ice-100);
+  }
+  h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: clamp(48px, 6vw, 96px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+    text-transform: var(--display-case);
+  }
+  p {
+    margin: 20px 0 32px;
+    font-size: 19px;
+    color: rgb(238 242 244 / 0.66);
+  }
+  a {
+    color: var(--ice-100);
+  }
+</style>

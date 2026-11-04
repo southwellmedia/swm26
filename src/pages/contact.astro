@@ -3,152 +3,755 @@
  * Contact page
  * URL: /contact
  *
- * Velocity's contact form and /api/contact endpoint, wearing the studio's
- * type. The submit handler is carried over from the stock page unchanged.
+ * The brief: a room of its own on ink, with no footer. One question at a time,
+ * and the answers write themselves up beside the question as the visitor goes.
+ * Questions and wording are in src/config/brief.config.ts; the sequence is
+ * src/scripts/brief.ts.
+ *
+ * Everything here is a real form first. Without JavaScript the questions stack
+ * and post to /api/contact, which lands on /contact/thanks.
+ *
+ * The chat sheet (site/ChatSheet.astro) stays the quick note from anywhere on
+ * the site. This is the fuller way in.
  */
+import { Image } from 'astro:assets';
 import { Icon } from 'astro-icon/components';
 import SiteLayout from '@/layouts/SiteLayout.astro';
-import SectionHead from '@/components/sections/SectionHead.astro';
-import Input from '@/components/ui/form/Input/Input.astro';
-import Textarea from '@/components/ui/form/Textarea/Textarea.astro';
-import Button from '@/components/ui/form/Button/Button.astro';
 import siteConfig from '@/config/site.config';
+import portrait from '@/assets/authors/MichaelFroseth-relight.webp';
+import { need, details, later, blocker, you, review, type BriefChoice } from '@/config/brief.config';
 
-const channels = [
-  { label: 'EMAIL', value: siteConfig.email, href: 'mailto:' + siteConfig.email, icon: 'mail' },
-  {
-    label: 'PHONE',
-    value: siteConfig.phone ?? '',
-    href: 'tel:' + siteConfig.phoneHref,
-    icon: 'phone',
-  },
-  { label: 'STUDIO', value: siteConfig.location, href: undefined, icon: 'map-pin' },
-];
+const choices: BriefChoice[] = [need, ...details, ...later];
 ---
 
 <SiteLayout
-  title="Contact"
-  description="Start a project with Southwell Media, or just say hello."
+  title="Start a Project"
+  description="Tell Michael what you're building. A few quick questions, and he reads every answer himself."
   includeOrgSchema
+  navTone="dark"
+  bare
 >
-  <header class="shell pt-[180px] max-[800px]:pt-[130px]">
-    <SectionHead
-      immediate
-      title="Contact"
-      blurb="Tell us what you are building. We answer every message ourselves — no forms disappearing into a queue."
-    />
-  </header>
+  <section class="brief invert-section" data-brief data-step="need">
+    {/* Returning mid-brief: hold the first paint so question one doesn't flash
+        before the saved step comes back. */}
+    <script is:inline>
+      try {
+        if (sessionStorage.getItem('sw-brief')) {
+          document.currentScript.parentElement.dataset.restoring = '';
+        }
+      } catch {}
+    </script>
+    <div class="brief__glow" aria-hidden="true"></div>
 
-  <section class="mt-20 grid grid-cols-[1.1fr_1fr] gap-20 shell max-[900px]:mt-12 max-[900px]:grid-cols-1 max-[900px]:gap-12">
-    <form id="contact-form" action="/api/contact" method="POST" class="flex flex-col gap-6">
-      <Input label="Your name" name="name" type="text" required autocomplete="name" />
-      <Input label="Email address" name="email" type="email" required autocomplete="email" />
-      <Input label="Subject" name="subject" type="text" />
-      <Textarea
-        label="Message"
-        name="message"
-        placeholder="What are you building, and what is in the way?"
-        rows={6}
-        required
-      />
+    <div class="brief__inner shell">
+      <header class="brief__head">
+        <h1 class="brief__title label-mono">
+          Start a project<span class="max-[600px]:sr-only"> with Southwell Media</span>
+        </h1>
+        <p class="brief__count label-mono" data-brief-count aria-live="polite"></p>
+        <div class="brief__bar" aria-hidden="true"><span></span></div>
+      </header>
 
-      <!-- Honeypot field for spam protection -->
-      <div class="hidden" aria-hidden="true">
-        <input type="text" name="honeypot" tabindex="-1" autocomplete="off" />
+      <div class="brief__room">
+        <form class="brief__form" data-brief-form action="/api/contact" method="POST">
+          {
+            choices.map((choice) => (
+              <fieldset
+                class="brief__step"
+                data-brief-step={choice.id}
+                data-when={choice.when}
+                data-active={choice.id === 'need' ? '' : undefined}
+              >
+                <legend class="brief__q" tabindex="-1">
+                  {choice.question}
+                </legend>
+                {choice.note && <p class="brief__note">{choice.note}</p>}
+                <div class="brief__options">
+                  {choice.options.map((option, i) => (
+                    <label class="brief__option">
+                      <input
+                        type="radio"
+                        name={choice.name}
+                        value={option.label}
+                        data-value={option.value}
+                        data-phrase={option.phrase}
+                      />
+                      <span class="brief__key label-mono" aria-hidden="true">
+                        {i + 1}
+                      </span>
+                      <span class="brief__label">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ))
+          }
+
+          <fieldset class="brief__step" data-brief-step="blocker">
+            <legend class="brief__q" tabindex="-1">{blocker.question}</legend>
+            <p class="brief__note">{blocker.note}</p>
+            <label class="sr-only" for="brief-message">{blocker.question}</label>
+            <textarea
+              class="brief__input brief__input--area"
+              id="brief-message"
+              name="message"
+              rows="4"
+              maxlength="5000"
+              placeholder={blocker.placeholder}></textarea>
+          </fieldset>
+
+          <fieldset class="brief__step" data-brief-step="you">
+            <legend class="brief__q" tabindex="-1">{you.question}</legend>
+            <div class="brief__fields">
+              <label class="brief__field">
+                <span class="label-mono">Your name</span>
+                <input
+                  class="brief__input"
+                  type="text"
+                  name="name"
+                  required
+                  minlength="2"
+                  maxlength="100"
+                  autocomplete="name"
+                />
+              </label>
+              <label class="brief__field">
+                <span class="label-mono">Company <em>optional</em></span>
+                <input
+                  class="brief__input"
+                  type="text"
+                  name="company"
+                  maxlength="200"
+                  autocomplete="organization"
+                />
+              </label>
+              <label class="brief__field">
+                <span class="label-mono">Email</span>
+                <input
+                  class="brief__input"
+                  type="email"
+                  name="email"
+                  required
+                  autocomplete="email"
+                />
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="brief__step" data-brief-step="review">
+            <legend class="brief__q" tabindex="-1">{review.question}</legend>
+            <p class="brief__note">{review.note}</p>
+          </fieldset>
+
+          {/* Anti-spam: bots fill it, people never see it. */}
+          <div class="hidden" aria-hidden="true">
+            <input type="text" name="honeypot" tabindex="-1" autocomplete="off" />
+          </div>
+          <input type="hidden" name="source" value="brief" />
+
+          <p class="brief__error" data-brief-error role="alert" hidden></p>
+          <p class="brief__fail" data-brief-fail role="alert" hidden>
+            That didn’t go through. Your answers are safe here, so try again, or email me at
+            <a href={'mailto:' + siteConfig.email}>{siteConfig.email}</a>.
+          </p>
+
+          <div class="brief__actions">
+            <button class="brief__back" type="button" data-brief-back hidden>
+              <span aria-hidden="true">←</span> Back
+            </button>
+            <button class="brief__next" type="button" data-brief-next>
+              Continue <span aria-hidden="true">→</span>
+            </button>
+            <button class="brief__next brief__send" type="submit" data-brief-send>
+              <span data-brief-send-label>{review.send}</span>
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+        </form>
+
+        <div class="brief__done">
+          <Image
+            src={portrait}
+            alt=""
+            width={144}
+            widths={[72, 144]}
+            sizes="72px"
+            class="brief__avatar"
+            loading="lazy"
+          />
+          <h2 class="brief__q" tabindex="-1" data-brief-done-title>
+            Got it, <span data-done-name></span>.
+          </h2>
+          <p class="brief__note">
+            I’ll read this myself and write back to <strong data-done-email></strong> soon.
+          </p>
+          <a class="brief__next" href="/work">See the work <span aria-hidden="true">→</span></a>
+        </div>
+
+        <aside class="brief__paper" aria-label="Your brief so far">
+          <p class="brief__paper-label label-mono">Your brief</p>
+          {/* Links, not buttons: a button won't wrap with the sentence around it. */}
+          <p class="brief__sentence">
+            Hi, I’m <a href="#" data-go="you" data-slot="name" data-blank="your name"></a><span
+              data-part="company"
+              >{' '}from <a href="#" data-go="you" data-slot="company" data-blank="your company"
+              ></a></span
+            >. We need <a href="#" data-go="need" data-slot="need" data-blank="something"></a><span
+              data-part="detail"
+              hidden>{' '}<a href="#" data-go="detail" data-slot="detail"></a></span
+            >. <a href="#" data-go="stage" data-slot="stage" data-blank="Where you are"></a>, and
+            we’d like to launch <a href="#" data-go="timeline" data-slot="timeline" data-blank="when"
+            ></a>. Budget: <a href="#" data-go="budget" data-slot="budget" data-blank="to be decided"
+            ></a>.
+          </p>
+          <p class="brief__quote" data-part="message" hidden>
+            <span class="label-mono">In the way</span>
+            <a href="#" data-go="blocker" data-slot="message"></a>
+          </p>
+        </aside>
       </div>
 
-      <div id="form-message" class="hidden text-sm" role="status" aria-live="polite"></div>
-
-      <Button
-        type="submit"
-        id="submit-button"
-        size="lg"
-        class="h-auto self-start rounded-full px-10 py-[18px] text-[17px] font-semibold"
-      >
-        Send message
-      </Button>
-    </form>
-
-    <aside class="flex flex-col gap-10">
-      {
-        channels.map((channel) => (
-          <div class="border-t border-border pt-6">
-            <span class="channel__label label-mono text-foreground-muted">
-              <Icon name={'lucide:' + channel.icon} aria-hidden="true" />
-              {channel.label}
-            </span>
-            <p class="mt-3 mb-0 text-[clamp(1.25rem,2vw,1.75rem)] tracking-[-0.03em]">
-              {channel.href ? <a href={channel.href}>{channel.value}</a> : channel.value}
-            </p>
-          </div>
-        ))
-      }
-    </aside>
+      <footer class="brief__foot">
+        <span class="label-mono">Rather just talk?</span>
+        <a href={'mailto:' + siteConfig.email}>
+          <Icon name="lucide:mail" aria-hidden="true" />
+          {siteConfig.email}
+        </a>
+        <a href={'tel:' + siteConfig.phoneHref}>
+          <Icon name="lucide:phone" aria-hidden="true" />
+          {siteConfig.phone}
+        </a>
+      </footer>
+    </div>
   </section>
-
-  <div class="h-[140px] max-[800px]:h-[100px]"></div>
 </SiteLayout>
 
 <style>
-  .channel__label {
+  /* The page ground goes with it, so overscroll never shows the light site. */
+  :global(html:has(.brief)),
+  :global(body:has(.brief)) {
+    background: var(--ink-950);
+  }
+  /* The site reserves room for a scrollbar this page rarely needs, and on ink
+     that room shows as a dark strip beside the light menu sheet. */
+  :global(html:has(.brief)) {
+    scrollbar-gutter: auto;
+  }
+
+  .brief {
+    position: relative;
+    display: flex;
+    overflow: hidden;
+    min-height: 100vh;
+    min-height: 100svh;
+    background: var(--ink-950);
+    color: var(--ice-100);
+    --brief-progress: 0.125;
+    --brief-line: rgb(238 242 244 / 0.16);
+    --brief-soft: rgb(238 242 244 / 0.66);
+  }
+
+  /* The one effect: a low ember that crosses the room as the brief fills.
+     A gradient on a moving layer, so it costs a transform and nothing else. */
+  .brief__glow {
+    position: absolute;
+    bottom: -60vh;
+    left: -60vw;
+    width: 120vw;
+    height: 120vh;
+    background: radial-gradient(
+      closest-side,
+      color-mix(in srgb, var(--signature-color, #ff542e) 22%, transparent),
+      transparent
+    );
+    transform: translate3d(calc(var(--brief-progress) * 100vw), 0, 0);
+    transition: transform 1.2s var(--ease-sw);
+    pointer-events: none;
+  }
+
+  .brief__inner {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding-top: clamp(104px, 13vh, 140px);
+    padding-bottom: 28px;
+  }
+
+  .brief__head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 14px 24px;
+    align-items: baseline;
+  }
+  .brief__title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--brief-soft);
+  }
+  .brief__count {
+    margin: 0;
+    font-size: 12px;
+    color: var(--brief-soft);
+  }
+  .brief__bar {
+    grid-column: 1 / -1;
+    height: 1px;
+    background: var(--brief-line);
+  }
+  .brief__bar span {
+    display: block;
+    height: 100%;
+    background: var(--signature-color, #ff542e);
+    transform: scaleX(var(--brief-progress));
+    transform-origin: 0 50%;
+    transition: transform 0.7s var(--ease-sw);
+  }
+
+  .brief__room {
+    display: grid;
+    flex: 1;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: clamp(40px, 7vw, 120px);
+    align-items: center;
+    padding-block: clamp(36px, 6vh, 72px);
+  }
+
+  /* --- the questions ------------------------------------------------------ */
+  .brief__step {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  :global(html.js) .brief__step:not([data-active]) {
+    display: none;
+  }
+  :global(html.js) .brief__step[data-active] {
+    animation: brief-in 0.5s var(--ease-sw) both;
+  }
+  @keyframes brief-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+  }
+  /* Without the sequence the questions simply stack, and the review has
+     nothing to review. */
+  :global(html:not(.js)) .brief__step {
+    margin-bottom: 56px;
+  }
+  :global(html:not(.js)) .brief__step[data-brief-step='review'],
+  :global(html:not(.js)) .brief__paper,
+  :global(html:not(.js)) .brief__next[data-brief-next],
+  :global(html:not(.js)) .brief__count,
+  :global(html:not(.js)) .brief__bar {
+    display: none;
+  }
+  :global(html:not(.js)) .brief__room {
+    grid-template-columns: minmax(0, 720px);
+  }
+
+  .brief[data-restoring] .brief__form,
+  .brief[data-restoring] .brief__paper {
+    opacity: 0;
+    animation: brief-held 0s 1.5s forwards;
+  }
+  @keyframes brief-held {
+    to {
+      opacity: 1;
+    }
+  }
+
+  .brief__q {
+    display: block;
+    margin: 0;
+    padding: 0;
+    outline: none;
+    font-family: var(--font-display);
+    font-weight: var(--display-weight);
+    font-size: clamp(36px, 4.6vw, 72px);
+    line-height: 1;
+    letter-spacing: var(--display-tracking);
+    text-transform: var(--display-case);
+    text-wrap: balance;
+  }
+  .brief__note {
+    max-width: 46ch;
+    margin: 16px 0 0;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--brief-soft);
+  }
+
+  .brief__options {
+    display: grid;
+    gap: 8px;
+    margin-top: clamp(24px, 4vh, 36px);
+  }
+  .brief__option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 58px;
+    padding: 12px 18px;
+    border: 1px solid var(--brief-line);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition:
+      border-color 0.25s ease,
+      background-color 0.25s ease,
+      transform 0.2s var(--ease-sw);
+  }
+  .brief__option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .brief__option:active {
+    transform: scale(0.99);
+  }
+  .brief__key {
+    flex: none;
+    width: 1.6em;
+    font-size: 12px;
+    color: var(--brief-soft);
+    transition: color 0.25s ease;
+  }
+  .brief__label {
+    font-size: clamp(17px, 1.4vw, 20px);
+    line-height: 1.3;
+  }
+  @media (hover: hover) {
+    .brief__option:hover {
+      border-color: rgb(238 242 244 / 0.42);
+      background: rgb(238 242 244 / 0.04);
+    }
+  }
+  .brief__option:has(input:checked) {
+    border-color: var(--signature-color, #ff542e);
+    background: color-mix(in srgb, var(--signature-color, #ff542e) 12%, transparent);
+  }
+  .brief__option:has(input:checked) .brief__key {
+    color: var(--signature-color, #ff542e);
+  }
+  .brief__option:has(input:focus-visible) {
+    outline: 2px solid var(--ice-100);
+    outline-offset: 2px;
+  }
+
+  .brief__fields {
+    display: grid;
+    gap: 22px;
+    margin-top: clamp(24px, 4vh, 36px);
+  }
+  .brief__field {
+    display: grid;
+    gap: 8px;
+  }
+  .brief__field span {
+    font-size: 12px;
+    color: var(--brief-soft);
+  }
+  .brief__field em {
+    font-style: normal;
+    opacity: 0.7;
+  }
+  .brief__input {
+    width: 100%;
+    padding: 10px 0;
+    border: 0;
+    border-bottom: 1px solid rgb(238 242 244 / 0.34);
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    color: var(--ice-100);
+    font-size: clamp(19px, 1.7vw, 24px);
+    transition: border-color 0.25s ease;
+  }
+  .brief__input:focus {
+    border-color: var(--signature-color, #ff542e);
+  }
+  .brief__input::placeholder {
+    color: rgb(238 242 244 / 0.42);
+  }
+  .brief__input--area {
+    display: block;
+    margin-top: clamp(20px, 3vh, 28px);
+    line-height: 1.45;
+    resize: vertical;
+  }
+
+  .brief__error,
+  .brief__fail {
+    margin: 18px 0 0;
+    font-size: 16px;
+    color: #ffb4a3;
+  }
+  .brief__fail a {
+    color: var(--ice-100);
+  }
+
+  .brief__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+    margin-top: clamp(24px, 4vh, 36px);
+  }
+  .brief__next {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 54px;
+    padding: 0 28px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ice-100);
+    color: var(--ink-950);
+    font-size: 17px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      transform 0.2s var(--ease-sw),
+      background-color 0.25s ease;
+  }
+  .brief__next[hidden] {
+    display: none;
+  }
+  .brief__next span:last-child {
+    transition: transform 0.3s var(--ease-sw);
+  }
+  .brief__next:active {
+    transform: scale(0.97);
+  }
+  .brief__next:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  @media (hover: hover) {
+    .brief__next:hover {
+      opacity: 1;
+      background: #fff;
+    }
+    .brief__next:hover span:last-child {
+      transform: translateX(4px);
+    }
+  }
+  .brief__send {
+    background: var(--signature-color, #ff542e);
+    color: var(--ink-950);
+  }
+  @media (hover: hover) {
+    .brief__send:hover {
+      background: color-mix(in srgb, var(--signature-color, #ff542e) 88%, #fff);
+    }
+  }
+  .brief__back {
+    order: 2;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--brief-soft);
+    font-size: 16px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  .brief__back[hidden] {
+    display: none;
+  }
+  .brief__back:hover {
+    color: var(--ice-100);
+  }
+  .brief__next:focus-visible,
+  .brief__back:focus-visible,
+  .brief__foot a:focus-visible {
+    outline: 2px solid var(--ice-100);
+    outline-offset: 3px;
+  }
+
+  /* --- the brief ---------------------------------------------------------- */
+  .brief__paper {
+    min-width: 0;
+    padding-left: clamp(24px, 3vw, 44px);
+    border-left: 1px solid var(--brief-line);
+    transition: border-color 0.5s ease;
+  }
+  .brief[data-step='review'] .brief__paper,
+  .brief[data-step='done'] .brief__paper {
+    border-color: var(--signature-color, #ff542e);
+  }
+  .brief__paper-label {
+    margin: 0 0 18px;
+    font-size: 12px;
+    color: var(--brief-soft);
+  }
+  .brief__sentence {
+    margin: 0;
+    font-size: clamp(20px, 1.9vw, 28px);
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    text-wrap: pretty;
+  }
+  .brief__paper a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: rgb(238 242 244 / 0.5);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.22em;
+    transition:
+      color 0.25s ease,
+      text-decoration-color 0.25s ease;
+  }
+  .brief__paper a:hover {
+    opacity: 1;
+    text-decoration-color: var(--signature-color, #ff542e);
+  }
+  .brief__paper a:focus-visible {
+    outline: 2px solid var(--ice-100);
+    outline-offset: 2px;
+  }
+  .brief__paper a[data-empty] {
+    text-decoration-style: dashed;
+    text-decoration-color: var(--brief-line);
+    color: rgb(238 242 244 / 0.42);
+  }
+  .brief__quote {
+    display: grid;
+    gap: 8px;
+    margin: 22px 0 0;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+  .brief__quote[hidden] {
+    display: none;
+  }
+  .brief__quote span {
+    font-size: 12px;
+    color: var(--brief-soft);
+  }
+  .brief__quote a {
+    color: var(--brief-soft);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  /* --- sent --------------------------------------------------------------- */
+  .brief__done {
+    display: none;
+  }
+  .brief[data-step='done'] .brief__form {
+    display: none;
+  }
+  .brief[data-step='done'] .brief__done {
+    display: block;
+    animation: brief-in 0.6s var(--ease-sw) both;
+  }
+  .brief[data-step='done'] .brief__paper a {
+    text-decoration-color: transparent;
+    pointer-events: none;
+  }
+  .brief__done .brief__next {
+    margin-top: 32px;
+  }
+  .brief__done strong {
+    color: var(--ice-100);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+  .brief__avatar {
+    display: block;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 24px;
+    border: 2px solid var(--signature-color, #ff542e);
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 50% 22%;
+  }
+
+  .brief__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 28px;
+    padding-top: 18px;
+    border-top: 1px solid var(--brief-line);
+    font-size: 15px;
+  }
+  .brief__foot span {
+    font-size: 12px;
+    color: var(--brief-soft);
+  }
+  .brief__foot a {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    min-height: 32px;
+    color: var(--ice-100);
+    text-decoration: none;
+  }
+  .brief__foot a:hover {
+    opacity: 1;
+    color: var(--signature-color, #ff542e);
+  }
+  .brief__foot :global(svg) {
+    width: 15px;
+    height: 15px;
   }
 
-  .channel__label :global(svg) {
-    width: 14px;
-    height: 14px;
-    stroke-width: 1.75;
+  @media (max-width: 900px) {
+    .brief__room {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 40px;
+      align-items: start;
+    }
+    .brief__paper {
+      padding-top: 22px;
+      padding-left: 0;
+      border-top: 1px solid var(--brief-line);
+      border-left: 0;
+    }
+    .brief__sentence {
+      font-size: 18px;
+    }
+    /* A phone has no number keys to hint at. */
+    .brief__key {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .brief__glow,
+    .brief__bar span {
+      transition: none;
+    }
+    :global(html.js) .brief__step[data-active],
+    .brief[data-step='done'] .brief__done {
+      animation: none;
+    }
   }
 </style>
 
 <script>
-  function initContactForm() {
-    const form = document.getElementById('contact-form') as HTMLFormElement | null;
-    const button = document.getElementById('submit-button') as HTMLButtonElement | null;
-    const message = document.getElementById('form-message') as HTMLDivElement | null;
+  import { initBrief } from '@/scripts/brief';
 
-    if (!form || !button || !message) return;
+  let stop: VoidFunction | null = null;
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      button.disabled = true;
-      button.textContent = 'Sending...';
-      message.classList.add('hidden');
-
-      try {
-        const formData = new FormData(form);
-        const response = await fetch('/api/contact', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-          message.textContent = 'Message sent. We will get back to you shortly.';
-          message.className = 'text-sm text-success';
-          form.reset();
-        } else {
-          const errors = data.errors
-            ? Object.values(data.errors).flat().join(', ')
-            : 'Something went wrong';
-          message.textContent = errors;
-          message.className = 'text-sm text-destructive';
-        }
-      } catch {
-        message.textContent = 'Failed to send message. Please try again later.';
-        message.className = 'text-sm text-destructive';
-      } finally {
-        button.disabled = false;
-        button.textContent = 'Send message';
-        message.classList.remove('hidden');
-      }
-    });
+  function setup() {
+    stop?.();
+    stop = null;
+    const root = document.querySelector<HTMLElement>('[data-brief]');
+    if (root) stop = initBrief(root);
   }
 
-  initContactForm();
-  document.addEventListener('astro:after-swap', initContactForm);
+  document.addEventListener('astro:page-load', setup);
+  document.addEventListener('astro:before-swap', () => {
+    stop?.();
+    stop = null;
+  });
 </script>
