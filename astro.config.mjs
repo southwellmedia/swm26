@@ -26,7 +26,7 @@ const searchPages = new Set(
 );
 
 export default defineConfig({
-  site: process.env.SITE_URL || 'https://southwell.media',
+  site: process.env.SITE_URL || 'https://www.southwellmedia.com',
 
   // Locales come from src/i18n/locales.mjs (one list for routing, UI and sitemap).
   // The default locale has no URL prefix; others live under /<locale>/.

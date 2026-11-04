@@ -58,7 +58,7 @@ const siteConfig: SiteConfig = {
   name: 'Southwell Media',
   description:
     'Southwell Media is a Dallas creative studio designing and building original websites, apps and brands. One team, from first conversation to final detail.',
-  url: SITE_URL || 'https://southwell.media',
+  url: SITE_URL || 'https://www.southwellmedia.com',
   ogImage: '/og-default.png',
   author: 'Southwell Media',
   email: 'hello@southwellmedia.com',
