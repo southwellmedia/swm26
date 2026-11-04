@@ -50,7 +50,7 @@ Three things are worth knowing if your site is custom too:
 
 **New pages are real pages.** The upgrade adds stock routes like `/search`. If you've built your own design, remove what doesn't belong before it deploys.
 
-**Decide about the router on purpose.** Velocity 2 moves to native view transitions, and Astro's CSP doesn't work with the ClientRouter. Our reel, navigation and scroll motion all follow the router's lifecycle, so we kept it and left CSP off for now. Everything else is on 2.0. Moving this site to native transitions is its own project, and we'd rather do it properly than rush it.
+**Decide about the router on purpose.** Velocity 2 moves to native view transitions, and Astro's CSP doesn't work with the ClientRouter. Our reel, navigation and scroll motion all follow the router's lifecycle, so we kept it and left CSP off for now. We also kept our own fonts and our own contact endpoint, because they already do their jobs here. The site runs on Velocity 2 and Astro 7, but it doesn't use every new default. Moving to native transitions is its own project, and we'd rather do it properly than rush it.
 
 Then we compared before and after, page by page. The pages we checked came back visually identical.
 
