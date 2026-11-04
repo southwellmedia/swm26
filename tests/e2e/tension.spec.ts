@@ -13,7 +13,9 @@ test('stacked service particle study responds and respects reduced motion', asyn
     await expect(fields.nth(i)).toHaveAttribute('data-ready', 'true');
     await expect(fields.nth(i)).toHaveAttribute('data-particle-variant', String(i));
   }
-  const field = fields.first();
+  // The last card: the stack slides each later card over the ones before it,
+  // so an earlier card scrolled into view sits under the pointer's reach.
+  const field = fields.last();
   await field.scrollIntoViewIfNeeded();
   await expect(field).toHaveAttribute('data-ready', 'true');
   const still = await field.locator('canvas').evaluate(canvas => (canvas as HTMLCanvasElement).toDataURL());

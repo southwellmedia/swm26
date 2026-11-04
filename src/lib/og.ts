@@ -40,12 +40,12 @@ export async function generateOGImage(options: OGImageOptions): Promise<Buffer> 
   const markup = html`
     <div style="height: 100%; width: 100%; display: flex; flex-direction: column; background: #0c1016; padding: 60px 80px; font-family: 'Inter'; position: relative;">
       <div style="display: flex; position: absolute; top: 0; left: 0; width: 8px; height: 100%; background: #eef2f4;"></div>
-      <div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding-left: 20px;">
+      <div style="display: flex; flex-direction: column; justify-content: space-between; width: 1020px; height: 100%; padding-left: 20px;">
         <div style="display: flex; align-items: center;">
           <div style="display: flex; padding: 8px 16px; background: rgba(238, 242, 244, 0.08); border: 1px solid rgba(238, 242, 244, 0.24); border-radius: 9999px; color: #c8d3d8; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">${type === 'article' ? 'Article' : 'Page'}</div>
         </div>
         <div style="display: flex; flex-direction: column; gap: 24px;">
-          <div style="display: flex; font-size: ${title.length > 50 ? '48px' : '64px'}; font-weight: 700; color: #eef2f4; line-height: 1.2; letter-spacing: -0.04em;">${title}</div>
+          <div style="display: flex; max-width: 980px; font-size: ${title.length > 50 ? '48px' : '64px'}; font-weight: 700; color: #eef2f4; line-height: 1.2; letter-spacing: -0.04em;">${title}</div>
           <div style="display: ${truncatedDescription ? 'flex' : 'none'}; font-size: 24px; color: #aebcc4; line-height: 1.5; max-width: 800px;">${truncatedDescription}</div>
         </div>
         <div style="display: flex; align-items: center; justify-content: space-between;">

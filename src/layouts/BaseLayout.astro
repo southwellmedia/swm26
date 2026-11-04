@@ -40,6 +40,10 @@ const {
   includeOrgSchema = false,
 } = Astro.props;
 
+// How long Motion gets before the page shows without it. The dev server compiles
+// on first request, which is slow rather than broken.
+const motionFailsafeMs = import.meta.env.DEV ? 20000 : 3000;
+
 // Build JSON-LD schemas
 const schemas: Array<WithContext<WebSite> | WithContext<Organization>> = [createWebsiteSchema()];
 if (includeOrgSchema) {
@@ -98,9 +102,8 @@ if (includeOrgSchema) {
          Nothing is hidden for a visitor without JS, and the timer means a
          blocked or crawling bundle can't leave the page blank: if Motion has
          not cleared it in time, the class comes off and the page just shows.
-         That page only: Motion takes back over on the next navigation. The dev
-         server compiles on first request, which is slow rather than broken. -->
-    <script is:inline>
+         That page only: Motion takes back over on the next navigation. -->
+    <script is:inline define:vars={{ motionFailsafeMs }}>
       (function () {
         const root = document.documentElement;
         root.classList.add('js');
@@ -108,7 +111,7 @@ if (includeOrgSchema) {
           function () {
             root.classList.remove('js');
           },
-          location.hostname === 'localhost' ? 20000 : 3000
+          motionFailsafeMs
         );
       })();
     </script>

@@ -22,7 +22,8 @@ test('reduced motion exposes work without the pinned sequence', async ({ page })
 });
 
 test('failed reel chunk restores the fallback and releases the project gate', async ({ page }) => {
-  await page.route('**/src/scripts/reel/morph.ts*', (route) => route.abort());
+  // Dev serves src/scripts/reel/morph.ts; a build serves a hashed morph chunk.
+  await page.route(/\/morph[.\w-]*\.(ts|js)/, (route) => route.abort());
   await page.goto('/');
   await page.locator('[data-reel]').scrollIntoViewIfNeeded();
   await expect(page.locator('[data-reel]')).toHaveAttribute('data-reel-mode', 'static');
@@ -111,5 +112,6 @@ test('light client story keeps navigation legible under a dark system theme', as
   await page.goto('/work/texas-trinkets');
   await expect(page.locator('#sw-nav')).toHaveCSS('color', 'rgb(25, 62, 59)');
   await page.locator('#sw-nav-toggle').click();
-  await expect(page.locator('#sw-nav')).toHaveCSS('color', 'rgb(238, 242, 244)');
+  // The site is pinned light, so the bar goes ink over the light menu sheet.
+  await expect(page.locator('#sw-nav')).toHaveCSS('color', 'rgb(12, 16, 22)');
 });
