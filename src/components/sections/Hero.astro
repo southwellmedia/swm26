@@ -90,8 +90,10 @@ import HeroScene from '@/components/site/HeroScene.tsx';
 
   /* Pre-animation state. Motion writes its first keyframe inline, and inline
      beats these, so there is never a frame of the finished layout before the
-     entrance. Without JS the class is absent and everything simply shows. */
-  :global(html.js) .hero__render,
+     entrance. Without JS the class is absent and everything simply shows.
+     .hero__render sits on HeroVisual's root, outside this component's scope,
+     so its rules have to be global or they never match. */
+  :global(html.js .hero__render),
   :global(html.js) .hero__foot {
     opacity: 0;
   }
@@ -205,7 +207,7 @@ import HeroScene from '@/components/site/HeroScene.tsx';
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .hero__render,
+    :global(.hero__render),
     .hero__word,
     .hero__foot {
       opacity: 1 !important;

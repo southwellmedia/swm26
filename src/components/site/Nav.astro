@@ -45,12 +45,19 @@ const { context, overMedia = false, tone, menuTone = 'light' } = Astro.props;
 
 const items = getNavItems();
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+// The bar waits for the hero's entrance on a fresh homepage load, and that is
+// the only time it arrives at all. Everywhere else it is simply there.
+const intro = path === '/';
 const isCurrent = (href: string) => path === href || (href !== '/' && path.startsWith(href + '/'));
 ---
 
+<div id="sw-nav-marker" class="sw-nav__marker" aria-hidden="true"></div>
+
 <header
-  class="sw-nav"
+  class:list={['sw-nav', intro && 'sw-nav--intro']}
   id="sw-nav"
+  transition:name="sw-nav"
+  transition:animate="none"
   data-menu-open="false"
   data-menu-tone={menuTone}
   data-over-media={overMedia ? '' : undefined}
@@ -198,12 +205,29 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
        kept a full-width layer resident for nothing. */
     color: var(--color-foreground);
     background: transparent;
-    animation: sw-fadein 1s 0.9s both;
     transition:
       background 0.4s ease,
       box-shadow 0.4s ease,
       padding 0.4s ease,
       color 0.3s ease;
+  }
+
+  /* The top 60px of the page: the bar frosts once this has scrolled away. */
+  .sw-nav__marker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 60px;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  /* The router rebuilds the bar on every page change, so an animation here
+     replays each time: `data-routed` (set in the swap, before paint) stops
+     that, or the nav blinks out for a second on every click. */
+  .sw-nav--intro:not([data-routed]) {
+    animation: sw-fadein 1s 0.9s both;
   }
 
   .sw-nav__inner {
@@ -521,10 +545,9 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   }
 
   .sw-menu__link {
+    position: relative;
     display: grid;
-    grid-template-columns: 28px auto;
     align-items: center;
-    gap: 14px;
     padding: 4px 0;
     text-decoration: none;
     color: inherit;
@@ -532,10 +555,15 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
 
   /* The arrow is the reward for hovering: it is not there until the row is
      hovered, then it arrives from the left, turned to point up and out, as
-     the word steps right to make room. */
+     the word steps right to make room. It takes no space of its own, so at
+     rest the words sit flush with the wordmark above them. */
   .sw-menu__arrow {
+    position: absolute;
+    top: 50%;
+    left: 0;
     width: 20px;
     height: 20px;
+    margin-top: -10px;
     color: var(--color-foreground);
     opacity: 0;
     transform: translateX(-10px) rotate(-45deg);
@@ -572,7 +600,7 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
 
   .sw-menu__link:hover .sw-menu__label,
   .sw-menu__link:focus-visible .sw-menu__label {
-    transform: translateX(12px);
+    transform: translateX(34px);
   }
 
   /* Hover and the current page narrow and lighten the word — the emphasis
@@ -731,7 +759,6 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     const scrim = document.getElementById('sw-menu-scrim');
     const list = menu.querySelector<HTMLElement>('.sw-menu__list');
     let open = false;
-    let scrolled = false;
 
     // The liquid underside. Reduced motion gets the stylesheet's still edge
     // instead.
@@ -775,8 +802,26 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     // finished rather than inside the scroll handler: reading layout and
     // writing to <html> mid-scroll forces a reflow in the same frame the
     // frost switches on.
+    //
+    // It also waits for the page to stop. A property on <html> restyles every
+    // element on the page (1,300 on the homepage, a 160ms pass on a slow CPU),
+    // which is a visible hitch right at the start of a scroll. Nothing reading
+    // it needs the new value mid-scroll: the sticky bands aren't stuck up here.
+    let lastScroll = 0;
+    let settle = 0;
+    const onScrollActivity = () => {
+      lastScroll = performance.now();
+    };
+    window.addEventListener('scroll', onScrollActivity, { passive: true });
+    const publishAtRest = () => {
+      window.clearTimeout(settle);
+      settle = window.setTimeout(() => {
+        if (performance.now() - lastScroll < 160) publishAtRest();
+        else publishHeight();
+      }, 180);
+    };
     const onTransitionEnd = (event: TransitionEvent) => {
-      if (event.target === nav && event.propertyName.startsWith('padding')) publishHeight();
+      if (event.target === nav && event.propertyName.startsWith('padding')) publishAtRest();
     };
     nav.addEventListener('transitionend', onTransitionEnd);
 
@@ -818,12 +863,16 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
       }
     };
 
-    const onScroll = () => {
-      const next = window.scrollY > 60;
-      if (next === scrolled) return;
-      scrolled = next;
-      nav.classList.toggle('is-scrolled', next);
-    };
+    // Frosted once the page has moved 60px. Watched rather than read: asking
+    // for scrollY in a scroll handler makes the browser finish all its pending
+    // style work on the spot, every event, for an answer that rarely changes.
+    const marker = document.getElementById('sw-nav-marker');
+    const frost = marker
+      ? new IntersectionObserver(([entry]) => {
+          nav.classList.toggle('is-scrolled', !entry?.isIntersecting);
+        })
+      : null;
+    if (marker) frost?.observe(marker);
 
     const onKeydown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && open) {
@@ -859,16 +908,16 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
     list?.addEventListener('pointerout', onListOut);
     window.addEventListener('pointermove', onPointerMove, { passive: true });
     document.addEventListener('mouseleave', onPointerLeave);
-    window.addEventListener('scroll', onScroll, { passive: true });
     document.addEventListener('keydown', onKeydown);
-    onScroll();
 
     // View transitions swap the DOM; drop the document/window listeners with
     // it so they do not stack up across navigations.
     document.addEventListener(
       'astro:before-swap',
       () => {
-        window.removeEventListener('scroll', onScroll);
+        frost?.disconnect();
+        window.clearTimeout(settle);
+        window.removeEventListener('scroll', onScrollActivity);
         window.removeEventListener('resize', onResize);
         window.removeEventListener('pointermove', onPointerMove);
         document.removeEventListener('mouseleave', onPointerLeave);
@@ -885,5 +934,8 @@ const isCurrent = (href: string) => path === href || (href !== '/' && path.start
   }
 
   initNav();
-  document.addEventListener('astro:after-swap', initNav);
+  document.addEventListener('astro:after-swap', () => {
+    document.getElementById('sw-nav')?.setAttribute('data-routed', '');
+    initNav();
+  });
 </script>

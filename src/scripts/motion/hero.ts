@@ -12,7 +12,10 @@ export function initHero(reduced: boolean): VoidFunction {
   const hero = document.querySelector<HTMLElement>('.hero');
   if (!hero) return () => {};
 
+  // The panel is what marks the homepage hero. Case studies have a .hero and a
+  // .hero__foot of their own, already showing, and must be left alone.
   const panel = hero.querySelector<HTMLElement>('.hero__render');
+  if (!panel) return () => {};
   const words = hero.querySelectorAll<HTMLElement>('.hero__word');
   const foot = hero.querySelector<HTMLElement>('.hero__foot');
   const parts = [panel, ...words, foot].filter((el): el is HTMLElement => Boolean(el));

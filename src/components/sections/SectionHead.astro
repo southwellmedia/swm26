@@ -6,15 +6,23 @@
  * The title rises out of a mask as the header comes into view; the blurb
  * lifts in a beat later. Both are [data-reveal] variants, see
  * src/scripts/motion/reveal.ts.
+ *
+ * `immediate` is for a header that opens the page. The title becomes the
+ * page's h1, and the blurb, usually the largest thing on screen, paints with
+ * the page rather than waiting on the motion bundle: that wait is what the
+ * page's load time is scored on.
  */
 interface Props {
   title: string;
   blurb: string;
+  /** Opens the page: an h1 title, and a blurb that paints at once. */
+  immediate?: boolean;
   id?: string;
   class?: string;
 }
 
-const { title, blurb, id, class: className } = Astro.props;
+const { title, blurb, immediate = false, id, class: className } = Astro.props;
+const Heading = immediate ? 'h1' : 'h2';
 ---
 
 <header
@@ -24,13 +32,13 @@ const { title, blurb, id, class: className } = Astro.props;
     className,
   ]}
 >
-  <h2 class="display-section m-0" id={id}>
+  <Heading class="display-section m-0" id={id}>
     <span class="sh__mask"><span class="sh__word" data-reveal="rise">{title}</span></span>
-  </h2>
+  </Heading>
   <p
     class="text-foreground-secondary m-0 max-w-[380px] text-[18px] leading-[1.55] max-[800px]:text-base"
-    data-reveal
-    data-reveal-delay="0.15"
+    data-reveal={immediate ? undefined : ''}
+    data-reveal-delay={immediate ? undefined : '0.15'}
   >
     {blurb}
   </p>

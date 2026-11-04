@@ -20,13 +20,48 @@ const dots = Array.from({ length: 160 }, (_, i) => {
 </div>
 <script>
   import { mountParticles } from '@/scripts/service-particles';
-  const init = () => document.querySelectorAll<HTMLElement>('[data-particle-field]').forEach(host => {
+  // Each field is a WebGL context and a shader compile, and they sit far below
+  // the fold. Mounting all of them on load stalled the first paint's main
+  // thread; mounting on approach put the compile in the middle of a scroll. So
+  // they mount in idle time, one per slot, with the static SVG holding the
+  // place. Scrolling there first still works: the watcher mounts on approach.
+  let watcher: IntersectionObserver | null = null;
+  let idle = 0;
+  // Safari has no idle callback; a short timer does the same job there.
+  const hasIdle = typeof window.requestIdleCallback === 'function';
+  const later = (run: () => void) =>
+    hasIdle ? window.requestIdleCallback(run, { timeout: 4000 }) : window.setTimeout(run, 400);
+  const cancel = (id: number) =>
+    hasIdle ? window.cancelIdleCallback(id) : window.clearTimeout(id);
+  const mount = (host: HTMLElement) => {
+    watcher?.unobserve(host);
     if (host.dataset.mounted) return;
     host.dataset.mounted = 'true';
     mountParticles(host);
-  });
-  init();
+  };
+  const stop = () => {
+    watcher?.disconnect();
+    watcher = null;
+    cancel(idle);
+  };
+  const init = () => {
+    stop();
+    const hosts = [...document.querySelectorAll<HTMLElement>('[data-particle-field]')];
+    if (!hosts.length) return;
+    watcher = new IntersectionObserver((entries) => {
+      for (const entry of entries) if (entry.isIntersecting) mount(entry.target as HTMLElement);
+    }, { rootMargin: '100% 0px' });
+    hosts.forEach((host) => watcher?.observe(host));
+    const next = () => {
+      const host = hosts.find((candidate) => !candidate.dataset.mounted);
+      if (!host) return;
+      mount(host);
+      idle = later(next);
+    };
+    idle = later(next);
+  };
   document.addEventListener('astro:page-load', init);
+  document.addEventListener('astro:before-swap', stop);
 </script>
 <style>
 /* The fade into the copy is a mask on the static SVG only; the live canvas

@@ -140,7 +140,7 @@ const SIZING: Record<'hero' | 'large' | 'wide' | 'standard', { widths: number[];
                   sizes={sizing.sizes}
                   class="card__img card__img--rest"
                   loading={i === 0 ? 'eager' : 'lazy'}
-                  fetchpriority={i === 0 ? 'high' : undefined}
+                  fetchpriority={i === 0 && !deliverLead ? 'high' : undefined}
                 />
               )}
 

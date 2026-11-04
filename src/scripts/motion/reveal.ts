@@ -35,12 +35,23 @@ export function initReveal(reduced: boolean): VoidFunction {
       inView(
         target,
         () => {
-          // Motion writes the first keyframe inline on its first frame, and
-          // inline beats the class rule that was hiding the element — so the
-          // class can come off now with no visible frame in between.
+          // Motion writes its first keyframe a frame or more after animate()
+          // (165ms once, on a busy load). Hold the start state inline first:
+          // lifting the class with nothing in its place shows the finished
+          // element, which then snaps away and animates back in.
+          //
+          // The lift ends at the element's own opacity, read in the same tick
+          // the class comes off, so nothing paints: muted text stays muted.
           el.classList.add('is-in');
-          if (rise) animate(el, { y: ['112%', '0%'] }, { ...RISE, delay });
-          else animate(el, { opacity: [0, 1], y: [56, 0] }, { ...LIFT, delay });
+          if (rise) {
+            el.style.transform = 'translateY(112%)';
+            animate(el, { y: ['112%', '0%'] }, { ...RISE, delay });
+          } else {
+            const rest = Number(getComputedStyle(el).opacity);
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(56px)';
+            animate(el, { opacity: [0, rest], y: [56, 0] }, { ...LIFT, delay });
+          }
         },
         { amount: 0.25, margin: '0px 0px -6% 0px' }
       )

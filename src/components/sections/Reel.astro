@@ -419,7 +419,10 @@ const framePortrait = await getImage({ src: portrait, width: 1200, format: 'webp
     const tone = pickTone();
     root.dataset.tone = tone;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced || !hasWebGL(document.createElement('canvas'))) {
+    // No html.js means Motion's failsafe gave up: the page is showing as
+    // static, and the reel should stay that way with it.
+    const motion = document.documentElement.classList.contains('js');
+    if (reduced || !motion || !hasWebGL(document.createElement('canvas'))) {
       root.dataset.reelMode = 'static';
       lead?.classList.add('is-in');
       return;

@@ -6,9 +6,12 @@
  * DOM API, so Astro's server-rendered markup and image pipeline stay as they
  * are and nothing hydrates just to animate.
  *
- * Progressive: until this module runs, `html.js` hides the elements it is
- * about to reveal; without JS nothing is ever hidden. Under
- * prefers-reduced-motion everything is shown in place.
+ * Progressive: an inline script in BaseLayout sets `html.js` before first
+ * paint, which hides the elements this module is about to reveal; without JS
+ * nothing is ever hidden. That script also starts a failsafe timer, cleared
+ * here. If it fired first the page is already showing, so Motion stays out of
+ * it rather than hiding it again. Under prefers-reduced-motion everything is
+ * shown in place.
  *
  * Lifecycle follows the ClientRouter: set up on every page load, torn down
  * before each swap so observers never outlive their DOM.
@@ -18,12 +21,20 @@ import { initHero } from './hero';
 import { initWork } from './work';
 import { initFlow } from './flow';
 
+declare global {
+  interface Window {
+    __motionFailsafe?: number;
+  }
+}
+
 const reducedQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+clearTimeout(window.__motionFailsafe);
+const live = document.documentElement.classList.contains('js');
 
 let teardown: VoidFunction[] = [];
 
 function setup() {
-  document.documentElement.classList.add('js');
   const reduced = reducedQuery.matches;
   try {
     for (const init of [initReveal, initHero, initWork, initFlow]) teardown.push(init(reduced));
@@ -49,6 +60,10 @@ function cleanup() {
 
 // The swap replaces <html>'s attributes with the new page's, which drops the
 // class. Restore it before the new page paints, or its reveals would flash.
-document.addEventListener('astro:after-swap', () => document.documentElement.classList.add('js'));
-document.addEventListener('astro:page-load', setup);
-document.addEventListener('astro:before-swap', cleanup);
+if (live) {
+  document.addEventListener('astro:after-swap', () =>
+    document.documentElement.classList.add('js')
+  );
+  document.addEventListener('astro:page-load', setup);
+  document.addEventListener('astro:before-swap', cleanup);
+}

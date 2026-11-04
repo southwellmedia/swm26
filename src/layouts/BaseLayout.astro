@@ -92,9 +92,21 @@ if (includeOrgSchema) {
     <ClientRouter />
 
     <!-- Motion (src/scripts/motion) hides what it is about to reveal behind
-         this class, so nothing is ever hidden for a visitor without JS. -->
-    <!-- The motion module opts into hidden entrance states only after loading.
-         A blocked bundle must never hide the server-rendered page. -->
+         html.js. The class has to be on before first paint: set any later,
+         the finished page paints, vanishes and then animates back in, and
+         the reel's layout jumps from static to pinned.
+         Nothing is hidden for a visitor without JS, and the timer means a
+         blocked or crawling bundle can't leave the page blank: if Motion has
+         not cleared it in time, the class comes off and the page just shows. -->
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        root.classList.add('js');
+        window.__motionFailsafe = setTimeout(function () {
+          root.classList.remove('js');
+        }, 3000);
+      })();
+    </script>
 
     <!-- The studio is one theme: ink on ice. The site used to follow the
          visitor's OS setting, which turned it dark with no way back; this

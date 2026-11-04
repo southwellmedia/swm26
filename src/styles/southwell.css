@@ -242,18 +242,9 @@
      Reveals
      Arrivals are Motion's job (src/scripts/motion/reveal.ts). The stylesheet
      only holds the pre-arrival state, and only once `html.js` says the
-     script is coming — without JS nothing is ever hidden.
+     script is coming — without JS nothing is ever hidden. That state lives
+     below, outside this layer.
      ----------------------------------------------------------------------- */
-  html.js [data-reveal]:not(.is-in) {
-    opacity: 0;
-  }
-
-  /* A masked rise starts below its clipping parent, fully opaque. */
-  html.js [data-reveal='rise']:not(.is-in) {
-    opacity: 1;
-    transform: translateY(112%);
-  }
-
   /* The mask a rise climbs out of: one line of a headline, clipped. The
      small negative inset keeps descenders and the display italics whole.
      clip-path alone does the clipping: overflow: hidden would clip to the
@@ -266,6 +257,20 @@
   .rv-mask > [data-reveal='rise'] {
     display: block;
   }
+}
+
+/* Pre-arrival state. Deliberately not in a layer: an unlayered style always
+   beats a layered one, so inside @layer utilities any component that sets its
+   own opacity (the service cards' muted text) would never be hidden, and would
+   show, snap away and animate back in. */
+html.js [data-reveal]:not(.is-in) {
+  opacity: 0;
+}
+
+/* A masked rise starts below its clipping parent, fully opaque. */
+html.js [data-reveal='rise']:not(.is-in) {
+  opacity: 1;
+  transform: translateY(112%);
 }
 
 /* -------------------------------------------------------------------------
