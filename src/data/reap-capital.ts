@@ -21,6 +21,8 @@ export interface Stat {
 export interface Chapter {
   num: string;
   title: string;
+  /** Written but not ready to show. Delete the flag to publish the section. */
+  hidden?: boolean;
 }
 
 export interface Property {
@@ -90,8 +92,8 @@ export const flagship = {
 export const chapters: Chapter[] = [
   { num: '02', title: 'Property sites — La Fortuna, The Landry' },
   { num: '03', title: 'Films — the founder series' },
-  { num: '04', title: 'Social media' },
-  { num: '05', title: 'Email campaigns' },
+  { num: '04', title: 'Social media', hidden: true },
+  { num: '05', title: 'Email campaigns', hidden: true },
 ];
 
 // The shots are laptop mockups of the live homepages. Both are landscape 4:3

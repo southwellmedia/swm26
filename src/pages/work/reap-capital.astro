@@ -37,6 +37,13 @@ import filmPoster from '@/assets/work/reap-capital/film-pref-equity.webp';
 // Where the door at the end leads: see src/lib/work.ts.
 const { project, next } = await getStoryProject('reap-capital');
 
+// Sections still being finished stay in the file but off the page: see `hidden`
+// in src/data/reap-capital.ts. The index, the heading and the sections all
+// follow that one flag.
+const shown = chapters.filter((chapter) => !chapter.hidden);
+const isShown = (num: string) => shown.some((chapter) => chapter.num === num);
+const moreCount = ['one', 'two', 'three', 'four', 'five'][shown.length - 1];
+
 // The section plays the first film and lists any others under it.
 const [reel, ...moreFilms] = films;
 ---
@@ -150,16 +157,16 @@ const [reel, ...moreFilms] = films;
       </div>
     </section>
 
-    {/* --- the ledger: sticky index + five more workstreams --------------- */}
+    {/* --- the ledger: sticky index + the other workstreams ---------------- */}
     <section class="ledger shell" aria-labelledby="ledger-title">
       <aside class="ledger__index">
         <p class="eyebrow label-mono">THE LEDGER</p>
         <h2 class="ledger__title" id="ledger-title">
-          five more <em>workstreams.</em>
+          {moreCount} more <em>workstreams.</em>
         </h2>
         <ol class="ledger__list">
           {
-            chapters.map((chapter) => (
+            shown.map((chapter) => (
               <li>
                 <a href={`#ws-${chapter.num}`}>
                   <span class="ledger__num label-mono">{chapter.num}</span>
@@ -261,46 +268,56 @@ const [reel, ...moreFilms] = films;
         </article>
 
         {/* 04 social */}
-        <article class="ws" id="ws-04" data-reveal>
-          <p class="eyebrow label-mono">04 · SOCIAL</p>
-          <h3 class="ws__title">the feed, <em>managed.</em></h3>
-          <p class="ws__intro">
-            Three accounts, a monthly calendar, one rule: every post comes from a real property, a
-            real deal or a real person. 312 posts, 4.1× LinkedIn growth.
-          </p>
+        {
+          isShown('04') && (
+            <article class="ws" id="ws-04" data-reveal>
+              <p class="eyebrow label-mono">04 · SOCIAL</p>
+              <h3 class="ws__title">
+                the feed, <em>managed.</em>
+              </h3>
+              <p class="ws__intro">
+                Three accounts, a monthly calendar, one rule: every post comes from a real property,
+                a real deal or a real person. 312 posts, 4.1× LinkedIn growth.
+              </p>
 
-          <div class="posts">
-            {
-              posts.map((post) => (
-                <div class="tile">
-                  <span class="tile__tag label-mono">{post}</span>
-                </div>
-              ))
-            }
-          </div>
-        </article>
+              <div class="posts">
+                {posts.map((post) => (
+                  <div class="tile">
+                    <span class="tile__tag label-mono">{post}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+          )
+        }
 
         {/* 05 email */}
-        <article class="ws" id="ws-05" data-reveal>
-          <p class="eyebrow label-mono">05 · EMAIL</p>
-          <h3 class="ws__title">two audiences, <em>one voice.</em></h3>
+        {
+          isShown('05') && (
+            <article class="ws" id="ws-05" data-reveal>
+              <p class="eyebrow label-mono">05 · EMAIL</p>
+              <h3 class="ws__title">
+                two audiences, <em>one voice.</em>
+              </h3>
 
-          <div class="email">
-            <p class="ws__intro email__intro">
-              Investor updates that read like the founder wrote them (he did, we edited) and
-              resident campaigns that turn a leasing special into tours by Friday. 61 campaigns, 58%
-              investor open rate.
-            </p>
-            <div class="email__shots">
-              <div class="tile tile--portrait">
-                <span class="tile__tag label-mono">investor update — Q2</span>
+              <div class="email">
+                <p class="ws__intro email__intro">
+                  Investor updates that read like the founder wrote them (he did, we edited) and
+                  resident campaigns that turn a leasing special into tours by Friday. 61 campaigns,
+                  58% investor open rate.
+                </p>
+                <div class="email__shots">
+                  <div class="tile tile--portrait">
+                    <span class="tile__tag label-mono">investor update — Q2</span>
+                  </div>
+                  <div class="tile tile--portrait">
+                    <span class="tile__tag label-mono">six weeks free — La Fortuna</span>
+                  </div>
+                </div>
               </div>
-              <div class="tile tile--portrait">
-                <span class="tile__tag label-mono">six weeks free — La Fortuna</span>
-              </div>
-            </div>
-          </div>
-        </article>
+            </article>
+          )
+        }
       </div>
     </section>
 
