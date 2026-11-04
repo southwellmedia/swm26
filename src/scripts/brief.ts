@@ -6,6 +6,21 @@
  * slot jumps back to its question. Answers live in this tab's sessionStorage
  * so a refresh loses nothing; they leave the browser only on send.
  */
+declare global {
+  interface Window {
+    dataLayer?: unknown[];
+  }
+}
+
+/**
+ * Hands an event to Google's tag, if the page has one (Analytics.astro). The
+ * tag only reads the Arguments object, so rest params won't do.
+ */
+function gtag(..._args: unknown[]) {
+  // eslint-disable-next-line prefer-rest-params
+  window.dataLayer?.push(arguments);
+}
+
 const KEY = 'sw-brief';
 /** Long enough to see the choice land before the next question arrives. */
 const ADVANCE_MS = 280;
@@ -214,6 +229,9 @@ export function initBrief(root: HTMLElement): VoidFunction {
       if (fail) fail.hidden = false;
       return;
     }
+
+    // The form's name only: nothing the visitor typed goes to Google.
+    gtag('event', 'generate_lead', { form_name: 'brief' });
 
     root.querySelectorAll<HTMLElement>('[data-done-name]').forEach((el) => {
       el.textContent = name.value.trim().split(/\s+/)[0] ?? '';
